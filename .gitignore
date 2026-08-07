@@ -1,0 +1,14 @@
+dist/
+node_modules/
+.vercel/
+supabase/.temp/
+.env.local
+.env*.local
+.DS_Store
+
+# Source documents. Real internal CampusTV material — names, contacts and
+# society history. Kept on disk because CLAUDE.md tells every session to read
+# the handover before making product decisions; kept out of git because it is
+# not ours to publish. data/year.json is the derived, shareable form.
+Handover Document - CampusTV station manager 2026.pdf
+CampusTV_Knowledge_Summary.txt

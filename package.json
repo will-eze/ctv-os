@@ -1,0 +1,27 @@
+{
+  "name": "ctv-os",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Internal operating system for CampusTV, University of Bath",
+  "scripts": {
+    "build:prototype": "python3 scripts/build_prototype.py",
+    "verify:contrast": "node scripts/contrast.mjs",
+    "verify:sql": "python3 scripts/sync_migration.py --check && node scripts/verify_sql.mjs && node scripts/verify_remote.mjs --local",
+    "verify": "npm run verify:contrast && npm run verify:sql && npm run verify:deploy",
+    "shots": "npm run build:prototype && node scripts/shots.mjs",
+    "e2e": "npm run build:prototype && node scripts/e2e.mjs",
+    "tasks": "python3 scripts/add_tasks.py",
+    "db:migration": "python3 scripts/sync_migration.py",
+    "verify:deploy": "node scripts/verify_deploy.mjs",
+    "deploy": "npm run build:prototype && vercel deploy --prod",
+    "verify:remote": "node scripts/verify_remote.mjs",
+    "db:provision": "bash scripts/provision_supabase.sh"
+  },
+  "devDependencies": {
+    "@electric-sql/pglite": "^0.5.4"
+  },
+  "dependencies": {
+    "pg": "^8.22.0",
+    "puppeteer-core": "^24.43.1"
+  }
+}

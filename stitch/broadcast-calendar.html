@@ -1,0 +1,350 @@
+<!DOCTYPE html><html class="light" lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>CampusTV OS - Calendar</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "secondary": "#5c5f61",
+                        "on-secondary": "#ffffff",
+                        "inverse-primary": "#95d5a4",
+                        "primary": "#004421",
+                        "on-tertiary-container": "#b5c5df",
+                        "surface-container-highest": "#dae2fd",
+                        "surface-container": "#eaedff",
+                        "on-background": "#131b2e",
+                        "background": "#faf8ff",
+                        "tertiary-fixed-dim": "#b7c8e1",
+                        "surface-container-high": "#e2e7ff",
+                        "error-container": "#ffdad6",
+                        "secondary-container": "#e0e3e5",
+                        "on-tertiary-fixed-variant": "#38485d",
+                        "on-secondary-container": "#626567",
+                        "on-surface": "#131b2e",
+                        "surface-tint": "#2c6a42",
+                        "on-primary-fixed-variant": "#0f512c",
+                        "secondary-fixed": "#e0e3e5",
+                        "tertiary-fixed": "#d3e4fe",
+                        "on-primary": "#ffffff",
+                        "surface-container-lowest": "#ffffff",
+                        "tertiary": "#2b3b50",
+                        "surface-variant": "#dae2fd",
+                        "on-secondary-fixed": "#191c1e",
+                        "on-secondary-fixed-variant": "#444749",
+                        "on-error": "#ffffff",
+                        "outline": "#707970",
+                        "on-primary-fixed": "#00210d",
+                        "inverse-surface": "#283044",
+                        "on-tertiary-fixed": "#0b1c30",
+                        "surface-dim": "#d2d9f4",
+                        "surface": "#faf8ff",
+                        "on-surface-variant": "#404941",
+                        "primary-container": "#1d5c35",
+                        "tertiary-container": "#425268",
+                        "error": "#ba1a1a",
+                        "secondary-fixed-dim": "#c4c7c9",
+                        "primary-fixed-dim": "#95d5a4",
+                        "surface-container-low": "#f2f3ff",
+                        "surface-bright": "#faf8ff",
+                        "inverse-on-surface": "#eef0ff",
+                        "on-tertiary": "#ffffff",
+                        "outline-variant": "#c0c9be",
+                        "primary-fixed": "#b0f2be",
+                        "on-primary-container": "#92d2a1",
+                        "on-error-container": "#93000a"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "stack-sm": "8px",
+                        "stack-lg": "24px",
+                        "sidebar-width": "260px",
+                        "gutter": "24px",
+                        "stack-md": "16px",
+                        "margin": "32px"
+                    },
+                    "fontFamily": {
+                        "headline-lg": ["Inter"],
+                        "display-lg": ["Inter"],
+                        "headline-md": ["Inter"],
+                        "headline-lg-mobile": ["Inter"],
+                        "label-md": ["Inter"],
+                        "title-lg": ["Inter"],
+                        "body-md": ["Inter"],
+                        "body-lg": ["Inter"]
+                    },
+                    "fontSize": {
+                        "headline-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+                        "display-lg": ["48px", { "lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "headline-md": ["24px", { "lineHeight": "32px", "fontWeight": "600" }],
+                        "headline-lg-mobile": ["28px", { "lineHeight": "36px", "fontWeight": "600" }],
+                        "label-md": ["12px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600" }],
+                        "title-lg": ["20px", { "lineHeight": "28px", "fontWeight": "500" }],
+                        "body-md": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+                        "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body { background-color: #F8FAFC; color: #131b2e; }
+        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 1px; background-color: #E2E8F0; border-top: 1px solid #E2E8F0; border-left: 1px solid #E2E8F0; }
+        .calendar-cell { background-color: #FFFFFF; min-height: 120px; padding: 8px; border-right: 1px solid #E2E8F0; border-bottom: 1px solid #E2E8F0; transition: background-color 0.2s; cursor: pointer; }
+        .calendar-cell:hover { background-color: #F1F5F9; }
+        .calendar-cell.other-month { background-color: #F8FAFC; color: #94A3B8; }
+        .event-badge { display: block; width: 100%; text-align: left; padding: 2px 6px; border-radius: 4px; margin-top: 4px; font-size: 11px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .event-live { background-color: #ffdad6; color: #93000a; }
+        .event-recorded { background-color: #eaedff; color: #004421; }
+        .event-prep { background-color: #e0e3e5; color: #444749; }
+        .sidebar-overlay { display: none; }
+        @media (max-width: 768px) { .sidebar-overlay.active { display: block; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 40; } }
+    </style>
+</head>
+<body class="font-body-md text-body-md min-h-screen flex flex-col md:flex-row">
+<!-- TopNavBar (Mobile Only) -->
+<header class="md:hidden flex justify-between items-center w-full px-gutter h-16 sticky top-0 z-40 bg-surface shadow-sm">
+<button class="p-2 text-secondary" id="mobile-menu-btn">
+<span class="material-symbols-outlined">menu</span>
+</button>
+<span class="font-headline-md text-headline-md font-bold text-primary">CampusTV</span>
+<div class="flex gap-2">
+<button class="p-2 text-secondary hover:bg-surface-container-low transition-colors rounded-full"><span class="material-symbols-outlined">notifications</span></button>
+<button class="p-2 text-secondary hover:bg-surface-container-low transition-colors rounded-full"><span class="material-symbols-outlined">search</span></button>
+</div>
+</header>
+<!-- SideNavBar -->
+<div class="sidebar-overlay" id="sidebar-overlay"></div>
+<nav class="fixed left-0 top-0 h-full w-[260px] flex flex-col z-50 bg-surface-container-low transition-transform transform -translate-x-full md:translate-x-0 md:relative md:z-auto" id="sidebar">
+<div class="px-6 py-6 border-b border-surface-container-high">
+<h1 class="font-headline-md text-headline-md font-bold text-primary">CampusTV OS</h1>
+<p class="font-label-md text-label-md text-secondary mt-1">Broadcast Management</p>
+</div>
+<div class="p-4">
+<button class="w-full bg-primary text-on-primary font-label-md text-label-md py-3 rounded-lg flex items-center justify-center gap-2 hover:bg-primary-container transition-colors shadow-sm">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">add</span>
+                New Broadcast
+            </button>
+</div>
+<div class="flex-1 overflow-y-auto py-2">
+<a class="flex items-center gap-stack-md text-secondary px-6 py-3 hover:bg-surface-container transition-all duration-200 ease-in-out" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="font-label-md text-label-md">Dashboard</span>
+</a>
+<a class="flex items-center gap-stack-md text-primary font-bold border-l-[3px] border-primary bg-surface-container-high px-6 py-3 transition-all duration-200 ease-in-out" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">calendar_today</span>
+<span class="font-label-md text-label-md">Broadcasts</span>
+</a>
+<a class="flex items-center gap-stack-md text-secondary px-6 py-3 hover:bg-surface-container transition-all duration-200 ease-in-out" href="#">
+<span class="material-symbols-outlined">video_library</span>
+<span class="font-label-md text-label-md">Library</span>
+</a>
+<a class="flex items-center gap-stack-md text-secondary px-6 py-3 hover:bg-surface-container transition-all duration-200 ease-in-out" href="#">
+<span class="material-symbols-outlined">handyman</span>
+<span class="font-label-md text-label-md">Gear Locker</span>
+</a>
+<a class="flex items-center gap-stack-md text-secondary px-6 py-3 hover:bg-surface-container transition-all duration-200 ease-in-out" href="#">
+<span class="material-symbols-outlined">group</span>
+<span class="font-label-md text-label-md">Crew</span>
+</a>
+</div>
+<div class="border-t border-surface-container-high p-4">
+<a class="flex items-center gap-stack-md text-secondary px-2 py-2 hover:bg-surface-container rounded transition-all duration-200 ease-in-out" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="font-label-md text-label-md">Settings</span>
+</a>
+<a class="flex items-center gap-stack-md text-secondary px-2 py-2 hover:bg-surface-container rounded transition-all duration-200 ease-in-out" href="#">
+<span class="material-symbols-outlined">contact_support</span>
+<span class="font-label-md text-label-md">Support</span>
+</a>
+</div>
+</nav>
+<!-- Main Content Canvas -->
+<main class="flex-1 flex flex-col w-full max-w-[1440px] mx-auto min-h-screen">
+<!-- Header area for desktop -->
+<div class="hidden md:flex justify-between items-center w-full px-margin h-20 bg-surface shadow-sm z-30 sticky top-0">
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-secondary" style="font-size: 28px;">calendar_month</span>
+<h2 class="font-headline-lg text-headline-lg text-on-surface">Broadcast Schedule</h2>
+</div>
+<div class="flex items-center gap-4">
+<div class="relative">
+<span class="material-symbols-outlined absolute left-3 top-1/2 transform -translate-y-1/2 text-secondary">search</span>
+<input class="pl-10 pr-4 py-2 border border-secondary-container rounded-lg focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary text-body-md bg-surface-container-lowest w-64 transition-all" placeholder="Search events..." type="text">
+</div>
+<div class="w-10 h-10 rounded-full bg-surface-container-highest overflow-hidden border border-secondary-container flex items-center justify-center">
+<img class="w-full h-full object-cover" data-alt="A professional headshot of a young broadcast producer in a modern studio environment. Bright, clear lighting with a soft depth of field." src="https://lh3.googleusercontent.com/aida-public/AB6AXuA2OdJcMblnUHqQ77hf9llSkiwXgpCt6GIMB9GMxx5R0aCiNWRhsEO2wcCJb8hvZ3VCYJf5XW77Z9-owSMkQyeCdBCAYxa1d-mk5HI81rRRuQ70HCOJdlNc2RnxuRQ84hFOMnKPl2dL7Xq2TCyb1CIajpsC0G_VnLXNGOwomR7RrdpA9WQ4B6n45V_DLSQ-RqTN_ZxfCYKohjXu85vK6B2IpGbwhD3uswX9xFI6LnB_34ZoBdwM9f8g">
+</div>
+</div>
+</div>
+<div class="p-4 md:p-margin flex-1 flex flex-col">
+<!-- Calendar Controls -->
+<div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+<div class="flex items-center gap-2 bg-surface-container-lowest p-1 rounded-lg border border-secondary-container shadow-sm">
+<button class="p-2 hover:bg-surface-container rounded text-secondary transition-colors"><span class="material-symbols-outlined">chevron_left</span></button>
+<span class="font-title-lg text-title-lg text-on-surface px-4 min-w-[140px] text-center font-semibold">November 2023</span>
+<button class="p-2 hover:bg-surface-container rounded text-secondary transition-colors"><span class="material-symbols-outlined">chevron_right</span></button>
+<div class="w-px h-6 bg-secondary-container mx-2"></div>
+<button class="px-4 py-1.5 text-body-md font-medium text-primary hover:bg-surface-container rounded transition-colors">Today</button>
+</div>
+<div class="flex items-center gap-2">
+<span class="font-label-md text-label-md text-secondary mr-2">FILTERS:</span>
+<button class="px-3 py-1.5 rounded-full border border-primary bg-surface-container-low text-primary font-label-md text-label-md flex items-center gap-1">
+<span class="w-2 h-2 rounded-full bg-error"></span> Live
+                    </button>
+<button class="px-3 py-1.5 rounded-full border border-secondary-container bg-surface-container-lowest hover:bg-surface-container-low text-secondary font-label-md text-label-md flex items-center gap-1 transition-colors">
+<span class="w-2 h-2 rounded-full bg-primary"></span> Recorded
+                    </button>
+<button class="px-3 py-1.5 rounded-full border border-secondary-container bg-surface-container-lowest hover:bg-surface-container-low text-secondary font-label-md text-label-md flex items-center gap-1 transition-colors">
+<span class="w-2 h-2 rounded-full bg-secondary"></span> Prep
+                    </button>
+</div>
+</div>
+<!-- Calendar Container -->
+<div class="bg-surface-container-lowest rounded-xl border border-secondary-container shadow-sm overflow-hidden flex-1 flex flex-col">
+<!-- Day Headers -->
+<div class="grid grid-cols-7 bg-surface-container-low border-b border-secondary-container">
+<div class="py-3 text-center font-label-md text-label-md text-secondary">SUN</div>
+<div class="py-3 text-center font-label-md text-label-md text-secondary">MON</div>
+<div class="py-3 text-center font-label-md text-label-md text-secondary">TUE</div>
+<div class="py-3 text-center font-label-md text-label-md text-secondary">WED</div>
+<div class="py-3 text-center font-label-md text-label-md text-secondary">THU</div>
+<div class="py-3 text-center font-label-md text-label-md text-secondary">FRI</div>
+<div class="py-3 text-center font-label-md text-label-md text-secondary">SAT</div>
+</div>
+<!-- Calendar Grid -->
+<div class="calendar-grid flex-1"><!-- Week 1 -->
+<div class="calendar-cell other-month p-2"><span class="font-body-md font-medium">29</span></div>
+<div class="calendar-cell other-month p-2"><span class="font-body-md font-medium">30</span></div>
+<div class="calendar-cell other-month p-2"><span class="font-body-md font-medium">31</span></div>
+<div class="calendar-cell p-2">
+    <span class="font-body-md font-medium text-on-surface">1</span>
+    <div class="event-badge event-recorded">10:00 AM - Faculty Interview</div>
+</div>
+<div class="calendar-cell p-2">
+    <span class="font-body-md font-medium text-on-surface">2</span>
+</div>
+<div class="calendar-cell p-2 bg-surface-container-low">
+    <span class="font-body-md font-bold text-primary flex items-center justify-between">3 <div class="w-2 h-2 rounded-full bg-primary"></div></span>
+    <div class="event-badge event-live">7:00 PM - Basketball Live</div>
+    <div class="event-badge event-prep">3:00 PM - Set Construction</div>
+</div>
+<div class="calendar-cell p-2">
+    <span class="font-body-md font-medium text-on-surface">4</span>
+</div>
+<!-- Week 2 -->
+<div class="calendar-cell p-2"><span class="font-body-md font-medium text-on-surface">5</span></div>
+<div class="calendar-cell p-2">
+    <span class="font-body-md font-medium text-on-surface">6</span>
+    <div class="event-badge event-recorded">2:00 PM - Campus Tour B-Roll</div>
+</div>
+<div class="calendar-cell p-2"><span class="font-body-md font-medium text-on-surface">7</span></div>
+<div class="calendar-cell p-2"><span class="font-body-md font-medium text-on-surface">8</span></div>
+<div class="calendar-cell p-2">
+    <span class="font-body-md font-medium text-on-surface">9</span>
+    <div class="event-badge event-prep">9:00 AM - Audio Check</div>
+</div>
+<div class="calendar-cell p-2">
+    <span class="font-body-md font-medium text-on-surface">10</span>
+    <div class="event-badge event-live">5:00 PM - Weekly News Wrap-up</div>
+</div>
+<div class="calendar-cell p-2"><span class="font-body-md font-medium text-on-surface">11</span></div>
+<!-- Week 3 -->
+<div class="calendar-cell p-2"><span class="font-body-md font-medium text-on-surface">12</span></div>
+<div class="calendar-cell p-2"><span class="font-body-md font-medium text-on-surface">13</span></div>
+<div class="calendar-cell p-2"><span class="font-body-md font-medium text-on-surface">14</span></div>
+<div class="calendar-cell p-2"><span class="font-body-md font-medium text-on-surface">15</span></div>
+<div class="calendar-cell p-2"><span class="font-body-md font-medium text-on-surface">16</span></div>
+<div class="calendar-cell p-2"><span class="font-body-md font-medium text-on-surface">17</span></div>
+<div class="calendar-cell p-2"><span class="font-body-md font-medium text-on-surface">18</span></div>
+<!-- Week 4 -->
+<div class="calendar-cell p-2"><span class="font-body-md font-medium text-on-surface">19</span></div>
+<div class="calendar-cell p-2"><span class="font-body-md font-medium text-on-surface">20</span></div>
+<div class="calendar-cell p-2"><span class="font-body-md font-medium text-on-surface">21</span></div>
+<div class="calendar-cell p-2"><span class="font-body-md font-medium text-on-surface">22</span></div>
+<div class="calendar-cell p-2"><span class="font-body-md font-medium text-on-surface">23</span></div>
+<div class="calendar-cell p-2"><span class="font-body-md font-medium text-on-surface">24</span></div>
+<div class="calendar-cell p-2"><span class="font-body-md font-medium text-on-surface">25</span></div>
+<!-- Week 5 -->
+<div class="calendar-cell p-2"><span class="font-body-md font-medium text-on-surface">26</span></div>
+<div class="calendar-cell p-2"><span class="font-body-md font-medium text-on-surface">27</span></div>
+<div class="calendar-cell p-2"><span class="font-body-md font-medium text-on-surface">28</span></div>
+<div class="calendar-cell p-2"><span class="font-body-md font-medium text-on-surface">29</span></div>
+<div class="calendar-cell p-2"><span class="font-body-md font-medium text-on-surface">30</span></div>
+<div class="calendar-cell other-month p-2"><span class="font-body-md font-medium">1</span></div>
+<div class="calendar-cell other-month p-2"><span class="font-body-md font-medium">2</span></div></div>
+</div>
+<!-- Event Details Sidebar (Mockup of click state) -->
+<div class="mt-6 bg-surface-container-lowest rounded-xl border border-secondary-container shadow-sm p-6">
+<div class="flex justify-between items-start mb-4">
+<div>
+<div class="flex items-center gap-2 mb-1">
+<span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-error-container text-error">Live Broadcast</span>
+<span class="text-secondary font-label-md">Nov 3, 2023 • 7:00 PM - 9:30 PM</span>
+</div>
+<h3 class="font-headline-md text-headline-md text-on-surface">Men's Basketball vs. State</h3>
+</div>
+<button class="text-primary hover:bg-surface-container p-2 rounded-lg transition-colors"><span class="material-symbols-outlined">edit</span></button>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6 pt-4 border-t border-secondary-container">
+<div>
+<p class="font-label-md text-secondary mb-2 flex items-center gap-1"><span class="material-symbols-outlined text-[16px]">location_on</span> Location</p>
+<p class="font-body-md text-on-surface">Main Gymnasium, Court 1</p>
+</div>
+<div>
+<p class="font-label-md text-secondary mb-2 flex items-center gap-1"><span class="material-symbols-outlined text-[16px]">group</span> Assigned Crew</p>
+<div class="flex -space-x-2">
+<div class="w-8 h-8 rounded-full border-2 border-surface-container-lowest overflow-hidden bg-secondary">
+<img class="w-full h-full object-cover" data-alt="Portrait of a young male camera operator wearing headphones in a studio." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDn7HPEO9w7pPG5ABvzVJ__MIDzw5XIzxCOO9Fr8-2RpcVlYK5C0sFxjQlZ3McxEqDVPFhDvj4cSQ__VujMA-zAPjWnkJ5PI06p7mK2f_2BEbDaYBuVwPCpqOHd3llyoA86KYcPCTT_tRN034odYtPXb-WtHJQGBglkpT8JHzufHKM2y6yWRuyXBD2xvN4TUtGxDh1zelRhROcLQu1pemuDBkEjtjITW7WXpVFUrbu2YwmxKn-uFMY9">
+</div>
+<div class="w-8 h-8 rounded-full border-2 border-surface-container-lowest overflow-hidden bg-secondary">
+<img class="w-full h-full object-cover" data-alt="Portrait of a female audio engineer adjusting levels on a soundboard." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDlr0bP4CfRAlsISKtduZ6c2ND5BHyw223LX4pkDdfvzEVQ93TMW_e52phA3cec7-JU8QuECQoLZUxZIiCFpSTH7JnJo-2lenWeAN8ZISlkRXHozU3GL-KEdnDetqBlR4GQzMbFUocejc3zjt2GWpI43klwU_aSiHvLrrkQoEbV6IPPoT5F3NL1qdRnz-bojwZu83ra2jYdaE6QM4F0EiU-v4uhNiWqLdynNmJJmTrk55jGHGP3Bjx6">
+</div>
+<div class="w-8 h-8 rounded-full border-2 border-surface-container-lowest overflow-hidden bg-surface-container-high flex items-center justify-center text-xs font-bold text-primary">+3</div>
+</div>
+</div>
+<div>
+<p class="font-label-md text-secondary mb-2 flex items-center gap-1"><span class="material-symbols-outlined text-[16px]">handyman</span> Key Gear</p>
+<div class="flex flex-wrap gap-2">
+<span class="px-2 py-1 bg-surface-container rounded text-xs text-on-surface border border-secondary-container">Cam A (Sony PXW)</span>
+<span class="px-2 py-1 bg-surface-container rounded text-xs text-on-surface border border-secondary-container">Wireless Lav x2</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+<script>
+        // Simple mobile sidebar toggle
+        const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+        const sidebar = document.getElementById('sidebar');
+        const sidebarOverlay = document.getElementById('sidebar-overlay');
+
+        function toggleSidebar() {
+            const isClosed = sidebar.classList.contains('-translate-x-full');
+            if (isClosed) {
+                sidebar.classList.remove('-translate-x-full');
+                sidebarOverlay.classList.add('active');
+            } else {
+                sidebar.classList.add('-translate-x-full');
+                sidebarOverlay.classList.remove('active');
+            }
+        }
+
+        mobileMenuBtn.addEventListener('click', toggleSidebar);
+        sidebarOverlay.addEventListener('click', toggleSidebar);
+    </script>
+
+
+</body></html>

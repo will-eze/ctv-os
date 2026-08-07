@@ -1,0 +1,345 @@
+<!DOCTYPE html><html class="light" lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>CampusTV - Crew Directory</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-container-low": "#f2f3ff",
+                        "on-surface": "#131b2e",
+                        "inverse-surface": "#283044",
+                        "tertiary-fixed": "#d3e4fe",
+                        "on-error": "#ffffff",
+                        "surface-container-highest": "#dae2fd",
+                        "surface-dim": "#d2d9f4",
+                        "surface": "#faf8ff",
+                        "surface-container-lowest": "#ffffff",
+                        "on-error-container": "#93000a",
+                        "error-container": "#ffdad6",
+                        "secondary-fixed-dim": "#c4c7c9",
+                        "on-primary-container": "#92d2a1",
+                        "tertiary-container": "#425268",
+                        "background": "#faf8ff",
+                        "primary": "#004421",
+                        "outline-variant": "#c0c9be",
+                        "on-tertiary": "#ffffff",
+                        "secondary": "#5c5f61",
+                        "on-secondary-fixed-variant": "#444749",
+                        "inverse-primary": "#95d5a4",
+                        "surface-bright": "#faf8ff",
+                        "on-primary-fixed": "#00210d",
+                        "tertiary": "#2b3b50",
+                        "on-background": "#131b2e",
+                        "outline": "#707970",
+                        "on-secondary-container": "#626567",
+                        "inverse-on-surface": "#eef0ff",
+                        "on-tertiary-container": "#b5c5df",
+                        "surface-variant": "#dae2fd",
+                        "tertiary-fixed-dim": "#b7c8e1",
+                        "on-surface-variant": "#404941",
+                        "surface-tint": "#2c6a42",
+                        "secondary-fixed": "#e0e3e5",
+                        "primary-fixed": "#b0f2be",
+                        "primary-container": "#1d5c35",
+                        "on-tertiary-fixed-variant": "#38485d",
+                        "on-primary": "#ffffff",
+                        "secondary-container": "#e0e3e5",
+                        "on-secondary-fixed": "#191c1e",
+                        "primary-fixed-dim": "#95d5a4",
+                        "on-tertiary-fixed": "#0b1c30",
+                        "surface-container-high": "#e2e7ff",
+                        "on-secondary": "#ffffff",
+                        "error": "#ba1a1a",
+                        "on-primary-fixed-variant": "#0f512c",
+                        "surface-container": "#eaedff"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "sidebar-width": "260px",
+                        "stack-sm": "8px",
+                        "gutter": "24px",
+                        "margin": "32px",
+                        "stack-md": "16px",
+                        "stack-lg": "24px"
+                    },
+                    "fontFamily": {
+                        "body-md": ["Inter"],
+                        "title-lg": ["Inter"],
+                        "display-lg": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "headline-lg": ["Inter"],
+                        "headline-lg-mobile": ["Inter"],
+                        "headline-md": ["Inter"],
+                        "label-md": ["Inter"]
+                    },
+                    "fontSize": {
+                        "body-md": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+                        "title-lg": ["20px", { "lineHeight": "28px", "fontWeight": "500" }],
+                        "display-lg": ["48px", { "lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "headline-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+                        "headline-lg-mobile": ["28px", { "lineHeight": "36px", "fontWeight": "600" }],
+                        "headline-md": ["24px", { "lineHeight": "32px", "fontWeight": "600" }],
+                        "label-md": ["12px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600" }]
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-background text-on-background font-body-md text-body-md min-h-screen flex">
+<!-- SideNavBar -->
+<nav class="bg-surface-container dark:bg-surface-dim text-primary dark:text-inverse-primary font-body-md text-body-md font-headline-md text-headline-md font-bold text-primary dark:text-inverse-primary fixed left-0 top-0 h-screen w-[260px] bg-surface-container dark:bg-surface-dim shadow-none hidden md:flex flex-col h-full py-margin px-stack-sm z-50">
+<div class="px-3 mb-8">
+<h1 class="font-headline-md text-headline-md font-bold text-primary">CampusTV</h1>
+<p class="font-label-md text-label-md text-on-surface-variant uppercase mt-1 tracking-wider">Internal OS</p>
+</div>
+<button class="mx-3 mb-6 bg-primary hover:bg-primary-container text-on-primary font-label-md text-label-md rounded-lg py-3 px-4 flex items-center justify-center gap-2 transition-colors">
+<span class="material-symbols-outlined" data-icon="add" style="font-variation-settings: 'FILL' 0;">add</span>
+            New Broadcast
+        </button>
+<div class="flex flex-col gap-1 flex-1">
+<a class="flex items-center gap-3 text-on-surface-variant hover:bg-surface-container-high transition-colors px-3 py-2.5 rounded-lg opacity-90 transition-opacity" href="#">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+<span class="font-body-md text-body-md">Dashboard</span>
+</a>
+<a class="flex items-center gap-3 text-on-surface-variant hover:bg-surface-container-high transition-colors px-3 py-2.5 rounded-lg opacity-90 transition-opacity" href="#">
+<span class="material-symbols-outlined" data-icon="live_tv">live_tv</span>
+<span class="font-body-md text-body-md">Broadcasts</span>
+</a>
+<a class="flex items-center gap-3 text-on-surface-variant hover:bg-surface-container-high transition-colors px-3 py-2.5 rounded-lg opacity-90 transition-opacity" href="#">
+<span class="material-symbols-outlined" data-icon="video_library">video_library</span>
+<span class="font-body-md text-body-md">Library</span>
+</a>
+<a class="flex items-center gap-3 text-on-surface-variant hover:bg-surface-container-high transition-colors px-3 py-2.5 rounded-lg opacity-90 transition-opacity" href="#">
+<span class="material-symbols-outlined" data-icon="inventory_2">inventory_2</span>
+<span class="font-body-md text-body-md">Gear Locker</span>
+</a>
+<a class="flex items-center gap-3 text-primary font-bold border-l-2 border-primary bg-primary-fixed-dim/10 px-3 py-2.5 rounded-r-lg opacity-90 transition-opacity" href="#">
+<span class="material-symbols-outlined" data-icon="groups">groups</span>
+<span class="font-body-md text-body-md">Crew</span>
+</a>
+</div>
+<div class="flex flex-col gap-1 mt-auto pt-6 border-t border-outline-variant/30">
+<a class="flex items-center gap-3 text-on-surface-variant hover:bg-surface-container-high transition-colors px-3 py-2.5 rounded-lg opacity-90 transition-opacity" href="#">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+<span class="font-body-md text-body-md">Settings</span>
+</a>
+<a class="flex items-center gap-3 text-on-surface-variant hover:bg-surface-container-high transition-colors px-3 py-2.5 rounded-lg opacity-90 transition-opacity" href="#">
+<span class="material-symbols-outlined" data-icon="help_outline">help_outline</span>
+<span class="font-body-md text-body-md">Support</span>
+</a>
+</div>
+</nav>
+<!-- Main Content Area -->
+<main class="flex-1 ml-0 md:ml-[260px] flex flex-col min-h-screen">
+<!-- TopNavBar -->
+<header class="bg-surface dark:bg-surface-dim text-primary dark:text-inverse-primary font-body-md text-body-md font-title-lg text-title-lg font-bold text-on-surface dark:text-inverse-on-surface fixed top-0 right-0 left-0 md:left-[260px] h-16 border-b border-outline-variant dark:border-outline shadow-sm dark:shadow-none z-40 bg-white/80 backdrop-blur-md">
+<div class="flex justify-between items-center px-gutter h-full w-full max-w-[1440px] mx-auto">
+<div class="flex items-center gap-4 flex-1">
+<!-- Mobile Menu Trigger -->
+<button class="md:hidden text-on-surface-variant p-2 -ml-2 rounded-lg hover:bg-surface-container-high">
+<span class="material-symbols-outlined" data-icon="menu">menu</span>
+</button>
+<div class="hidden md:flex relative max-w-md w-full">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant" data-icon="search">search</span>
+<input class="w-full pl-10 pr-4 py-2 bg-surface-container-low border border-outline-variant rounded-lg font-body-md text-body-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-all" placeholder="Search crew members, roles, or stations..." type="text">
+</div>
+</div>
+<div class="flex items-center gap-2">
+<button class="text-on-surface-variant hover:text-primary transition-colors p-2 rounded-full hover:bg-surface-container-high focus:ring-2 ring-primary">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+</button>
+<button class="text-on-surface-variant hover:text-primary transition-colors p-2 rounded-full hover:bg-surface-container-high focus:ring-2 ring-primary">
+<span class="material-symbols-outlined" data-icon="help">help</span>
+</button>
+<div class="h-8 w-8 rounded-full ml-2 overflow-hidden border border-outline-variant cursor-pointer hover:ring-2 hover:ring-primary transition-all">
+<img alt="User Profile" class="w-full h-full object-cover" data-alt="A professional headshot of a young broadcast producer wearing a headset, well-lit studio environment, modern lighting, clear face, high resolution." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAkvK84xGCCIKsAFjdF3q1OriuPx1PtLqgCiHFpzvc81RUS_sRNLBRAJxrj_QjqDzN_EqQoa5nIDtPt5jlEVvaESS49WawEwSmhef-kJCkZVp4zaZtZQVjgDi7DDbrMWDhPce9hgEaPFu-YwgO6dM0dieZDL8GS5lnsXFwZKD1z2ixntNba_us4cxdQ4FSk6B_nJz-LGomaJaxMyIrMfRlqBIztJaQFmFXUBAdLHSpw_4WWE4ZJ-FPi">
+</div>
+</div>
+</div>
+</header>
+<!-- Page Content -->
+<div class="flex-1 pt-16 px-gutter py-margin max-w-[1440px] mx-auto w-full">
+<!-- Header & Filters -->
+<div class="flex flex-col lg:flex-row justify-between items-start lg:items-end mb-8 gap-4">
+<div>
+<h2 class="font-headline-lg text-headline-lg-mobile lg:text-headline-lg text-on-surface mb-2">Crew Directory</h2>
+<p class="font-body-md text-body-md text-on-surface-variant">Manage and contact CampusTV team members across all studios.</p>
+</div>
+<div class="flex flex-wrap items-center gap-3 w-full lg:w-auto">
+<!-- Filter Chips -->
+<div class="flex gap-2 overflow-x-auto pb-2 lg:pb-0 hide-scrollbar w-full lg:w-auto">
+<button class="whitespace-nowrap px-4 py-1.5 rounded-full bg-primary text-on-primary font-label-md text-label-md shadow-sm">All Roles</button>
+<button class="whitespace-nowrap px-4 py-1.5 rounded-full bg-surface-container-low border border-outline-variant text-on-surface-variant hover:bg-surface-container-high font-label-md text-label-md transition-colors">Producer</button>
+<button class="whitespace-nowrap px-4 py-1.5 rounded-full bg-surface-container-low border border-outline-variant text-on-surface-variant hover:bg-surface-container-high font-label-md text-label-md transition-colors">Technical</button>
+<button class="whitespace-nowrap px-4 py-1.5 rounded-full bg-surface-container-low border border-outline-variant text-on-surface-variant hover:bg-surface-container-high font-label-md text-label-md transition-colors">Talent</button>
+</div>
+</div>
+</div>
+<!-- Bento Grid Directory -->
+<div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+<!-- Crew Card 1 -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-5 shadow-[0_4px_12px_rgba(0,0,0,0.05)] hover:shadow-[0_8px_16px_rgba(0,0,0,0.08)] transition-all flex flex-col group relative overflow-hidden">
+<div class="absolute top-0 left-0 w-full h-1 bg-surface-tint"></div>
+<div class="flex items-start justify-between mb-4">
+<div class="flex items-center gap-4">
+<div class="w-14 h-14 rounded-full overflow-hidden border-2 border-surface-container-high relative">
+<img class="w-full h-full object-cover" data-alt="Professional headshot of a confident female broadcast director, wearing a dark blazer, studio lighting background, modern corporate broadcast aesthetic, clear focus." src="https://lh3.googleusercontent.com/aida-public/AB6AXuByeHKPrrcJEtQAB-NAfULEuUac_LbCscvsZ0HUTMZ7P6hQnt-I6CBG_LwWX0n-4oXc5npOT5I3fwl2nZLHyo1Iu32JIMIJ6RgcI7dhQPJiG80_eFzaupi1vX3bki4DrU7DpWdD0c0jZwahSSrsog7e7uUG9GUY0w7GRHdsyljXik7PphGff5aAm0XIUbFOYHbC76pjYhdMxKYZ9H2MOg5CMhK4g8vG3SWzGFWdSwxYkmRHq7qDf5k3">
+<div class="absolute bottom-0 right-0 w-3.5 h-3.5 bg-green-500 border-2 border-white rounded-full z-10" title="At Studio"></div>
+</div>
+<div>
+<h3 class="font-title-lg text-title-lg text-on-surface">Sarah Jenkins</h3>
+<p class="font-label-md text-label-md text-primary mt-0.5">Lead Producer</p>
+</div>
+</div>
+<div class="bg-green-100 text-green-800 px-2.5 py-1 rounded-md font-label-md text-[10px] uppercase tracking-wider flex items-center gap-1">
+<span class="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span>
+                            At Studio A
+                        </div>
+</div>
+<div class="border-t border-outline-variant/50 pt-4 mb-4 flex-1">
+<div class="grid grid-cols-2 gap-y-3 gap-x-2">
+<div class="flex flex-col">
+<span class="font-label-md text-label-md text-on-surface-variant uppercase text-[10px]">Current Assignment</span>
+<span class="font-body-sm text-body-md text-on-surface flex items-center gap-1 mt-1">
+<span class="material-symbols-outlined text-[16px] text-primary" data-icon="video_camera_front">video_camera_front</span>
+                                    Morning News
+                                </span>
+</div>
+<div class="flex flex-col">
+<span class="font-label-md text-label-md text-on-surface-variant uppercase text-[10px]">Comms Channel</span>
+<span class="font-body-sm text-body-md text-on-surface flex items-center gap-1 mt-1">
+<span class="material-symbols-outlined text-[16px] text-tertiary" data-icon="headset_mic">headset_mic</span>
+                                    CH-1 (Prod)
+                                </span>
+</div>
+</div>
+</div>
+<div class="flex items-center gap-2 mt-auto">
+<button class="flex-1 bg-surface-container border border-outline-variant text-on-surface font-label-md text-label-md py-2 rounded-lg hover:bg-surface-container-high transition-colors flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-[18px]" data-icon="chat">chat</span>
+                            Message
+                        </button>
+<button class="flex-1 bg-primary text-on-primary font-label-md text-label-md py-2 rounded-lg hover:bg-primary-container transition-colors flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-[18px]" data-icon="call">call</span>
+                            Call
+                        </button>
+</div>
+</div>
+<!-- Crew Card 2 -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-5 shadow-[0_4px_12px_rgba(0,0,0,0.05)] hover:shadow-[0_8px_16px_rgba(0,0,0,0.08)] transition-all flex flex-col group relative overflow-hidden">
+<div class="flex items-start justify-between mb-4">
+<div class="flex items-center gap-4">
+<div class="w-14 h-14 rounded-full overflow-hidden border-2 border-surface-container-high relative">
+<img class="w-full h-full object-cover" data-alt="Close-up headshot of a male technical audio engineer adjusting a mixing board, focused expression, ambient studio lights in the background, sharp details." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDEFx-wunBczb4RViufj2UqUecVE2UTXC7ErfkWcqdod1GADHcpBU5qmn17yyVr2FEsd327N_289_qZwMapV4xTKQoLzjYlsf-mGxTqavbrkvkHbivc97VdjDKMw1IlnnJdlQ7AJ8LcPFoeoGXSYZzu-wVavp8ysbEJ9kXoyW9fXlgbaeJNqVcLE1Ck24LK1NDSNCxOkoIrDsr7UJnn2QPHARhMJ17UeWJ8H046wti8FzsDXD-i8_u9">
+<div class="absolute bottom-0 right-0 w-3.5 h-3.5 bg-yellow-500 border-2 border-white rounded-full z-10" title="On Call"></div>
+</div>
+<div>
+<h3 class="font-title-lg text-title-lg text-on-surface">Marcus Chen</h3>
+<p class="font-label-md text-label-md text-tertiary mt-0.5">Audio Engineer</p>
+</div>
+</div>
+<div class="bg-yellow-100 text-yellow-800 px-2.5 py-1 rounded-md font-label-md text-[10px] uppercase tracking-wider flex items-center gap-1">
+<span class="w-1.5 h-1.5 bg-yellow-500 rounded-full"></span>
+                            On Call
+                        </div>
+</div>
+<div class="border-t border-outline-variant/50 pt-4 mb-4 flex-1">
+<div class="grid grid-cols-2 gap-y-3 gap-x-2">
+<div class="flex flex-col">
+<span class="font-label-md text-label-md text-on-surface-variant uppercase text-[10px]">Current Assignment</span>
+<span class="font-body-sm text-body-md text-on-surface flex items-center gap-1 mt-1">
+<span class="material-symbols-outlined text-[16px] text-on-surface-variant" data-icon="pending">pending</span>
+                                    Standby
+                                </span>
+</div>
+<div class="flex flex-col">
+<span class="font-label-md text-label-md text-on-surface-variant uppercase text-[10px]">Comms Channel</span>
+<span class="font-body-sm text-body-md text-on-surface flex items-center gap-1 mt-1">
+<span class="material-symbols-outlined text-[16px] text-tertiary" data-icon="headset_mic">headset_mic</span>
+                                    CH-3 (Audio)
+                                </span>
+</div>
+</div>
+</div>
+<div class="flex items-center gap-2 mt-auto">
+<button class="flex-1 bg-surface-container border border-outline-variant text-on-surface font-label-md text-label-md py-2 rounded-lg hover:bg-surface-container-high transition-colors flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-[18px]" data-icon="chat">chat</span>
+                            Message
+                        </button>
+<button class="flex-1 bg-surface border border-outline-variant text-on-surface-variant opacity-50 cursor-not-allowed font-label-md text-label-md py-2 rounded-lg flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-[18px]" data-icon="call_off">fitbit_jumping_jacks</span>
+                            Call
+                        </button>
+</div>
+</div>
+<!-- Crew Card 3 -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-5 shadow-[0_4px_12px_rgba(0,0,0,0.05)] hover:shadow-[0_8px_16px_rgba(0,0,0,0.08)] transition-all flex flex-col group relative overflow-hidden">
+<div class="flex items-start justify-between mb-4">
+<div class="flex items-center gap-4">
+<div class="w-14 h-14 rounded-full overflow-hidden border-2 border-surface-container-high relative grayscale opacity-70">
+<img class="w-full h-full object-cover" data-alt="Portrait of a female broadcast anchor looking off-camera, warm ambient lighting, modern broadcast news set background out of focus, realistic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDLLOAnAjffm2JYksFOhKZc4_FoGFOQ-z7mM3wKgR-fyUTGk19gGwb88rPQKhXh4MrgROttLVZMpqYq_9Ok9mkms9sOgdTstZbn4hCoTfysvFRE3rhuxQKXHtO4eZYhLx9GLUgT_8YHKTdt_14H1oU6jwWAfizqt4kmFNt39whF83kzvZhJIIbxw_fhEAumw3ZG9NShen2fXKZHevIZeBxcAVOB0xcSYj1GKxVW4TTKJrt2msbEjppa">
+<div class="absolute bottom-0 right-0 w-3.5 h-3.5 bg-gray-400 border-2 border-white rounded-full z-10" title="Away"></div>
+</div>
+<div>
+<h3 class="font-title-lg text-title-lg text-on-surface">Elena Rodriguez</h3>
+<p class="font-label-md text-label-md text-secondary mt-0.5">Lead Anchor</p>
+</div>
+</div>
+<div class="bg-surface-container-high text-on-surface-variant px-2.5 py-1 rounded-md font-label-md text-[10px] uppercase tracking-wider flex items-center gap-1">
+<span class="w-1.5 h-1.5 bg-gray-500 rounded-full"></span>
+                            Away (PTO)
+                        </div>
+</div>
+<div class="border-t border-outline-variant/50 pt-4 mb-4 flex-1">
+<div class="grid grid-cols-2 gap-y-3 gap-x-2">
+<div class="flex flex-col">
+<span class="font-label-md text-label-md text-on-surface-variant uppercase text-[10px]">Next Assignment</span>
+<span class="font-body-sm text-body-md text-on-surface flex items-center gap-1 mt-1 opacity-70">
+<span class="material-symbols-outlined text-[16px] text-on-surface-variant" data-icon="event">event</span>
+                                    Oct 14, 8:00 AM
+                                </span>
+</div>
+<div class="flex flex-col">
+<span class="font-label-md text-label-md text-on-surface-variant uppercase text-[10px]">Comms Channel</span>
+<span class="font-body-sm text-body-md text-on-surface flex items-center gap-1 mt-1 opacity-70">
+<span class="material-symbols-outlined text-[16px] text-on-surface-variant" data-icon="mic_off">mic_off</span>
+                                    Offline
+                                </span>
+</div>
+</div>
+</div>
+<div class="flex items-center gap-2 mt-auto">
+<button class="flex-1 bg-surface-container border border-outline-variant text-on-surface font-label-md text-label-md py-2 rounded-lg hover:bg-surface-container-high transition-colors flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-[18px]" data-icon="mail">mail</span>
+                            Email
+                        </button>
+</div>
+</div>
+</div>
+</div>
+</main>
+<style>
+        /* Utility for hiding scrollbar in filter section */
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .hide-scrollbar {
+            -ms-overflow-style: none;  /* IE and Edge */
+            scrollbar-width: none;  /* Firefox */
+        }
+    </style>
+</body></html>

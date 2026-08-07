@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>CampusTV OS - Tasks</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "secondary": "#5c5f61",
+                        "on-secondary": "#ffffff",
+                        "inverse-primary": "#95d5a4",
+                        "primary": "#004421",
+                        "on-tertiary-container": "#b5c5df",
+                        "surface-container-highest": "#dae2fd",
+                        "surface-container": "#eaedff",
+                        "on-background": "#131b2e",
+                        "background": "#faf8ff",
+                        "tertiary-fixed-dim": "#b7c8e1",
+                        "surface-container-high": "#e2e7ff",
+                        "error-container": "#ffdad6",
+                        "secondary-container": "#e0e3e5",
+                        "on-tertiary-fixed-variant": "#38485d",
+                        "on-secondary-container": "#626567",
+                        "on-surface": "#131b2e",
+                        "surface-tint": "#2c6a42",
+                        "on-primary-fixed-variant": "#0f512c",
+                        "secondary-fixed": "#e0e3e5",
+                        "tertiary-fixed": "#d3e4fe",
+                        "on-primary": "#ffffff",
+                        "surface-container-lowest": "#ffffff",
+                        "tertiary": "#2b3b50",
+                        "surface-variant": "#dae2fd",
+                        "on-secondary-fixed": "#191c1e",
+                        "on-secondary-fixed-variant": "#444749",
+                        "on-error": "#ffffff",
+                        "outline": "#707970",
+                        "on-primary-fixed": "#00210d",
+                        "inverse-surface": "#283044",
+                        "on-tertiary-fixed": "#0b1c30",
+                        "surface-dim": "#d2d9f4",
+                        "surface": "#faf8ff",
+                        "on-surface-variant": "#404941",
+                        "primary-container": "#1d5c35",
+                        "tertiary-container": "#425268",
+                        "error": "#ba1a1a",
+                        "secondary-fixed-dim": "#c4c7c9",
+                        "primary-fixed-dim": "#95d5a4",
+                        "surface-container-low": "#f2f3ff",
+                        "surface-bright": "#faf8ff",
+                        "inverse-on-surface": "#eef0ff",
+                        "on-tertiary": "#ffffff",
+                        "outline-variant": "#c0c9be",
+                        "primary-fixed": "#b0f2be",
+                        "on-primary-container": "#92d2a1",
+                        "on-error-container": "#93000a"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "stack-sm": "8px",
+                        "stack-lg": "24px",
+                        "sidebar-width": "260px",
+                        "gutter": "24px",
+                        "stack-md": "16px",
+                        "margin": "32px"
+                    },
+                    "fontFamily": {
+                        "headline-lg": ["Inter"],
+                        "display-lg": ["Inter"],
+                        "headline-md": ["Inter"],
+                        "headline-lg-mobile": ["Inter"],
+                        "label-md": ["Inter"],
+                        "title-lg": ["Inter"],
+                        "body-md": ["Inter"],
+                        "body-lg": ["Inter"]
+                    },
+                    "fontSize": {
+                        "headline-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+                        "display-lg": ["48px", { "lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "headline-md": ["24px", { "lineHeight": "32px", "fontWeight": "600" }],
+                        "headline-lg-mobile": ["28px", { "lineHeight": "36px", "fontWeight": "600" }],
+                        "label-md": ["12px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600" }],
+                        "title-lg": ["20px", { "lineHeight": "28px", "fontWeight": "500" }],
+                        "body-md": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+                        "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; }
+    </style>
+</head>
+<body class="bg-background text-on-background flex min-h-screen font-sans antialiased overflow-hidden">
+<!-- SideNavBar -->
+<aside class="fixed left-0 top-0 h-full w-[260px] flex flex-col z-50 bg-surface-container-low dark:bg-surface-container-lowest">
+<div class="p-6 border-b border-surface-container-high flex flex-col gap-2">
+<h1 class="font-headline-md text-headline-md font-bold text-primary">CampusTV OS</h1>
+<p class="font-label-md text-label-md text-secondary">Broadcast Management</p>
+</div>
+<nav class="flex-1 overflow-y-auto py-4 flex flex-col gap-1">
+<a class="flex items-center gap-stack-md text-secondary px-6 py-3 hover:bg-surface-container transition-all duration-200 ease-in-out font-label-md text-label-md" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">dashboard</span>
+                Dashboard
+            </a>
+<a class="flex items-center gap-stack-md text-secondary px-6 py-3 hover:bg-surface-container transition-all duration-200 ease-in-out font-label-md text-label-md" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">calendar_today</span>
+                Broadcasts
+            </a>
+<a class="flex items-center gap-stack-md text-secondary px-6 py-3 hover:bg-surface-container transition-all duration-200 ease-in-out font-label-md text-label-md" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">video_library</span>
+                Library
+            </a>
+<a class="flex items-center gap-stack-md text-secondary px-6 py-3 hover:bg-surface-container transition-all duration-200 ease-in-out font-label-md text-label-md" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">handyman</span>
+                Gear Locker
+            </a>
+<!-- Active state for Crew/Tasks context -->
+<a class="flex items-center gap-stack-md text-primary font-bold border-l-4 border-primary bg-surface-container-high px-5 py-3 transition-all duration-200 ease-in-out font-label-md text-label-md" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">group</span>
+                Crew
+            </a>
+</nav>
+<div class="p-4 mt-auto border-t border-surface-container-high">
+<button class="w-full bg-primary text-on-primary py-2 px-4 rounded-lg font-label-md text-label-md hover:bg-primary-container transition-colors shadow-sm">
+                New Broadcast
+            </button>
+<div class="mt-4 flex flex-col gap-1">
+<a class="flex items-center gap-stack-md text-secondary px-4 py-2 hover:bg-surface-container rounded-md transition-all duration-200 ease-in-out font-label-md text-label-md" href="#">
+<span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 0;">settings</span>
+                    Settings
+                </a>
+<a class="flex items-center gap-stack-md text-secondary px-4 py-2 hover:bg-surface-container rounded-md transition-all duration-200 ease-in-out font-label-md text-label-md" href="#">
+<span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 0;">contact_support</span>
+                    Support
+                </a>
+</div>
+</div>
+</aside>
+<!-- Main Content Area -->
+<main class="ml-sidebar-width flex-1 flex flex-col h-screen overflow-hidden">
+<!-- TopNavBar -->
+<header class="flex justify-between items-center w-full px-gutter h-16 sticky top-0 z-40 bg-surface shadow-sm">
+<div class="flex items-center gap-4">
+<span class="font-headline-md text-headline-md font-bold text-primary">CampusTV</span>
+<div class="relative ml-8">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-secondary">search</span>
+<input class="pl-10 pr-4 py-2 w-64 bg-surface-container-low border-none rounded-full text-body-md focus:ring-2 focus:ring-primary focus:bg-surface transition-all placeholder:text-secondary" placeholder="Search tasks, crew, gear..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<button class="p-2 rounded-full text-secondary hover:bg-surface-container-low transition-colors cursor-pointer active:scale-95">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">notifications</span>
+</button>
+<button class="p-2 rounded-full text-secondary hover:bg-surface-container-low transition-colors cursor-pointer active:scale-95">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">help_outline</span>
+</button>
+<img alt="User Profile" class="w-8 h-8 rounded-full object-cover border border-outline-variant ml-2" data-alt="A small circular profile picture of a young professional woman in a modern office setting. Light neutral background, bright even lighting, corporate professional style." src="https://lh3.googleusercontent.com/aida-public/AB6AXuB_uScbY6U7ZOLrXocrzqWjlDfZA9WQqhWQIeicSaw5JKGFHmDyUQTv6hTs2nDsz4upkRZWwVcGvJsrCd2AXJIGQt_1UrPtEeFo205n8NqBh6pcJDlquOAplOcuOFcN4cwqqTHl6r9GFDzSxK4fCMQnR12FBt1xpoRjpGVhGaZJkqvP-R-Fd4AWInObzloJJHe4X27uMbQJ5OIe85G6xhnZXwoO_kV2-29YLindsRvmw8beMCk5GOaP"/>
+</div>
+</header>
+<!-- Canvas -->
+<div class="flex-1 overflow-y-auto bg-surface-bright p-margin">
+<div class="max-w-[1440px] mx-auto flex flex-col h-full">
+<!-- Page Header & Controls -->
+<div class="flex justify-between items-end mb-stack-lg">
+<div>
+<h2 class="font-display-lg text-display-lg text-on-background mb-2">Crew Tasks</h2>
+<p class="font-body-lg text-body-lg text-secondary">Manage assignments and track production progress.</p>
+</div>
+<div class="flex items-center gap-4">
+<!-- Filters -->
+<div class="bg-surface-container p-1 rounded-lg flex border border-outline-variant shadow-sm"><button class="px-4 py-1.5 rounded-md text-secondary font-label-md text-label-md hover:text-on-background transition-all">Board</button><button class="px-4 py-1.5 rounded-md bg-white text-primary font-label-md text-label-md shadow-sm transition-all">List</button></div>
+<button class="flex items-center gap-2 bg-primary text-on-primary px-4 py-2 rounded-lg font-label-md text-label-md hover:bg-primary-container transition-all shadow-sm active:scale-95">
+<span class="material-symbols-outlined text-[18px]">add</span>
+                            New Task
+                        </button>
+</div>
+</div>
+<!-- Kanban Board -->
+<div class="flex-1 bg-surface-container-low rounded-xl border border-surface-container-high overflow-hidden"><table class="w-full text-left border-collapse"><thead class="bg-surface-container-high border-b border-surface-container-high"><tr class="text-label-md font-label-md text-secondary uppercase tracking-wider"><th class="px-6 py-4">Task Title</th><th class="px-6 py-4">Priority</th><th class="px-6 py-4">Due Date</th><th class="px-6 py-4">Assigned Crew</th><th class="px-6 py-4">Status</th><th class="px-6 py-4"></th></tr></thead><tbody class="divide-y divide-surface-container-high"><tr class="hover:bg-white transition-colors group"><td class="px-6 py-4 font-title-lg text-on-surface">Verify Audio Levels for Main Stage</td><td class="px-6 py-4"><span class="bg-error-container text-on-error-container px-2 py-1 rounded-md font-label-md text-[10px] uppercase tracking-wider">High</span></td><td class="px-6 py-4 text-body-md text-secondary">Oct 24</td><td class="px-6 py-4"><div class="flex items-center gap-2"><img alt="Assignee" class="w-6 h-6 rounded-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBzEjCttybDr7PixRI0-Yc1HNSMbVMgvnkHaRgWl5HE7Q2nSqtPTNv5MkVO-r-ohiAQJlj-8Lt90y77SI9qOzQ0WCGmPahAjCpvlF_RPxvoKezfbqlYXHsB33pmoO5SUeVLYVbznjIdiGbxS-t2yPzo3Lzf2r8CbAXbvzwVw9GdhEuaZ3TkiIkijwa4RsNg2G_mEUqGRmqLKcr0o5GyefniZcjfZ9chqho838geaKfVkpHG06-q2jUH"/><span class="text-body-md text-secondary">Sound Eng.</span></div></td><td class="px-6 py-4"><span class="bg-surface-container-highest text-on-surface-variant px-2 py-1 rounded-full font-label-md text-[10px] uppercase">To Do</span></td><td class="px-6 py-4 text-right"><button class="text-secondary opacity-0 group-hover:opacity-100 transition-opacity"><span class="material-symbols-outlined text-[18px]">more_horiz</span></button></td></tr><tr class="hover:bg-white transition-colors group"><td class="px-6 py-4 font-title-lg text-on-surface">Setup B-Roll Camera Angles</td><td class="px-6 py-4"><span class="bg-surface-container-highest text-on-surface-variant px-2 py-1 rounded-md font-label-md text-[10px] uppercase tracking-wider">Medium</span></td><td class="px-6 py-4 text-body-md text-secondary">Oct 25</td><td class="px-6 py-4"><div class="flex items-center gap-2"><div class="w-6 h-6 rounded-full bg-primary-container text-on-primary-container flex items-center justify-center font-label-md text-[10px]">JD</div><span class="text-body-md text-secondary">Camera Op</span></div></td><td class="px-6 py-4"><span class="bg-surface-container-highest text-on-surface-variant px-2 py-1 rounded-full font-label-md text-[10px] uppercase">To Do</span></td><td class="px-6 py-4 text-right"><button class="text-secondary opacity-0 group-hover:opacity-100 transition-opacity"><span class="material-symbols-outlined text-[18px]">more_horiz</span></button></td></tr><tr class="hover:bg-white transition-colors group"><td class="px-6 py-4 font-title-lg text-on-surface">Draft Graphics for Lower Thirds</td><td class="px-6 py-4"><span class="bg-surface-container-highest text-on-surface-variant px-2 py-1 rounded-md font-label-md text-[10px] uppercase tracking-wider">Medium</span></td><td class="px-6 py-4 text-primary font-medium">Today</td><td class="px-6 py-4"><div class="flex items-center gap-2"><img alt="Assignee" class="w-6 h-6 rounded-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAyml1Ws-1uBxzJH80mtB7A-xAlxJ0_vxIpI_ggLYR-YcyUOROfx4McvbimnqaDovSep2PozjfHFdsyyPzMdbBRBM-GI8F4QWFfyaw1Rzt61cPXSXD9GOqM-Pu-mSFq5xYTu7igX5J2D2zl_omPnf3NuMP_dIvKoQyRHLd0gZxXIPTntiWvntM0RSaQdbUkcNPmfME5I_kueSNPUm5A7dAJvwEvgPkvnEuvsYkPFG_D7PJds3gbbn6A"/><span class="text-body-md text-secondary">Graphics</span></div></td><td class="px-6 py-4"><span class="bg-primary-container text-on-primary-container px-2 py-1 rounded-full font-label-md text-[10px] uppercase">In Progress</span></td><td class="px-6 py-4 text-right"><button class="text-secondary opacity-0 group-hover:opacity-100 transition-opacity"><span class="material-symbols-outlined text-[18px]">more_horiz</span></button></td></tr></tbody></table></div>
+</div>
+</div>
+</main>
+</body></html>

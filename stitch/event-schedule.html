@@ -1,0 +1,459 @@
+<!DOCTYPE html><html class="light" lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>CampusTV - Event Schedule</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com" rel="preconnect">
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "surface-container-low": "#f2f3ff",
+                      "on-surface": "#131b2e",
+                      "inverse-surface": "#283044",
+                      "tertiary-fixed": "#d3e4fe",
+                      "on-error": "#ffffff",
+                      "surface-container-highest": "#dae2fd",
+                      "surface-dim": "#d2d9f4",
+                      "surface": "#faf8ff",
+                      "surface-container-lowest": "#ffffff",
+                      "on-error-container": "#93000a",
+                      "error-container": "#ffdad6",
+                      "secondary-fixed-dim": "#c4c7c9",
+                      "on-primary-container": "#92d2a1",
+                      "tertiary-container": "#425268",
+                      "background": "#faf8ff",
+                      "primary": "#004421",
+                      "outline-variant": "#c0c9be",
+                      "on-tertiary": "#ffffff",
+                      "secondary": "#5c5f61",
+                      "on-secondary-fixed-variant": "#444749",
+                      "inverse-primary": "#95d5a4",
+                      "surface-bright": "#faf8ff",
+                      "on-primary-fixed": "#00210d",
+                      "tertiary": "#2b3b50",
+                      "on-background": "#131b2e",
+                      "outline": "#707970",
+                      "on-secondary-container": "#626567",
+                      "inverse-on-surface": "#eef0ff",
+                      "on-tertiary-container": "#b5c5df",
+                      "surface-variant": "#dae2fd",
+                      "tertiary-fixed-dim": "#b7c8e1",
+                      "on-surface-variant": "#404941",
+                      "surface-tint": "#2c6a42",
+                      "secondary-fixed": "#e0e3e5",
+                      "primary-fixed": "#b0f2be",
+                      "primary-container": "#1d5c35",
+                      "on-tertiary-fixed-variant": "#38485d",
+                      "on-primary": "#ffffff",
+                      "secondary-container": "#e0e3e5",
+                      "on-secondary-fixed": "#191c1e",
+                      "primary-fixed-dim": "#95d5a4",
+                      "on-tertiary-fixed": "#0b1c30",
+                      "surface-container-high": "#e2e7ff",
+                      "on-secondary": "#ffffff",
+                      "error": "#ba1a1a",
+                      "on-primary-fixed-variant": "#0f512c",
+                      "surface-container": "#eaedff"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "sidebar-width": "260px",
+                      "stack-sm": "8px",
+                      "gutter": "24px",
+                      "margin": "32px",
+                      "stack-md": "16px",
+                      "stack-lg": "24px"
+              },
+              "fontFamily": {
+                      "body-md": [
+                              "Inter"
+                      ],
+                      "title-lg": [
+                              "Inter"
+                      ],
+                      "display-lg": [
+                              "Inter"
+                      ],
+                      "body-lg": [
+                              "Inter"
+                      ],
+                      "headline-lg": [
+                              "Inter"
+                      ],
+                      "headline-lg-mobile": [
+                              "Inter"
+                      ],
+                      "headline-md": [
+                              "Inter"
+                      ],
+                      "label-md": [
+                              "Inter"
+                      ]
+              },
+              "fontSize": {
+                      "body-md": [
+                              "14px",
+                              {
+                                      "lineHeight": "20px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "title-lg": [
+                              "20px",
+                              {
+                                      "lineHeight": "28px",
+                                      "fontWeight": "500"
+                              }
+                      ],
+                      "display-lg": [
+                              "48px",
+                              {
+                                      "lineHeight": "56px",
+                                      "letterSpacing": "-0.02em",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "body-lg": [
+                              "16px",
+                              {
+                                      "lineHeight": "24px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "headline-lg": [
+                              "32px",
+                              {
+                                      "lineHeight": "40px",
+                                      "letterSpacing": "-0.01em",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "headline-lg-mobile": [
+                              "28px",
+                              {
+                                      "lineHeight": "36px",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "headline-md": [
+                              "24px",
+                              {
+                                      "lineHeight": "32px",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "label-md": [
+                              "12px",
+                              {
+                                      "lineHeight": "16px",
+                                      "letterSpacing": "0.05em",
+                                      "fontWeight": "600"
+                              }
+                      ]
+              }
+      },
+          },
+        }
+      </script>
+<style>
+        .timeline-line {
+            position: absolute;
+            left: 50%;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background-color: #E2E8F0;
+            transform: translateX(-50%);
+            z-index: 0;
+        }
+        @media (max-width: 768px) {
+            .timeline-line {
+                left: 16px;
+                transform: none;
+            }
+        }
+        .date-picker-scroll::-webkit-scrollbar {
+            display: none;
+        }
+        .date-picker-scroll {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background font-body-md text-body-md antialiased overflow-x-hidden">
+<!-- SideNavBar -->
+<nav class="hidden md:flex flex-col bg-surface-container dark:bg-surface-dim fixed left-0 top-0 h-screen w-[260px] py-margin px-stack-sm z-50">
+<div class="mb-margin px-4">
+<h1 class="font-headline-md text-headline-md font-bold text-primary dark:text-inverse-primary">CampusTV</h1>
+<p class="font-label-md text-label-md text-on-surface-variant">Internal OS</p>
+</div>
+<button class="bg-primary text-on-primary font-label-md text-label-md py-3 px-4 rounded-lg mb-8 flex items-center justify-center gap-2 hover:bg-primary-container transition-colors">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">add</span>
+            New Broadcast
+        </button>
+<ul class="flex-1 flex flex-col gap-2">
+<li>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant dark:text-on-surface-variant hover:bg-surface-container-high dark:hover:bg-surface-variant transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+                    Dashboard
+                </a>
+</li>
+<li>
+<!-- Active State -->
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-primary dark:text-inverse-primary font-bold border-l-2 border-primary dark:border-inverse-primary bg-primary-fixed-dim/10 opacity-90 transition-opacity" href="#">
+<span class="material-symbols-outlined" data-icon="live_tv">live_tv</span>
+                    Broadcasts
+                </a>
+</li>
+<li>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant dark:text-on-surface-variant hover:bg-surface-container-high dark:hover:bg-surface-variant transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="video_library">video_library</span>
+                    Library
+                </a>
+</li>
+<li>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant dark:text-on-surface-variant hover:bg-surface-container-high dark:hover:bg-surface-variant transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="inventory_2">inventory_2</span>
+                    Gear Locker
+                </a>
+</li>
+<li>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant dark:text-on-surface-variant hover:bg-surface-container-high dark:hover:bg-surface-variant transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="groups">groups</span>
+                    Crew
+                </a>
+</li>
+</ul>
+<div class="mt-auto">
+<ul class="flex flex-col gap-2">
+<li>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant dark:text-on-surface-variant hover:bg-surface-container-high dark:hover:bg-surface-variant transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+                        Settings
+                    </a>
+</li>
+<li>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant dark:text-on-surface-variant hover:bg-surface-container-high dark:hover:bg-surface-variant transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="help_outline">help_outline</span>
+                        Support
+                    </a>
+</li>
+</ul>
+</div>
+</nav>
+<!-- TopNavBar -->
+<header class="hidden md:flex justify-between items-center px-gutter bg-surface dark:bg-surface-dim border-b border-outline-variant dark:border-outline shadow-sm dark:shadow-none fixed top-0 right-0 left-[260px] h-16 z-40">
+<div class="flex items-center gap-4">
+<div class="relative focus-within:ring-2 focus-within:ring-primary dark:focus-within:ring-inverse-primary rounded-lg transition-all">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant">search</span>
+<input class="pl-10 pr-4 py-2 bg-surface-container-lowest border border-outline-variant rounded-lg font-body-md text-body-md text-on-surface focus:outline-none focus:border-primary focus:ring-0 w-64 transition-colors" placeholder="Search broadcasts..." type="text">
+</div>
+</div>
+<div class="flex items-center gap-6">
+<button class="text-on-surface-variant dark:text-on-surface-variant hover:text-primary dark:hover:text-inverse-primary transition-colors">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+</button>
+<button class="text-on-surface-variant dark:text-on-surface-variant hover:text-primary dark:hover:text-inverse-primary transition-colors">
+<span class="material-symbols-outlined" data-icon="help">help</span>
+</button>
+<div class="w-8 h-8 rounded-full overflow-hidden bg-surface-container-highest border border-outline-variant cursor-pointer">
+<img alt="User Profile" class="w-full h-full object-cover" data-alt="A professional headshot of a young adult working in a modern broadcast studio environment. Soft, flattering studio lighting with a slightly blurred background showing technical equipment. Crisp details, natural colors, modern corporate aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBKaNYqaHiw5KFSgnTo4iAn9TJ-0lEOfgx41Yj4qebnvy27VpzKKS_riL7qNangCt1hH6hf-dpcJYqsfY5zvGsV5EVpU33CQcAH6xPvMfixDurGkiBr20qEIVrRLW5bQ_44MCtD5NsWrt5ynB2TJ-2bRaXWAfPXb-2QkhQEI4bFRMzH-RJNEAqUWpEBl0njolzp6KY46akH45mTEMAVXgnYKpUX4jznAm9oizPNwBWv3JkTyIB52neo">
+</div>
+</div>
+</header>
+<!-- Main Content Area -->
+<main class="md:ml-[260px] md:pt-16 min-h-screen pb-24 md:pb-8">
+<!-- Header & Horizontal Date Picker -->
+<div class="sticky top-0 md:top-16 bg-background/95 backdrop-blur-sm z-30 pt-stack-lg pb-stack-md border-b border-outline-variant/30">
+<div class="max-w-[1440px] mx-auto px-gutter">
+<div class="flex justify-between items-end mb-stack-lg">
+<div>
+<h2 class="font-headline-lg-mobile md:font-headline-lg text-headline-lg-mobile md:text-headline-lg text-on-surface">Event Schedule</h2>
+<p class="font-body-md text-body-md text-on-surface-variant mt-1">Manage upcoming broadcasts and crew requirements.</p>
+</div>
+<button class="hidden md:flex bg-primary text-on-primary font-label-md text-label-md py-2.5 px-5 rounded-lg items-center justify-center gap-2 hover:bg-primary-container transition-colors shadow-sm">
+<span class="material-symbols-outlined text-[18px]">event</span>
+                        Add Event
+                    </button>
+</div>
+<!-- Date Picker -->
+<div class="flex items-center gap-4 overflow-x-auto date-picker-scroll pb-2">
+<button class="flex-shrink-0 w-10 h-10 rounded-full border border-outline-variant flex items-center justify-center text-on-surface-variant hover:bg-surface-container-low transition-colors">
+<span class="material-symbols-outlined">chevron_left</span>
+</button>
+<div class="flex gap-2">
+<!-- Date Cards -->
+<button class="flex flex-col items-center justify-center w-16 h-20 rounded-xl bg-surface-container-lowest border border-outline-variant text-on-surface hover:border-primary transition-colors">
+<span class="font-label-md text-label-md text-on-surface-variant">Mon</span>
+<span class="font-title-lg text-title-lg font-bold">12</span>
+</button>
+<button class="flex flex-col items-center justify-center w-16 h-20 rounded-xl bg-surface-container-lowest border border-outline-variant text-on-surface hover:border-primary transition-colors">
+<span class="font-label-md text-label-md text-on-surface-variant">Tue</span>
+<span class="font-title-lg text-title-lg font-bold">13</span>
+</button>
+<button class="flex flex-col items-center justify-center w-16 h-20 rounded-xl bg-primary text-on-primary shadow-sm border border-transparent transition-colors">
+<span class="font-label-md text-label-md opacity-90">Wed</span>
+<span class="font-title-lg text-title-lg font-bold">14</span>
+<div class="w-1.5 h-1.5 bg-on-primary rounded-full mt-1"></div>
+</button>
+<button class="flex flex-col items-center justify-center w-16 h-20 rounded-xl bg-surface-container-lowest border border-outline-variant text-on-surface hover:border-primary transition-colors">
+<span class="font-label-md text-label-md text-on-surface-variant">Thu</span>
+<span class="font-title-lg text-title-lg font-bold">15</span>
+</button>
+<button class="flex flex-col items-center justify-center w-16 h-20 rounded-xl bg-surface-container-lowest border border-outline-variant text-on-surface hover:border-primary transition-colors">
+<span class="font-label-md text-label-md text-on-surface-variant">Fri</span>
+<span class="font-title-lg text-title-lg font-bold">16</span>
+</button>
+<button class="flex flex-col items-center justify-center w-16 h-20 rounded-xl bg-surface-container-lowest border border-outline-variant text-on-surface hover:border-primary transition-colors opacity-60">
+<span class="font-label-md text-label-md text-on-surface-variant">Sat</span>
+<span class="font-title-lg text-title-lg font-bold">17</span>
+</button>
+<button class="flex flex-col items-center justify-center w-16 h-20 rounded-xl bg-surface-container-lowest border border-outline-variant text-on-surface hover:border-primary transition-colors opacity-60">
+<span class="font-label-md text-label-md text-on-surface-variant">Sun</span>
+<span class="font-title-lg text-title-lg font-bold">18</span>
+</button>
+</div>
+<button class="flex-shrink-0 w-10 h-10 rounded-full border border-outline-variant flex items-center justify-center text-on-surface-variant hover:bg-surface-container-low transition-colors">
+<span class="material-symbols-outlined">chevron_right</span>
+</button>
+<button class="ml-auto flex items-center gap-2 px-4 py-2 border border-outline-variant rounded-lg text-on-surface-variant hover:bg-surface-container-low transition-colors font-label-md text-label-md">
+<span class="material-symbols-outlined text-[18px]">calendar_today</span>
+                        Today
+                    </button>
+</div>
+</div>
+</div>
+<!-- Timeline Content -->
+<div class="max-w-[1440px] mx-auto px-gutter mt-stack-lg relative">
+<div class="timeline-line"></div>
+<div class="flex flex-col gap-stack-lg relative z-10">
+<!-- Event Item 1 -->
+<div class="flex flex-col md:flex-row items-start gap-4 md:gap-8 group">
+<!-- Time Column -->
+<div class="flex md:flex-col items-center md:items-end md:w-32 flex-shrink-0 md:pt-4">
+<span class="font-title-lg text-title-lg font-bold text-on-surface">14:00</span>
+<span class="font-label-md text-label-md text-on-surface-variant ml-2 md:ml-0">16:30</span>
+</div>
+<!-- Timeline Node (Hidden on Mobile, replaced by left-border line) -->
+<div class="hidden md:flex flex-col items-center pt-5">
+<div class="w-4 h-4 rounded-full bg-primary border-4 border-background ring-1 ring-primary z-10 transition-transform group-hover:scale-110"></div>
+</div>
+<!-- Event Card -->
+<div class="flex-1 w-full bg-surface-container-lowest border border-[#E2E8F0] rounded-xl p-stack-md shadow-[0px_4px_12px_rgba(0,0,0,0.05)] hover:shadow-[0px_12px_24px_rgba(0,0,0,0.08)] transition-all relative overflow-hidden">
+<!-- Status Bar -->
+<div class="absolute left-0 top-0 bottom-0 w-1 bg-primary"></div>
+<div class="flex flex-col md:flex-row md:items-start justify-between gap-4">
+<div class="pl-2">
+<div class="flex items-center gap-3 mb-2">
+<span class="inline-flex items-center px-2 py-1 rounded-md bg-primary-container/10 text-primary-container font-label-md text-label-md">
+<span class="w-1.5 h-1.5 rounded-full bg-primary-container mr-1.5 animate-pulse"></span>
+                                        Live Broadcast
+                                    </span>
+<span class="font-label-md text-label-md text-on-surface-variant flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px]">location_on</span>
+                                        Main Arena
+                                    </span>
+</div>
+<h3 class="font-headline-md text-headline-md font-bold text-on-surface mb-1">University Basketball Live</h3>
+<p class="font-body-md text-body-md text-on-surface-variant">Men's Varsity vs. State College. Full multi-camera setup required.</p>
+</div>
+<!-- Missing Requirements Alert -->
+<div class="bg-error-container/30 border border-error-container rounded-lg p-3 md:w-64 flex-shrink-0">
+<div class="flex items-center gap-2 mb-2">
+<span class="material-symbols-outlined text-error text-[18px]">warning</span>
+<span class="font-label-md text-label-md text-error font-bold">Missing Requirements</span>
+</div>
+<ul class="flex flex-col gap-1.5">
+<li class="flex items-center justify-between font-body-md text-body-md text-[13px] text-on-surface">
+<span class="flex items-center gap-1.5 text-on-surface-variant"><span class="material-symbols-outlined text-[14px]">person</span> Audio Engineer</span>
+<button class="text-primary font-label-md text-label-md hover:underline">Assign</button>
+</li>
+<li class="flex items-center justify-between font-body-md text-body-md text-[13px] text-on-surface">
+<span class="flex items-center gap-1.5 text-on-surface-variant"><span class="material-symbols-outlined text-[14px]">videocam</span> Camera Operator (Cam 3)</span>
+<button class="text-primary font-label-md text-label-md hover:underline">Assign</button>
+</li>
+</ul>
+</div>
+</div>
+<!-- Divider -->
+<div class="h-px w-full bg-outline-variant/30 my-4 ml-2"></div>
+<!-- Actions & Assigned -->
+<div class="flex justify-between items-center pl-2">
+<div class="flex -space-x-2">
+<img alt="Crew Member" class="w-8 h-8 rounded-full border-2 border-surface-container-lowest object-cover z-30" data-alt="A tight crop on a smiling young professional woman with glasses, brightly lit in a modern office. Clear, corporate style photography." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBLdNt7O9GkuXlFExrpv6rUnhIWb7qIw0WNU1_QfHRTnMryhKjCygrJboLyqycHnAOXttmcQjJsKZVHW4bADmkHAhxc8cDcPYXDh_EXBuRI5uxh8pWEkNsFjCKnkn_75kBzmq8v0wb0_yU7KFDc9qa6x6oaYT2ZbtQZtnTzfuGp1RXWoeHfCGRm9x7pF91cMBwG2wy1GDkyyWqIbSBeAbny3ju-Ta33NRfGX82wR2kGqpWsH2KMqC0g">
+<img alt="Crew Member" class="w-8 h-8 rounded-full border-2 border-surface-container-lowest object-cover z-20" data-alt="A tight crop on a young professional man in a dark polo shirt, standing in a studio setting. Clear, modern corporate style photography." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCrSuwW_mmoNaD5N8j1K1Y7sHJ5Df7qL5q1HcjAnNzRDey54gl7rSLUhzU6vZYpclEYfsbv3CzJDQtXAR2N_G_TnMwI-O3aQ14MZwCjrRiywoWCKk_u2g81GbSM0z7yJz143i4ugSwHhZkNWVpEHpTldUbUrGPX0feZuXg8tJ37lJ5KDzaz-jmYdjlhkEX9gCqtWwTR4vFycPQTVAfZBFMKyMtJaUJZdpKRMgqNQwx4u-kvWQAyLzQC">
+<img alt="Crew Member" class="w-8 h-8 rounded-full border-2 border-surface-container-lowest object-cover z-10" data-alt="A tight crop on a female student wearing a headset in a broadcast booth. Professional, well-lit portrait." src="https://lh3.googleusercontent.com/aida-public/AB6AXuB5GpJQgUG4AJohOi1ISRb8qng_AGqPekQKdWt6jMcvdxS1V7P6kYsdf4oTIzPB1P4Ap5rlvCVTuzCdzI_msgXYCl1ka3-CwnBUTuGvUJHXXimE0eXaqpN0vTD1OaopNFSeYJTSOsecoPFoKZ-8VVeN3KTJ5d9Hy4qEJ1RNYwIfACK-UhC2hSJfhnxMdeYxDvrNffxxagQoQEBew4K2UDPa5zIv6-d_AzB22D25lXQ1st7dtGKoBUdJ">
+<div class="w-8 h-8 rounded-full border-2 border-surface-container-lowest bg-surface-container-highest flex items-center justify-center font-label-md text-[10px] text-on-surface-variant z-0">+4</div>
+</div>
+<div class="flex gap-2">
+<button class="px-3 py-1.5 rounded-lg border border-outline-variant text-on-surface font-label-md text-label-md hover:bg-surface-container-low transition-colors bg-surface-container-lowest">Edit</button>
+<button class="px-3 py-1.5 rounded-lg bg-surface-container-highest text-on-surface font-label-md text-label-md hover:bg-surface-dim transition-colors">View Details</button>
+</div>
+</div>
+</div>
+</div>
+<!-- Event Item 2 -->
+<div class="flex flex-col md:flex-row items-start gap-4 md:gap-8 group">
+<div class="flex md:flex-col items-center md:items-end md:w-32 flex-shrink-0 md:pt-4">
+<span class="font-title-lg text-title-lg font-bold text-on-surface">18:00</span>
+<span class="font-label-md text-label-md text-on-surface-variant ml-2 md:ml-0">19:00</span>
+</div>
+<div class="hidden md:flex flex-col items-center pt-5">
+<div class="w-4 h-4 rounded-full bg-tertiary-fixed border-4 border-background ring-1 ring-outline-variant z-10 transition-transform group-hover:scale-110"></div>
+</div>
+<div class="flex-1 w-full bg-surface-container-lowest border border-[#E2E8F0] rounded-xl p-stack-md shadow-[0px_4px_12px_rgba(0,0,0,0.05)] hover:shadow-[0px_12px_24px_rgba(0,0,0,0.08)] transition-all relative overflow-hidden">
+<div class="absolute left-0 top-0 bottom-0 w-1 bg-tertiary"></div>
+<div class="flex flex-col md:flex-row md:items-start justify-between gap-4">
+<div class="pl-2">
+<div class="flex items-center gap-3 mb-2">
+<span class="inline-flex items-center px-2 py-1 rounded-md bg-tertiary/10 text-tertiary font-label-md text-label-md">
+                                        Scheduled
+                                    </span>
+<span class="font-label-md text-label-md text-on-surface-variant flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px]">location_on</span>
+                                        Studio A
+                                    </span>
+</div>
+<h3 class="font-headline-md text-headline-md font-bold text-on-surface mb-1">Weekly News Wrap-up</h3>
+<p class="font-body-md text-body-md text-on-surface-variant">Standard 3-anchor desk format with graphics overlay package.</p>
+</div>
+<!-- Complete Status -->
+<div class="bg-primary-fixed/20 border border-primary-fixed-dim rounded-lg p-3 md:w-64 flex-shrink-0 flex flex-col justify-center items-center h-full min-h-[80px]">
+<span class="material-symbols-outlined text-primary text-[24px] mb-1">check_circle</span>
+<span class="font-label-md text-label-md text-primary font-bold">Crew &amp; Gear Ready</span>
+</div>
+</div>
+<div class="h-px w-full bg-outline-variant/30 my-4 ml-2"></div>
+<div class="flex justify-between items-center pl-2">
+<div class="flex -space-x-2">
+<img alt="Crew Member" class="w-8 h-8 rounded-full border-2 border-surface-container-lowest object-cover z-30" data-alt="A portrait of a male news anchor adjusting a tie in a brightly lit studio. Professional, crisp broadcast aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBY8w6xAzionyPUal9wG4SX-7nLK86ZOZriCJPGB84PLwOBI1DYUWomtKejjGLVbtxjdDQyd3Mz53tVSvNkLlKjhtwf3ss3J5PVFdy4ZDPjG2YgOaQix9dPJ9vx9mXREUygSOz3M7pUScXQiG__WMkuXW0NhBBVBNDQPsc6iIeQ_yPhyTYF-LO7OPT184HIIJC4EmX8yTTejIgO7ePhVuWMvDQF3Nl-smN0an7zP67ph7nv-uIJrN05">
+<img alt="Crew Member" class="w-8 h-8 rounded-full border-2 border-surface-container-lowest object-cover z-20" data-alt="A portrait of a female technical director looking thoughtfully at a monitor. Cool blue studio lighting, high resolution." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAbVwXpEdAnuw0AZeyw0YclPbWIgfuuPeW8F6UbQ2ipDQYCBmcw4wKDRdiNdfQpwyfYICOqpZdLSsg4dEETfl7RVDpIgY7IndnylhXRSoEgaRfSS6guGjJ45RdsFcmL_X4uDAIvNtTLHoHOulpRm0jzEY9eronLjxyV4ZEHqMyxEHlmI2ldnsjlwsniayLqSZX-PseBYnFVC0jSs9YCMBzozAQNnZXb7SlEdXQ-jHrl2yNw3XT0H2KY">
+</div>
+<div class="flex gap-2">
+<button class="px-3 py-1.5 rounded-lg border border-outline-variant text-on-surface font-label-md text-label-md hover:bg-surface-container-low transition-colors bg-surface-container-lowest text-primary">Edit</button>
+<button class="px-3 py-1.5 rounded-lg bg-surface-container-highest text-on-surface font-label-md text-label-md hover:bg-surface-dim transition-colors">View Details</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- Mobile FAB -->
+<button class="md:hidden fixed bottom-6 right-6 w-14 h-14 bg-primary text-on-primary rounded-full shadow-[0px_12px_24px_rgba(0,0,0,0.1)] flex items-center justify-center hover:bg-primary-container transition-colors z-50">
+<span class="material-symbols-outlined text-[24px]" style="font-variation-settings: 'FILL' 1;">add</span>
+</button>
+</body></html>

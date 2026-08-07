@@ -1,0 +1,58 @@
+[
+  {
+    "title": "Gear Locker",
+    "id": "9f8f5fec5711436d82c48c44758eab9e",
+    "slug": "gear-locker",
+    "w": "2560",
+    "h": "2048",
+    "device": "DESKTOP"
+  },
+  {
+    "title": "Broadcast Calendar",
+    "id": "8ee0453298794f34ad3d0730618b3088",
+    "slug": "broadcast-calendar",
+    "w": "2560",
+    "h": "2048",
+    "device": "DESKTOP"
+  },
+  {
+    "title": "Production Tasks (List View)",
+    "id": "ad8fabeee8f44f498779070972831931",
+    "slug": "production-tasks-list-view",
+    "w": "2560",
+    "h": "2048",
+    "device": "DESKTOP"
+  },
+  {
+    "title": "Crew Directory",
+    "id": "7123b316bbe244418d2573c688d66d62",
+    "slug": "crew-directory",
+    "w": "2560",
+    "h": "2048",
+    "device": "DESKTOP"
+  },
+  {
+    "title": "Production Tasks",
+    "id": "15990d47a7404fdc9d01537df49af9eb",
+    "slug": "production-tasks",
+    "w": "2560",
+    "h": "2048",
+    "device": "DESKTOP"
+  },
+  {
+    "title": "Studio Dashboard",
+    "id": "81eca06f73484c4cb6b9ed6b0d763337",
+    "slug": "studio-dashboard",
+    "w": "2560",
+    "h": "2342",
+    "device": "DESKTOP"
+  },
+  {
+    "title": "Event Schedule",
+    "id": "f3ee569e042a4dc1987f8422d64f75e6",
+    "slug": "event-schedule",
+    "w": "2560",
+    "h": "2048",
+    "device": "DESKTOP"
+  }
+]

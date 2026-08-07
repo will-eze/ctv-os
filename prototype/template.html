@@ -1,0 +1,2361 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CTV OS — CampusTV 2026/27</title>
+
+<style>
+/* ==========================================================================
+   CTV OS — Studio Essential
+   --------------------------------------------------------------------------
+   The visual system is Google Stitch's "Studio Essential", downloaded to
+   stitch/design-system.json and ported by hand. Stitch's own export pulls in
+   the Tailwind CDN, Google Fonts and Material Symbols; all three are blocked
+   by the artifact CSP and by opening this file over file://, so the CSS below
+   is written from the token set directly, Inter is embedded as a subsetted
+   variable woff2, and every Material Symbol is redrawn as an inline SVG.
+
+   Light only, by design. Studio Essential defines no dark palette, so there is
+   no theme switch — offering one would mean inventing a second set of colours
+   the design system has nothing to say about.
+   ========================================================================== */
+
+@font-face {
+  font-family: 'Inter';
+  /* Variable, wght 100–900: one face covers the 400/500/600/700 the system
+     asks for, at a quarter the bytes of four static cuts. */
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+  src: url(data:font/woff2;base64,__FONT_INTER__) format('woff2');
+}
+
+:root {
+  /* --- Studio Essential named colours, verbatim ------------------------- */
+  --bg:              #faf8ff;   /* background / surface / surface-bright     */
+  --card:            #ffffff;   /* surface-container-lowest                  */
+  --low:             #f2f3ff;   /* surface-container-low  — the sidebar      */
+  --container:       #eaedff;   /* surface-container                         */
+  --high:            #e2e7ff;   /* surface-container-high                    */
+  --highest:         #dae2fd;   /* surface-container-highest / surface-variant */
+  --dim:             #d2d9f4;   /* surface-dim                               */
+
+  --primary:         #004421;
+  --primary-c:       #1d5c35;   /* primary-container                         */
+  --on-primary:      #ffffff;
+  --on-primary-c:    #92d2a1;
+  --tint:            #2c6a42;   /* surface-tint                              */
+
+  --on-surface:      #131b2e;
+  --on-surface-var:  #404941;
+  --secondary:       #5c5f61;
+  --outline:         #707970;
+  --outline-var:     #c0c9be;
+
+  --error:           #ba1a1a;
+  --error-c:         #ffdad6;   /* error-container                           */
+  --on-error-c:      #93000a;
+  --tertiary:        #2b3b50;
+
+  /* Stitch's own calendar CSS steps outside the token set for the grid rules
+     and uses slate-200. Kept, because a warm outline-variant grid over white
+     cells reads green at 1px, and the month grid is mostly rules. */
+  --grid:            #e2e8f0;
+  --grid-bg:         #f8fafc;
+
+  /* --- Shape and depth -------------------------------------------------- */
+  /* roundness: ROUND_EIGHT. Cards take 12px (Stitch's rounded-xl), controls 8. */
+  --r:               8px;
+  --r-card:          12px;
+  --r-pill:          999px;
+  --shadow-sm:       0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow:          0 4px 12px rgba(0, 0, 0, 0.05);
+  --shadow-lg:       0 12px 24px rgba(0, 0, 0, 0.08);
+
+  /* --- Spacing scale --------------------------------------------------- */
+  --gutter:          24px;
+  --margin:          32px;
+  --side-w:          260px;
+  --top-h:           64px;
+
+  /* --- Stacking ---------------------------------------------------------
+     Declared in one place and used by name. An earlier build declared this
+     scale in the design doc but never defined the custom properties, so
+     `z-index: var(--z-toast)` resolved to `auto`, the toast sat under the
+     scrim and Undo could not be clicked. Every layer below is defined. */
+  --z-top:           40;
+  --z-side-scrim:    45;
+  --z-side:          50;
+  --z-scrim:         60;
+  --z-sheet:         70;
+  --z-toast:         80;   /* above the sheet: undo must never be unreachable */
+
+  --dur:             160ms;
+  --ease:            cubic-bezier(0.2, 0, 0, 1);
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--on-surface);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-size: 14px;             /* body-md */
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+button, input, select, textarea { font: inherit; color: inherit; }
+button { cursor: pointer; }
+h1, h2, h3, h4 { margin: 0; text-wrap: balance; }
+p { margin: 0; text-wrap: pretty; }
+ul { margin: 0; padding: 0; list-style: none; }
+
+/* --- Type scale, from designSystem.theme.typography --------------------- */
+.t-display  { font-size: 48px; font-weight: 700; letter-spacing: -0.02em; line-height: 1.05; }
+.t-headline { font-size: 32px; font-weight: 600; letter-spacing: -0.01em; line-height: 1.15; }
+.t-title    { font-size: 24px; font-weight: 600; line-height: 1.25; }
+.t-subtitle { font-size: 20px; font-weight: 500; line-height: 1.3; }
+.t-label {
+  font-size: 12px; font-weight: 600; letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+.t-body-lg  { font-size: 16px; font-weight: 400; }
+.muted      { color: var(--on-surface-var); }
+.dimmed     { color: var(--secondary); }
+/* Tabular figures everywhere a number sits above or beside another number —
+   dates, counts, times, countdowns. */
+.num        { font-variant-numeric: tabular-nums; }
+
+.icon { width: 20px; height: 20px; flex: none; display: block; }
+.icon-sm { width: 16px; height: 16px; }
+.icon-lg { width: 24px; height: 24px; }
+
+/* ==========================================================================
+   Shell
+   ========================================================================== */
+.app { display: flex; min-height: 100vh; }
+
+.side {
+  position: fixed; inset: 0 auto 0 0; z-index: var(--z-side);
+  width: var(--side-w);
+  background: var(--low);
+  border-right: 1px solid var(--high);
+  display: flex; flex-direction: column;
+}
+.side-head { padding: 22px var(--gutter); border-bottom: 1px solid var(--high); }
+.side-head h1 { font-size: 24px; font-weight: 700; color: var(--primary); letter-spacing: -0.01em; }
+.side-head p { margin-top: 2px; color: var(--secondary); }
+.side-cta { padding: 16px; }
+.side-nav { flex: 1; overflow-y: auto; padding: 8px 0; }
+.side-foot { border-top: 1px solid var(--high); padding: 12px 16px; display: grid; gap: 2px; }
+
+.nav-item {
+  display: flex; align-items: center; gap: 16px; width: 100%;
+  padding: 12px var(--gutter); border: 0; background: none; text-align: left;
+  color: var(--secondary); font-size: 12px; font-weight: 600; letter-spacing: 0.05em;
+  text-transform: uppercase;
+  border-left: 3px solid transparent;
+  transition: background var(--dur) var(--ease), color var(--dur) var(--ease);
+}
+.nav-item:hover { background: var(--container); color: var(--on-surface); }
+.nav-item[aria-current='true'] {
+  color: var(--primary); font-weight: 700;
+  background: var(--high); border-left-color: var(--primary);
+}
+/* The open-role count rides the nav item it belongs to, so the one number the
+   product exists to drive down is visible from every screen. */
+.nav-pill {
+  margin-left: auto; min-width: 22px; padding: 1px 6px; border-radius: var(--r-pill);
+  background: var(--error-c); color: var(--on-error-c);
+  font-size: 11px; font-weight: 700; letter-spacing: 0; text-align: center;
+}
+.nav-pill.is-clear { background: var(--container); color: var(--on-surface-var); }
+/* Assigning someone moves this number while you are looking at the sheet, not
+   at the sidebar. The flash is how you know the count you just changed is the
+   count that changed. */
+.nav-pill.is-hit { animation: pill-hit 520ms var(--ease); }
+@keyframes pill-hit {
+  0%   { transform: scale(1); }
+  30%  { transform: scale(1.28); box-shadow: 0 0 0 4px rgba(0, 68, 33, 0.16); }
+  100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(0, 68, 33, 0); }
+}
+
+.side-link {
+  display: flex; align-items: center; gap: 12px; width: 100%;
+  padding: 8px; border: 0; background: none; border-radius: var(--r);
+  color: var(--secondary); font-size: 13px; text-align: left;
+  transition: background var(--dur) var(--ease), color var(--dur) var(--ease);
+}
+.side-link:hover { background: var(--container); color: var(--on-surface); }
+
+.main { flex: 1; min-width: 0; margin-left: var(--side-w); display: flex; flex-direction: column; }
+
+.top {
+  position: sticky; top: 0; z-index: var(--z-top);
+  height: var(--top-h); flex: none;
+  display: flex; align-items: center; gap: 16px;
+  padding: 0 var(--gutter);
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--outline-var);
+}
+.search { position: relative; flex: 1; max-width: 420px; }
+.search .icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--secondary); }
+/* Fields take --outline, not --outline-var.
+   A text field is empty until you type, so its border is the only thing saying
+   a field is there — WCAG 1.4.11 puts that boundary at 3:1. Stitch's export
+   uses outline-variant here, which measures 1.70:1 on white; --outline is the
+   same design system's token for boundaries that have to be seen (4.51:1).
+   Cards and grid rules keep outline-variant, because they are separators, not
+   affordances. scripts/contrast.mjs holds the line. */
+.search input {
+  width: 100%; padding: 9px 12px 9px 40px;
+  background: var(--low); border: 1px solid var(--outline);
+  border-radius: var(--r); outline: 0;
+  transition: border-color var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
+}
+.search input::placeholder { color: var(--secondary); }
+.search input:focus { border-color: var(--primary); box-shadow: 0 0 0 2px rgba(0, 68, 33, 0.2); background: var(--card); }
+.top-right { margin-left: auto; display: flex; align-items: center; gap: 4px; }
+.icon-btn {
+  display: grid; place-items: center; width: 36px; height: 36px;
+  border: 0; background: none; border-radius: var(--r-pill); color: var(--secondary);
+  transition: background var(--dur) var(--ease), color var(--dur) var(--ease);
+}
+.icon-btn:hover { background: var(--container); color: var(--on-surface); }
+/* Both of these are phone-only and switch on in the responsive block below.
+   They must be declared *here*, above it: an identical-specificity rule placed
+   after a media query wins regardless of the query, which is how the menu
+   button ended up invisible on the one device that needs it. */
+.menu-btn { display: none; }
+.side-scrim { display: none; }
+.avatar {
+  display: grid; place-items: center; flex: none;
+  width: 32px; height: 32px; border-radius: var(--r-pill);
+  background: var(--primary-c); color: var(--on-primary-c);
+  font-size: 11px; font-weight: 700; letter-spacing: 0.02em;
+  border: 1px solid var(--outline-var);
+}
+/* Nobody has uploaded a photograph and the page makes no network requests, so
+   every face in this product is a pair of initials. */
+.avatar.sm { width: 26px; height: 26px; font-size: 10px; }
+.avatar.lg { width: 52px; height: 52px; font-size: 16px; border-width: 2px; border-color: var(--high); }
+
+.canvas { flex: 1; width: 100%; max-width: 1440px; margin: 0 auto; padding: var(--margin) var(--gutter) 64px; }
+.view[hidden] { display: none; }
+
+.page-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-bottom: var(--gutter); }
+.page-head p { margin-top: 4px; color: var(--on-surface-var); max-width: 68ch; }
+.page-tools { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+
+/* ==========================================================================
+   Primitives
+   ========================================================================== */
+.card {
+  background: var(--card); border: 1px solid var(--outline-var);
+  border-radius: var(--r-card); box-shadow: var(--shadow);
+}
+.card-head {
+  display: flex; align-items: center; gap: 12px;
+  padding: 16px 20px; border-bottom: 1px solid var(--outline-var);
+}
+.card-body { padding: 20px; }
+
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  padding: 10px 18px; border-radius: var(--r); border: 1px solid transparent;
+  font-size: 12px; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase;
+  transition: background var(--dur) var(--ease), border-color var(--dur) var(--ease), color var(--dur) var(--ease);
+}
+.btn:active { transform: scale(0.98); }
+.btn-primary { background: var(--primary); color: var(--on-primary); box-shadow: var(--shadow-sm); }
+.btn-primary:hover { background: var(--primary-c); }
+.btn-ghost { background: var(--card); color: var(--on-surface-var); border-color: var(--outline-var); }
+.btn-ghost:hover { background: var(--low); color: var(--on-surface); }
+.btn-danger { background: none; color: var(--error); border-color: var(--error-c); }
+.btn-danger:hover { background: var(--error-c); color: var(--on-error-c); }
+.btn-block { width: 100%; }
+
+.seg {
+  display: inline-flex; padding: 4px; gap: 2px;
+  background: var(--container); border: 1px solid var(--outline-var);
+  border-radius: var(--r); box-shadow: var(--shadow-sm);
+}
+.seg button {
+  padding: 6px 16px; border: 0; background: none; border-radius: 6px;
+  color: var(--secondary); font-size: 12px; font-weight: 600; letter-spacing: 0.05em;
+  text-transform: uppercase;
+  transition: background var(--dur) var(--ease), color var(--dur) var(--ease);
+}
+.seg button:hover { color: var(--on-surface); }
+.seg button[aria-pressed='true'] { background: var(--card); color: var(--primary); box-shadow: var(--shadow-sm); }
+
+.chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 6px 14px; border-radius: var(--r-pill);
+  background: var(--card); border: 1px solid var(--outline-var);
+  color: var(--secondary); font-size: 12px; font-weight: 600; letter-spacing: 0.05em;
+  white-space: nowrap;
+  transition: background var(--dur) var(--ease), color var(--dur) var(--ease), border-color var(--dur) var(--ease);
+}
+.chip:hover { background: var(--low); color: var(--on-surface); }
+.chip[aria-pressed='true'] { background: var(--primary); border-color: var(--primary); color: var(--on-primary); }
+.chip[aria-pressed='true'] .dot { background: currentColor; }
+.chip .dot { width: 8px; height: 8px; border-radius: var(--r-pill); flex: none; }
+.dot-error { background: var(--error); }
+.dot-primary { background: var(--primary); }
+.dot-secondary { background: var(--secondary); }
+.chips { display: flex; gap: 8px; flex-wrap: wrap; }
+
+/* A tag is a label, not a control: no hover, no pointer. */
+.tag {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 3px 8px; border-radius: 6px;
+  font-size: 11px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase;
+  background: var(--highest); color: var(--on-surface-var); white-space: nowrap;
+}
+.tag-error { background: var(--error-c); color: var(--on-error-c); }
+.tag-primary { background: var(--primary-c); color: var(--on-primary-c); }
+.tag-outline { background: var(--card); color: var(--on-surface-var); border: 1px solid var(--outline-var); }
+
+.stack { display: flex; flex-direction: column; gap: var(--gutter); }
+.spacer { flex: 1; }
+.empty {
+  padding: 32px 20px; text-align: center; color: var(--secondary);
+  background: var(--low); border: 1px dashed var(--outline-var); border-radius: var(--r-card);
+}
+
+/* ==========================================================================
+   Overview
+   ========================================================================== */
+/* PRODUCT.md: the uncovered role "must be impossible to miss and impossible to
+   confuse with anything else." Four equal metric tiles did the opposite — they
+   gave a count of events and a count of unconfirmed dates the same weight as
+   the one number the product exists to drive to zero. One readout carries it;
+   everything else is a line of context underneath. */
+.lede { display: flex; align-items: baseline; gap: 18px; padding: 22px 24px 20px; }
+.lede-n {
+  flex: none; font-size: 56px; font-weight: 700; letter-spacing: -0.03em;
+  line-height: 0.9; color: var(--error); font-variant-numeric: tabular-nums;
+}
+.lede.is-clear .lede-n { color: var(--primary); }
+.lede h3 { font-size: 20px; font-weight: 600; text-wrap: balance; }
+.lede p { margin-top: 5px; color: var(--on-surface-var); max-width: 54ch; text-wrap: pretty; }
+
+.meta-strip {
+  display: flex; align-items: center; gap: 4px 14px; flex-wrap: wrap;
+  margin-bottom: var(--gutter); color: var(--secondary);
+}
+.meta-strip > * + *::before {
+  content: ''; display: inline-block; width: 3px; height: 3px; border-radius: 50%;
+  background: var(--outline); vertical-align: 0.24em; margin-right: 14px;
+}
+.meta-item { border: 0; background: none; padding: 0; color: inherit; font: inherit; }
+.meta-item b { font-weight: 600; color: var(--on-surface); font-variant-numeric: tabular-nums; }
+button.meta-item { text-decoration: underline; text-decoration-color: var(--outline-var); text-underline-offset: 3px; }
+button.meta-item:hover { color: var(--on-surface); text-decoration-color: currentColor; }
+button.meta-item.is-alert b { color: var(--error); }
+
+.dash { display: grid; grid-template-columns: 2fr 1fr; gap: var(--gutter); align-items: start; }
+
+/* The uncovered role is the primary object, so on the overview it gets the
+   slot Stitch gave the live video player — the largest thing on the screen. */
+.gap-row {
+  display: flex; align-items: flex-start; gap: 16px; width: 100%;
+  padding: 14px 20px; border: 0; border-top: 1px solid var(--outline-var);
+  background: none; text-align: left;
+  transition: background var(--dur) var(--ease);
+}
+.gap-row:hover { background: var(--low); }
+.gap-when {
+  flex: none; width: 76px; padding-top: 2px;
+  color: var(--secondary); font-size: 12px; font-weight: 600; letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.gap-main { flex: 1; min-width: 0; }
+.gap-title { font-weight: 600; }
+.gap-roles { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
+.gap-n { flex: none; align-self: center; }
+
+.next-count { padding: 16px; border-radius: var(--r); background: var(--container); }
+.next-count .t-label { color: var(--primary); }
+.next-days { margin-top: 4px; font-size: 44px; font-weight: 700; letter-spacing: -0.02em; line-height: 1; }
+.next-days small { font-size: 16px; font-weight: 500; letter-spacing: 0; color: var(--on-surface-var); margin-left: 6px; }
+.faces { display: flex; }
+.faces > * { margin-left: -8px; border: 2px solid var(--card); }
+.faces > *:first-child { margin-left: 0; }
+.quick { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.quick button {
+  display: flex; flex-direction: column; align-items: center; gap: 8px;
+  padding: 16px 8px; border-radius: var(--r);
+  background: var(--bg); border: 1px solid var(--outline-var); color: var(--on-surface-var);
+  font-size: 12px; font-weight: 600;
+  transition: border-color var(--dur) var(--ease), background var(--dur) var(--ease), color var(--dur) var(--ease);
+}
+.quick button:hover { border-color: var(--primary); background: var(--low); color: var(--primary); }
+
+/* ==========================================================================
+   Calendar — the month grid
+   --------------------------------------------------------------------------
+   Stitch's Event Schedule is a week strip only. The month grid was explicitly
+   required, so it is drawn here in Studio Essential's language: a white card,
+   a 1px slate grid, and event badges that take their colour from whether the
+   event still has a job nobody is doing.
+   ========================================================================== */
+.month-bar { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 16px; }
+.month-nav {
+  display: flex; align-items: center; gap: 4px; padding: 4px;
+  background: var(--card); border: 1px solid var(--outline-var);
+  border-radius: var(--r); box-shadow: var(--shadow-sm);
+}
+.month-nav h2 { min-width: 168px; text-align: center; font-size: 20px; font-weight: 600; }
+.month-nav .sep { width: 1px; height: 24px; background: var(--outline-var); margin: 0 4px; }
+.month-nav .link {
+  padding: 6px 14px; border: 0; background: none; border-radius: 6px;
+  color: var(--primary); font-size: 13px; font-weight: 600;
+}
+.month-nav .link:hover { background: var(--container); }
+.month-nav .icon-btn { width: 32px; height: 32px; border-radius: 6px; }
+
+/* The year ribbon: eleven months of the academic year, each carrying its own
+   count of open roles. Asked for alongside the month grid, and redrawn here as
+   date cards rather than the tally ticks of the rejected direction. */
+.ribbon { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 8px; margin-bottom: 16px; scrollbar-width: thin; }
+.rib {
+  flex: none; display: flex; flex-direction: column; align-items: center; gap: 3px;
+  width: 66px; padding: 8px 4px; border-radius: var(--r);
+  background: var(--card); border: 1px solid var(--outline-var); color: var(--on-surface);
+  transition: border-color var(--dur) var(--ease), background var(--dur) var(--ease);
+}
+.rib:hover { border-color: var(--primary); }
+.rib-m { font-size: 11px; font-weight: 600; letter-spacing: 0.06em; color: var(--secondary); }
+.rib-n { font-size: 18px; font-weight: 700; }
+.rib-bar { width: 26px; height: 3px; border-radius: var(--r-pill); background: var(--highest); }
+.rib-bar.is-open { background: var(--error); }
+.rib-bar.is-clear { background: var(--primary); }
+.rib.is-current { background: var(--primary); border-color: var(--primary); color: var(--on-primary); }
+.rib.is-current .rib-m { color: rgba(255, 255, 255, 0.85); }
+.rib.is-current .rib-bar { background: rgba(255, 255, 255, 0.5); }
+.rib.is-now .rib-m::after { content: '•'; margin-left: 3px; color: var(--primary); }
+.rib.is-current.is-now .rib-m::after { color: var(--on-primary); }
+
+.cal { overflow: hidden; }
+.weekdays {
+  display: grid; grid-template-columns: repeat(7, 1fr);
+  background: var(--low); border-bottom: 1px solid var(--outline-var);
+}
+.weekdays span {
+  padding: 12px 0; text-align: center;
+  font-size: 12px; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase;
+  color: var(--secondary);
+}
+.grid {
+  /* minmax(0, …), not 1fr. A bare 1fr floors at min-content, and the event
+     badges are `white-space: nowrap`, so one long title dragged the whole
+     column wider and the seven days stopped being the same size. */
+  display: grid; grid-template-columns: repeat(7, minmax(0, 1fr));
+  background: var(--grid); gap: 1px; border-top: 1px solid var(--grid);
+}
+.day {
+  position: relative; min-height: 124px; padding: 8px;
+  background: var(--card); transition: background var(--dur) var(--ease);
+}
+.day:hover { background: #f1f5f9; }
+.day.is-outside { background: var(--grid-bg); }
+.day.is-outside .daynum { color: #94a3b8; }
+.day.is-today { background: var(--low); }
+.day.is-today .daynum { color: var(--primary); font-weight: 700; }
+.day.is-drop { background: var(--container); box-shadow: inset 0 0 0 2px var(--primary); }
+.day-head { display: flex; align-items: center; justify-content: space-between; min-height: 20px; }
+.daynum { font-size: 13px; font-weight: 500; font-variant-numeric: tabular-nums; }
+.today-dot { width: 6px; height: 6px; border-radius: var(--r-pill); background: var(--primary); }
+
+/* The badge is the miniature of the event card: same colour logic, one line. */
+.ev {
+  display: block; width: 100%; margin-top: 4px; padding: 3px 7px;
+  border: 0; border-radius: 4px; text-align: left;
+  font-size: 11px; font-weight: 500; line-height: 1.35;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  background: var(--container); color: var(--primary);
+  transition: filter var(--dur) var(--ease);
+}
+.ev:hover { filter: brightness(0.96); }
+.ev.is-open { background: var(--error-c); color: var(--on-error-c); }
+/* An event with no roles on it at all is not a crewed event. Without this it
+   took the default green badge and read as complete — a fabricated finished
+   state, which is worse than an honest empty one. */
+.ev.is-bare { background: var(--highest); color: var(--on-surface-var); }
+.ev.is-cancelled { background: var(--highest); color: var(--secondary); text-decoration: line-through; }
+.ev.is-dragging { opacity: 0.4; }
+.ev.is-faded { opacity: 0.28; }
+.ev-time { font-variant-numeric: tabular-nums; opacity: 0.75; }
+
+.day-add {
+  position: absolute; right: 5px; bottom: 5px;
+  width: 22px; height: 22px; display: grid; place-items: center;
+  border: 1px solid var(--outline-var); border-radius: 6px;
+  background: var(--card); color: var(--secondary);
+  opacity: 0; transition: opacity var(--dur) var(--ease), border-color var(--dur) var(--ease);
+}
+.day:hover .day-add { opacity: 1; }
+.day-add:hover, .day-add:focus-visible { opacity: 1; border-color: var(--primary); color: var(--primary); }
+
+/* ==========================================================================
+   Schedule — week strip and timeline
+   ========================================================================== */
+.weekstrip { display: flex; align-items: center; gap: 12px; margin-bottom: var(--gutter); flex-wrap: wrap; }
+.weekstrip .days { display: flex; gap: 8px; }
+.dcard {
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px;
+  width: 62px; height: 78px; border-radius: var(--r-card);
+  background: var(--card); border: 1px solid var(--outline-var); color: var(--on-surface);
+  transition: border-color var(--dur) var(--ease), background var(--dur) var(--ease);
+}
+.dcard:hover { border-color: var(--primary); }
+.dcard-d { font-size: 12px; font-weight: 600; letter-spacing: 0.04em; color: var(--secondary); }
+.dcard-n { font-size: 20px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.dcard-dot { width: 6px; height: 6px; border-radius: var(--r-pill); background: var(--error); margin-top: 2px; }
+/* A day with nothing on it recedes by colour, not by opacity: opacity fades
+   the text along with the card, and at 0.55 the date dropped to 3.86:1. */
+.dcard.is-empty { background: var(--bg); }
+.dcard.is-empty .dcard-n { color: var(--secondary); font-weight: 600; }
+.dcard.is-sel { background: var(--primary); border-color: var(--primary); color: var(--on-primary); box-shadow: var(--shadow-sm); }
+.dcard.is-sel .dcard-d { color: rgba(255, 255, 255, 0.9); }
+.dcard.is-sel .dcard-dot { background: var(--on-primary); }
+.round-btn {
+  display: grid; place-items: center; width: 40px; height: 40px; flex: none;
+  border-radius: var(--r-pill); background: var(--card);
+  border: 1px solid var(--outline-var); color: var(--on-surface-var);
+  transition: background var(--dur) var(--ease), border-color var(--dur) var(--ease);
+}
+.round-btn:hover { background: var(--low); border-color: var(--primary); }
+
+.timeline { position: relative; display: flex; flex-direction: column; gap: var(--gutter); }
+/* The rail sits under the nodes, behind the cards, aligned to the node centre. */
+.timeline::before {
+  content: ''; position: absolute; top: 12px; bottom: 12px; left: 146px;
+  width: 2px; background: var(--outline-var); opacity: 0.5;
+}
+.tl-month {
+  display: flex; align-items: center; gap: 12px;
+  margin-top: 8px; color: var(--secondary);
+}
+.tl-month::after { content: ''; flex: 1; height: 1px; background: var(--outline-var); }
+.tl-row { display: flex; align-items: flex-start; gap: 20px; position: relative; }
+.tl-when { flex: none; width: 118px; padding-top: 14px; text-align: right; }
+.tl-day { font-size: 18px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.tl-time { display: block; font-size: 12px; font-weight: 600; letter-spacing: 0.04em; color: var(--secondary); font-variant-numeric: tabular-nums; }
+/* The node on the rail is the state marker, and it is the only one.
+   The card used to carry a 4px coloured left edge as well — a side-stripe
+   accent, which is decoration standing in for information. It said nothing the
+   node, the strand tag, the crewed fraction and the Missing Requirements panel
+   were not already saying, and it sat where nobody scans. The node is on the
+   rail the eye is already following. */
+.tl-node { flex: none; width: 18px; margin-top: 19px; display: grid; place-items: center; }
+.tl-node i {
+  width: 13px; height: 13px; border-radius: var(--r-pill);
+  background: var(--primary); border: 3px solid var(--bg);
+  box-shadow: 0 0 0 1.5px var(--primary);
+  transition: box-shadow var(--dur) var(--ease), transform var(--dur) var(--ease);
+}
+.tl-row.is-open .tl-node i { background: var(--error); box-shadow: 0 0 0 1.5px var(--error); }
+.tl-row.is-bare .tl-node i,
+.tl-row.is-cancelled .tl-node i { background: var(--card); box-shadow: 0 0 0 1.5px var(--outline); }
+.tl-row:hover .tl-node i { transform: scale(1.18); }
+.tl-card { flex: 1; min-width: 0; padding: 18px 20px; text-align: left; width: 100%; }
+.tl-card:hover { box-shadow: var(--shadow-lg); }
+.tl-top { display: flex; gap: 20px; align-items: flex-start; flex-wrap: wrap; }
+.tl-meta { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 8px; }
+.tl-place { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; font-weight: 600; letter-spacing: 0.04em; color: var(--secondary); }
+.tl-brief { margin-top: 6px; color: var(--on-surface-var); max-width: 62ch; }
+.tl-foot { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--outline-var); }
+
+/* Missing Requirements, straight from Stitch — and the single most important
+   component in the product, because an uncovered role is the thing CTV OS
+   exists to surface. Assign is inside it, so closing the gap never means
+   navigating somewhere else first. */
+.missing {
+  flex: none; width: 272px; padding: 12px 14px; border-radius: var(--r);
+  background: var(--error-c); border: 1px solid var(--error-c);
+}
+.missing-h { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; color: var(--on-error-c); }
+.missing-h span { font-size: 12px; font-weight: 700; letter-spacing: 0.04em; }
+.missing li { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 3px 0; }
+.missing li span { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--on-error-c); }
+.assign {
+  border: 0; background: none; padding: 2px 4px; border-radius: 4px;
+  color: var(--primary); font-size: 12px; font-weight: 700; letter-spacing: 0.04em;
+}
+.assign:hover { background: rgba(255, 255, 255, 0.6); text-decoration: underline; }
+
+/* ==========================================================================
+   Tasks
+   ========================================================================== */
+/* Columns are not boxes. A tinted, bordered column holding bordered white
+   cards is a card inside a card; the column only needs to say where it starts
+   and how much is in it, which a heading rule does. */
+.board { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(208px, 1fr); gap: 18px; overflow-x: auto; padding-bottom: 12px; align-items: start; }
+.col { display: flex; flex-direction: column; min-width: 0; }
+.col-h {
+  display: flex; align-items: center; gap: 8px;
+  padding-bottom: 10px; margin-bottom: 12px;
+  border-bottom: 2px solid var(--outline-var);
+  color: var(--on-surface-var);
+}
+.col-n { margin-left: auto; min-width: 22px; padding: 1px 7px; border-radius: var(--r-pill); background: var(--container); color: var(--on-surface-var); font-size: 11px; font-weight: 700; text-align: center; }
+.col.is-over .col-h { color: var(--on-error-c); border-bottom-color: var(--error); }
+.col.is-over .col-n { background: var(--error-c); color: var(--on-error-c); }
+.col-body { display: flex; flex-direction: column; gap: 10px; }
+/* Empty states teach what the column is for rather than reporting a void. */
+.col-empty { font-size: 13px; color: var(--secondary); padding: 2px 2px 8px; text-wrap: pretty; }
+
+/* Adding a to-do happens in place, above the board, in the same shape as the
+   event sheet: fields apply on change, nothing is behind a wizard. */
+.addbar {
+  display: grid; grid-template-columns: minmax(220px, 3fr) minmax(130px, 1fr) minmax(150px, 1fr) auto auto;
+  gap: 12px; align-items: end;
+  padding: 16px 18px; margin-bottom: var(--gutter);
+  background: var(--card); border: 1px solid var(--primary);
+  border-radius: var(--r-card); box-shadow: var(--shadow);
+}
+.addbar label { display: block; font-size: 11px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: var(--secondary); }
+.addbar input, .addbar select {
+  width: 100%; margin-top: 5px; padding: 9px 11px;
+  border: 1px solid var(--outline); border-radius: var(--r); background: var(--card); outline: 0;
+  font-size: 14px; text-transform: none; letter-spacing: 0; font-weight: 400; color: var(--on-surface);
+}
+.addbar input:focus, .addbar select:focus { border-color: var(--primary); box-shadow: 0 0 0 2px rgba(0, 68, 33, 0.2); }
+
+.tcard { padding: 12px 14px; border-radius: var(--r); position: relative; }
+.tcard-x {
+  position: absolute; top: 8px; right: 8px;
+  display: grid; place-items: center; width: 24px; height: 24px;
+  border: 0; background: none; border-radius: 4px; color: var(--secondary);
+  opacity: 0; transition: opacity var(--dur) var(--ease), background var(--dur) var(--ease), color var(--dur) var(--ease);
+}
+.tcard:hover .tcard-x, .tcard-x:focus-visible { opacity: 1; }
+.tcard-x:hover { background: var(--error-c); color: var(--on-error-c); }
+.tcard-h { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; padding-right: 26px; }
+.tcard-t { font-weight: 600; line-height: 1.35; }
+.tcard-d { margin-top: 4px; color: var(--secondary); font-size: 13px; }
+.tcard-f { display: flex; align-items: center; gap: 8px; margin-top: 10px; color: var(--secondary); font-size: 12px; flex-wrap: wrap; }
+.tcard-due { display: inline-flex; align-items: center; gap: 5px; font-variant-numeric: tabular-nums; }
+.tcard.is-over .tcard-due { color: var(--error); font-weight: 600; }
+.tcard.is-done { opacity: 0.55; }
+.tcard.is-done .tcard-t { text-decoration: line-through; }
+
+/* A checkbox that keeps the platform control but takes the accent colour —
+   the box is the only place in the product where a tick means "done". */
+.box {
+  flex: none; width: 17px; height: 17px; margin: 1px 0 0; accent-color: var(--primary); cursor: pointer;
+}
+
+.tbl-wrap { border-radius: var(--r-card); border: 1px solid var(--outline-var); overflow: hidden; background: var(--card); box-shadow: var(--shadow); }
+.tbl { width: 100%; border-collapse: collapse; }
+.tbl th {
+  padding: 14px 20px; text-align: left; background: var(--high);
+  font-size: 12px; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase;
+  color: var(--secondary); white-space: nowrap;
+}
+.tbl td { padding: 13px 20px; border-top: 1px solid var(--high); vertical-align: middle; }
+.tbl tbody tr { transition: background var(--dur) var(--ease); }
+.tbl tbody tr:hover { background: var(--low); }
+.tbl .td-t { font-weight: 500; }
+.tbl tr.is-done .td-t { text-decoration: line-through; color: var(--secondary); }
+.tbl .td-due { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.tbl tr.is-over .td-due { color: var(--error); font-weight: 600; }
+.rel { display: block; font-size: 11px; color: var(--secondary); font-weight: 400; }
+
+/* ==========================================================================
+   Crew
+   ========================================================================== */
+.people { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: var(--gutter); }
+/* No accent bar across the top. It was decoration duplicating the Clash tag,
+   and on the seven cards that do not clash it said nothing at all. */
+.person { padding: 20px; display: flex; flex-direction: column; }
+.person.is-clash { border-color: var(--error); box-shadow: 0 0 0 1px var(--error), var(--shadow); }
+.person-h { display: flex; align-items: flex-start; gap: 14px; margin-bottom: 16px; }
+.person-h h3 { font-size: 18px; font-weight: 600; }
+.person-role { color: var(--primary); font-size: 12px; font-weight: 600; letter-spacing: 0.04em; margin-top: 1px; }
+.person-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; padding-top: 16px; border-top: 1px solid var(--outline-var); }
+.kv-k { display: block; font-size: 10px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--secondary); margin-bottom: 5px; }
+.kv-v { font-size: 13px; }
+.next-list { margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--outline-var); display: grid; gap: 2px; }
+.next-item {
+  display: flex; align-items: center; gap: 10px; width: 100%; padding: 6px 8px; margin: 0 -8px;
+  border: 0; background: none; border-radius: 6px; text-align: left; font-size: 13px;
+  transition: background var(--dur) var(--ease);
+}
+.next-item:hover { background: var(--low); }
+.next-item .d { flex: none; width: 52px; color: var(--secondary); font-size: 12px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.next-item .t { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* ==========================================================================
+   Sheet, scrim, toast
+   ========================================================================== */
+.scrim {
+  position: fixed; inset: 0; z-index: var(--z-scrim);
+  border: 0; padding: 0; background: rgba(19, 27, 46, 0.32);
+  opacity: 0; pointer-events: none; transition: opacity var(--dur) var(--ease);
+}
+.scrim.is-open { opacity: 1; pointer-events: auto; }
+
+.sheet {
+  position: fixed; z-index: var(--z-sheet); top: 0; right: 0; bottom: 0;
+  width: min(520px, 100vw);
+  background: var(--card); border-left: 1px solid var(--outline-var);
+  box-shadow: -12px 0 32px rgba(0, 0, 0, 0.1);
+  transform: translateX(100%); transition: transform 220ms var(--ease);
+  overflow-y: auto; overscroll-behavior: contain;
+}
+.sheet.is-open { transform: none; }
+.sheet-in { padding: 20px var(--gutter) 96px; }
+.sheet-head {
+  position: sticky; top: 0; z-index: 1; margin: -20px calc(var(--gutter) * -1) 16px;
+  padding: 18px var(--gutter); background: var(--card);
+  border-bottom: 1px solid var(--outline-var);
+  display: flex; align-items: flex-start; gap: 12px;
+}
+.sheet-head h2 { font-size: 20px; font-weight: 600; }
+.sheet-when { margin-top: 3px; color: var(--secondary); font-size: 12px; font-weight: 600; letter-spacing: 0.04em; }
+.rule {
+  display: flex; align-items: center; gap: 10px;
+  margin: 22px 0 12px; color: var(--secondary);
+  font-size: 12px; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase;
+}
+.rule::after { content: ''; flex: 1; height: 1px; background: var(--outline-var); }
+
+.field { display: block; margin-bottom: 12px; }
+.field-k { display: block; margin-bottom: 5px; font-size: 11px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: var(--secondary); }
+.field input, .field select, .sheet textarea {
+  width: 100%; padding: 9px 11px; border-radius: var(--r);
+  background: var(--card); border: 1px solid var(--outline); outline: 0;
+  transition: border-color var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
+}
+.field input:focus, .field select:focus, .sheet textarea:focus {
+  border-color: var(--primary); box-shadow: 0 0 0 2px rgba(0, 68, 33, 0.2);
+}
+.sheet textarea { min-height: 116px; resize: vertical; font-family: inherit; }
+/* 100px, not 132: the four time fields are one thought, and at 132 the sheet
+   fitted three and left "Out" stranded on a line of its own. */
+.field-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 12px; }
+
+/* One bay per role. The select IS the bay — closing a crew gap is the product's
+   whole job, so it must never require opening a second thing to do it. */
+.bank { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 10px; align-items: start; }
+.bay { padding: 10px 12px 8px; border-radius: var(--r); background: var(--low); border: 1px solid var(--outline-var); }
+.bay.is-open { background: var(--error-c); border-color: var(--error-c); }
+.bay.is-editing { background: var(--card); border-color: var(--primary); box-shadow: 0 0 0 1px var(--primary); }
+.bay-h { display: flex; align-items: center; gap: 4px; margin-bottom: 6px; }
+/* The role name edits in place. It looks like the label it is until you focus
+   it, so a bank of six roles does not read as a bank of six text fields. */
+.bay-k {
+  flex: 1; min-width: 0; width: 100%;
+  padding: 2px 4px; margin: -2px -4px;
+  border: 1px solid transparent; border-radius: 4px; background: none; outline: 0;
+  font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;
+  color: var(--secondary);
+  transition: border-color var(--dur) var(--ease), background var(--dur) var(--ease);
+}
+.bay-k:hover { border-color: var(--outline-var); }
+.bay-k:focus { border-color: var(--primary); background: var(--card); color: var(--on-surface); }
+.bay.is-open .bay-k { color: var(--on-error-c); }
+.bay-x {
+  flex: none; display: grid; place-items: center; width: 22px; height: 22px;
+  border: 0; background: none; border-radius: 4px; color: var(--secondary);
+  opacity: 0; transition: opacity var(--dur) var(--ease), background var(--dur) var(--ease), color var(--dur) var(--ease);
+}
+.bay:hover .bay-x, .bay-x:focus-visible { opacity: 1; }
+.bay-x:hover { background: var(--error-c); color: var(--on-error-c); }
+.bay select { width: 100%; padding: 6px 8px; border-radius: 6px; border: 1px solid var(--outline); background: var(--card); outline: 0; }
+.bay select:focus { border-color: var(--primary); box-shadow: 0 0 0 2px rgba(0, 68, 33, 0.2); }
+.bay-t { margin-top: 6px; font-size: 11px; color: var(--secondary); font-variant-numeric: tabular-nums; }
+.bay-clash { color: var(--error); font-weight: 600; }
+/* Times and on-site are set once and read often, so they collapse to a line
+   you can click. Assigning somebody is the frequent act; it stays one control. */
+.bay-toggle {
+  display: flex; align-items: center; gap: 4px; width: 100%;
+  padding: 4px 4px; margin: 2px -4px -2px;
+  border: 0; background: none; border-radius: 4px; text-align: left;
+  font-size: 11px; color: var(--secondary); font-variant-numeric: tabular-nums;
+  transition: background var(--dur) var(--ease), color var(--dur) var(--ease);
+}
+.bay-toggle:hover { background: var(--container); color: var(--on-surface); }
+.bay.is-open .bay-toggle:hover { background: rgba(255, 255, 255, 0.55); }
+.bay-toggle .icon { margin-left: auto; transition: transform var(--dur) var(--ease); }
+.bay-toggle[aria-expanded='true'] .icon { transform: rotate(180deg); }
+.bay-edit { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px; }
+.bay-edit label { display: block; font-size: 10px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: var(--secondary); }
+.bay-edit input[type='time'] { width: 100%; margin-top: 3px; padding: 5px 6px; border: 1px solid var(--outline); border-radius: 6px; background: var(--card); outline: 0; font-size: 12px; }
+.bay-edit input[type='time']:focus { border-color: var(--primary); box-shadow: 0 0 0 2px rgba(0, 68, 33, 0.2); }
+.bay-edit label.bay-check {
+  grid-column: 1 / -1; display: flex; align-items: center; gap: 7px;
+  text-transform: none; letter-spacing: 0;
+  font-size: 12px; font-weight: 500; color: var(--on-surface-var);
+}
+.bay-check input { accent-color: var(--primary); width: 16px; height: 16px; flex: none; }
+.bank-add { margin-top: 10px; }
+
+.rows { display: grid; gap: 1px; background: var(--outline-var); border: 1px solid var(--outline-var); border-radius: var(--r); overflow: hidden; }
+.row { display: flex; align-items: flex-start; gap: 12px; padding: 10px 12px; background: var(--card); }
+.row-l { flex: 1; min-width: 0; }
+.row-sub { display: block; margin-top: 2px; font-size: 11px; font-weight: 600; letter-spacing: 0.04em; color: var(--primary); }
+.row-d { display: block; margin-top: 3px; font-size: 12px; color: var(--secondary); }
+.row-due { flex: none; text-align: right; font-variant-numeric: tabular-nums; }
+.row-date { display: block; font-size: 12px; font-weight: 600; }
+.row-rel { display: block; font-size: 11px; color: var(--secondary); }
+.row-due.is-over .row-date, .row-due.is-over .row-rel { color: var(--error); }
+
+.note { padding: 11px 13px; border-radius: var(--r); background: var(--low); border: 1px solid var(--outline-var); margin-bottom: 8px; font-size: 13px; }
+.note.is-caution { background: var(--error-c); border-color: var(--error-c); color: var(--on-error-c); }
+.note-k { display: block; font-size: 10px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--secondary); margin-bottom: 3px; }
+.note.is-caution .note-k { color: var(--on-error-c); }
+
+.sheet-foot {
+  position: sticky; bottom: 0; margin: 24px calc(var(--gutter) * -1) -96px;
+  padding: 14px var(--gutter); background: var(--card);
+  border-top: 1px solid var(--outline-var);
+  display: flex; align-items: center; gap: 10px;
+}
+
+/* Every mutation is undoable, which is the only reason offering Delete on a
+   year of unconfirmed dates is safe rather than reckless. */
+.toast {
+  position: fixed; z-index: var(--z-toast); left: 50%; bottom: 24px;
+  transform: translateX(-50%);
+  display: flex; align-items: center; gap: 14px;
+  max-width: calc(100vw - 32px);
+  padding: 10px 12px 10px 18px; border-radius: var(--r);
+  background: var(--on-surface); color: #fff; box-shadow: var(--shadow-lg);
+  font-size: 13px;
+  animation: toast-in 220ms var(--ease);
+}
+@keyframes toast-in {
+  from { opacity: 0; transform: translate(-50%, 12px); }
+  to   { opacity: 1; transform: translate(-50%, 0); }
+}
+.toast[hidden] { display: none; }
+.toast button {
+  padding: 5px 12px; border-radius: 6px;
+  background: none; border: 1px solid rgba(255, 255, 255, 0.5); color: #fff;
+  font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;
+}
+.toast button:hover { background: #fff; color: var(--on-surface); }
+
+:where(button, a, input, select, textarea):focus-visible {
+  outline: 2px solid var(--primary); outline-offset: 2px;
+}
+
+/* ==========================================================================
+   Narrow
+   --------------------------------------------------------------------------
+   The month grid survives on a phone, because the month grid is the thing that
+   was asked for. Cells drop the badge text and keep a coloured bar, which is
+   the glanceable part; tapping the day opens it.
+   ========================================================================== */
+@media (max-width: 1100px) {
+  .dash { grid-template-columns: 1fr; }
+  .stats { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 900px) {
+  :root { --margin: 20px; --gutter: 16px; }
+  .side { transform: translateX(-100%); transition: transform 220ms var(--ease); }
+  .side.is-open { transform: none; }
+  .main { margin-left: 0; }
+  .menu-btn { display: grid; }
+
+  /* The sidebar had no way out. It slid over the page with nothing behind it,
+     so tapping the content you could still see did nothing and the only exit
+     was Escape — which a phone does not have. */
+  .side-scrim {
+    display: block; position: fixed; inset: 0; z-index: var(--z-side-scrim);
+    border: 0; padding: 0; background: rgba(19, 27, 46, 0.32);
+    opacity: 0; pointer-events: none;
+    transition: opacity var(--dur) var(--ease);
+  }
+  .side-scrim.is-open { opacity: 1; pointer-events: auto; }
+
+  /* 44px targets. This is the mode PRODUCT.md is tuned for: one hand, dark
+     venue, kit in the other. */
+  .icon-btn { width: 44px; height: 44px; }
+  .round-btn { width: 44px; height: 44px; }
+  .side-link { padding: 12px 8px; }
+  .assign { padding: 10px 8px; margin: -6px -8px -6px 0; }
+  .chip { padding: 10px 16px; }
+  .seg button { padding: 10px 16px; }
+  .box { width: 22px; height: 22px; }
+  .timeline::before { display: none; }
+  .tl-row { flex-direction: column; gap: 8px; }
+  .tl-when { width: auto; padding-top: 0; text-align: left; display: flex; align-items: baseline; gap: 8px; }
+  .tl-node { display: none; }
+  .missing { width: 100%; }
+  .day { min-height: 74px; padding: 5px 4px; }
+  .ev { font-size: 0; padding: 0; height: 5px; margin-top: 3px; border-radius: 3px; }
+  .ev-time { display: none; }
+  .day-add { display: none; }
+  .weekdays span { font-size: 10px; }
+  .sheet { width: 100%; }
+  .stats { grid-template-columns: 1fr; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition-duration: 1ms !important; }
+  .sheet { transition: none; }
+}
+</style>
+
+<!-- Material Symbols are blocked by the CSP, so the icon set is redrawn here
+     once as a sprite and referenced by <use>. Same 24px grid, same optical
+     weight as Symbols Outlined at the sizes used. -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+  <g id="ico" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"></g>
+  <symbol id="i-dashboard" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="8" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="11" width="7" height="10" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/></symbol>
+  <symbol id="i-calendar" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></symbol>
+  <symbol id="i-timeline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M5 4v16"/><circle cx="5" cy="8" r="2"/><circle cx="5" cy="16" r="2"/><path d="M10 8h9M10 16h6"/></symbol>
+  <symbol id="i-checklist" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6l2 2 3-3M3 15l2 2 3-3M12 7h9M12 16h9"/></symbol>
+  <symbol id="i-group" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.2"/><path d="M3 20a6 6 0 0 1 12 0"/><path d="M16.5 5.6a3.2 3.2 0 0 1 0 6.3M18 14.4a6 6 0 0 1 3 5.6"/></symbol>
+  <symbol id="i-person" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.4"/><path d="M5 20a7 7 0 0 1 14 0"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></symbol>
+  <symbol id="i-left" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></symbol>
+  <symbol id="i-right" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5L21 21"/></symbol>
+  <symbol id="i-pin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s7-5.6 7-11a7 7 0 1 0-14 0c0 5.4 7 11 7 11z"/><circle cx="12" cy="10" r="2.6"/></symbol>
+  <symbol id="i-clock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><path d="M12 7v5.2l3.2 2"/></symbol>
+  <symbol id="i-warning" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.8L21 19.5H3z"/><path d="M12 9.5v4.2"/><circle cx="12" cy="16.6" r="0.5" fill="currentColor"/></symbol>
+  <symbol id="i-close" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></symbol>
+  <symbol id="i-download" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v11m0 0l-4-4m4 4l4-4M4 19h16"/></symbol>
+  <symbol id="i-undo" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9h9a5.5 5.5 0 1 1 0 11H8"/><path d="M4 9l4-4M4 9l4 4"/></symbol>
+  <symbol id="i-help" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><path d="M9.6 9.4a2.5 2.5 0 1 1 3.3 2.4c-.6.2-.9.8-.9 1.4v.4"/><circle cx="12" cy="16.6" r="0.5" fill="currentColor"/></symbol>
+  <symbol id="i-video" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="6" width="13" height="12" rx="2"/><path d="M15.5 11l6-3.2v8.4l-6-3.2z"/></symbol>
+  <symbol id="i-menu" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 12.5l5 5 10-11"/></symbol>
+  <symbol id="i-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9.5l6 6 6-6"/></symbol>
+  <symbol id="i-trash" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M9 7V5h6v2M6 7l1 13h10l1-13"/></symbol>
+</defs></svg>
+
+<div class="app">
+  <nav class="side" id="side" aria-label="Sections">
+    <div class="side-head">
+      <h1>CampusTV OS</h1>
+      <p class="t-label">CTV OS · 2026/27</p>
+    </div>
+    <div class="side-cta">
+      <button class="btn btn-primary btn-block" id="add-event" type="button">
+        <svg class="icon icon-sm"><use href="#i-plus"/></svg> New event
+      </button>
+    </div>
+    <div class="side-nav" id="nav"></div>
+    <div class="side-foot">
+      <button class="side-link" id="export" type="button" title="Download your corrected year.json">
+        <svg class="icon icon-sm"><use href="#i-download"/></svg> Export year.json
+      </button>
+      <button class="side-link" id="reset" type="button" title="Discard your edits and reload the seed year">
+        <svg class="icon icon-sm"><use href="#i-undo"/></svg> Reset to seed
+      </button>
+    </div>
+  </nav>
+
+  <div class="main">
+    <header class="top">
+      <button class="icon-btn menu-btn" id="menu" type="button" aria-label="Sections"
+              aria-expanded="false" aria-controls="side">
+        <svg class="icon"><use href="#i-menu"/></svg>
+      </button>
+      <div class="search">
+        <svg class="icon icon-sm"><use href="#i-search"/></svg>
+        <input id="q" type="search" placeholder="Search events, crew, to-do…" aria-label="Search">
+      </div>
+      <div class="top-right">
+        <button class="icon-btn" id="help" type="button" aria-label="About this prototype">
+          <svg class="icon"><use href="#i-help"/></svg>
+        </button>
+        <span class="avatar" title="Will E — Station Manager">WE</span>
+      </div>
+    </header>
+
+    <div class="canvas">
+      <section class="view" id="v-overview"></section>
+      <section class="view" id="v-calendar" hidden></section>
+      <section class="view" id="v-schedule" hidden></section>
+      <section class="view" id="v-tasks" hidden></section>
+      <section class="view" id="v-crew" hidden></section>
+    </div>
+  </div>
+</div>
+
+<button class="side-scrim" id="side-scrim" type="button" aria-label="Close menu"></button>
+<button class="scrim" id="scrim" type="button" aria-label="Close"></button>
+<aside class="sheet" id="sheet" aria-hidden="true"><div class="sheet-in" id="sheet-in"></div></aside>
+<div class="toast" id="toast" hidden role="status">
+  <span id="toast-t"></span><button id="toast-undo" type="button">Undo</button>
+</div>
+
+<script>
+const SEED = __DATA__;
+const TODAY = '2026-08-07';   // the prototype's "now"
+// Bumped when the stored shape changes — v1 predates tasks, and a stale v1
+// blob would leave DATA.tasks undefined on the one screen that needs it.
+const STORE = 'ctvos.year.v2';
+
+const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+const MON3   = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
+// Monday-first. Stitch's grid runs Sunday-first, which is a US convention; a
+// UK academic week starts on Monday and the weekend belongs together at the end.
+const DAYS   = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+
+const byId = (list) => Object.fromEntries(list.map((x) => [x.id, x]));
+const MEMBERS = byId(SEED.members);
+const SOCS = byId(SEED.societies);
+
+// --- Store ----------------------------------------------------------------
+// Not one date in this year is confirmed. The handover states National
+// Television Day and the rule that welcome weekend is the Friday–Sunday before
+// freshers; everything else was inferred, so the working copy is the truth and
+// the seed is only a starting point you can fall back to.
+const clone = (x) => JSON.parse(JSON.stringify(x));
+
+let DATA = (() => {
+  try {
+    const saved = localStorage.getItem(STORE);
+    if (saved) return JSON.parse(saved);
+  } catch { /* corrupt or unavailable storage falls back to the seed */ }
+  return clone(SEED);
+})();
+
+const persist = () => {
+  try { localStorage.setItem(STORE, JSON.stringify(DATA)); } catch { /* private mode */ }
+};
+
+// Every mutation goes through here, so every mutation is undoable. That is
+// what makes offering Delete safe rather than reckless.
+function mutate(label, fn) {
+  const before = clone(DATA);
+  fn(DATA);
+  persist();
+  render();
+  toast(label, () => { DATA = before; persist(); render(); });
+}
+
+let toastTimer;
+function toast(text, undo) {
+  const el = document.getElementById('toast');
+  document.getElementById('toast-t').textContent = text;
+  const btn = document.getElementById('toast-undo');
+  btn.onclick = () => { undo(); el.hidden = true; clearTimeout(toastTimer); };
+  el.hidden = false;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { el.hidden = true; }, 7000);
+}
+
+const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;' }[c]));
+const d2 = (n) => String(n).padStart(2, '0');
+const iso = (d) => `${d.getFullYear()}-${d2(d.getMonth() + 1)}-${d2(d.getDate())}`;
+const parse = (s) => { const [y, m, d] = s.split('-').map(Number); return new Date(y, m - 1, d); };
+const daysBetween = (a, b) => Math.round((parse(b) - parse(a)) / 86400000);
+const svg = (name, cls) => `<svg class="icon ${cls || 'icon-sm'}"><use href="#i-${name}"/></svg>`;
+const initials = (m) => (m?.known_as ?? '?').slice(0, 2).toUpperCase();
+const relDay = (n) => n === null ? '' : n < 0 ? `${Math.abs(n)}d late` : n === 0 ? 'today' : `in ${n}d`;
+const shortDate = (s) => `${d2(parse(s).getDate())} ${MON3[parse(s).getMonth()]}`;
+
+// --- Derived state --------------------------------------------------------
+// Coverage and clashes are computed, never stored — same rule as the SQL views,
+// so the prototype cannot drift from what the database would say.
+function coverage(ev) {
+  const roles = ev.roles || [];
+  const open = roles.filter((r) => !r.member).length;
+  return { total: roles.length, open, filled: roles.length - open,
+           complete: roles.length > 0 && open === 0 };
+}
+
+// One person, two on-site jobs, overlapping hours. Off-site roles (the editor,
+// whose work is tomorrow at a desk) are excluded — see schema.sql.
+//
+// Recomputed on every render rather than cached: moving an event onto a day
+// where someone is already booked has to surface the clash immediately, which
+// is most of the point of being able to move events at all.
+function findClashes() {
+  const out = new Map();
+  const onSite = (r) => r.on_site !== false;
+  const mins = (t) => t ? Number(t.slice(0, 2)) * 60 + Number(t.slice(3, 5)) : null;
+  const byDate = {};
+  for (const ev of DATA.events) (byDate[ev.date] ||= []).push(ev);
+
+  for (const list of Object.values(byDate)) {
+    const slots = [];
+    for (const ev of list) {
+      if (ev.status === 'cancelled') continue;
+      for (const r of ev.roles || []) {
+        if (r.member && onSite(r)) slots.push({ ev, r });
+      }
+    }
+    for (let i = 0; i < slots.length; i++) {
+      for (let j = i + 1; j < slots.length; j++) {
+        const a = slots[i], b = slots[j];
+        if (a.r.member !== b.r.member) continue;
+        const af = mins(a.r.from) ?? 0, at = mins(a.r.to) ?? 1439;
+        const bf = mins(b.r.from) ?? 0, bt = mins(b.r.to) ?? 1439;
+        if (af < bt && bf < at) {
+          out.set(a.r, `${b.r.label} on ${b.ev.title}`);
+          out.set(b.r, `${a.r.label} on ${a.ev.title}`);
+        }
+      }
+    }
+  }
+  return out;
+}
+
+let CLASHES = new Map();
+const totalOpen = () => DATA.events.reduce((n, ev) => n + coverage(ev).open, 0);
+
+// --- Who can actually do this job ----------------------------------------
+// CTV OS exists to stop crew gaps, so an assignment control that will silently
+// create a clash — or put somebody on a camera they have never been signed off
+// on — is working against the product. The dropdown answers both questions
+// before you choose, instead of the clash detector complaining afterwards.
+const ROLE_SKILL = {
+  camera: 'camera', vision_mix: 'vision_mix', ptz: 'ptz',
+  editor: 'edit', audio: 'audio',
+};
+// Producing and interviewing need no sign-off, so they are absent by design.
+
+// New roles are typed as free text, so the skill a label implies is inferred
+// once, here, rather than asking for a role key nobody thinks in.
+const LABEL_ROLE = {
+  'CAM OP': 'camera', 'BACK CAM': 'camera', 'CAMERA': 'camera', 'GANTRY': 'camera',
+  'SU BOX': 'camera', 'ROAMING': 'camera', 'ASSIST': 'camera',
+  'INTERVIEW': 'interview', 'VISION MIX': 'vision_mix', 'PTZ': 'ptz',
+  'EDITOR': 'editor', 'POST': 'editor', 'POSTING': 'editor',
+  'AUDIO': 'audio', 'SOUND': 'audio',
+  'PRODUCER': 'producer', 'LEAD': 'producer', 'CHAIR': 'producer',
+};
+const ROLE_PRESETS = ['CAM OP', 'INTERVIEW', 'VISION MIX', 'PTZ', 'AUDIO', 'EDITOR',
+  'PRODUCER', 'LEAD', 'GANTRY', 'SU BOX', 'ROAMING', 'BACK CAM', 'STALL', 'TECH', 'ASSIST'];
+
+const roleMins = (t) => t ? Number(t.slice(0, 2)) * 60 + Number(t.slice(3, 5)) : null;
+
+// Everything else this person is already holding, on this date, at these hours.
+// Same rule as the clash detector: off-site work is not a conflict of presence.
+function busyWith(memberId, ev, role) {
+  if (!memberId) return [];
+  const af = roleMins(role.from) ?? 0, at = roleMins(role.to) ?? 1439;
+  const out = [];
+  for (const other of DATA.events) {
+    if (other.date !== ev.date || other.status === 'cancelled') continue;
+    for (const r of other.roles || []) {
+      if (r === role || r.member !== memberId) continue;
+      if (r.on_site === false || role.on_site === false) continue;
+      const bf = roleMins(r.from) ?? 0, bt = roleMins(r.to) ?? 1439;
+      if (af < bt && bf < at) out.push(`${r.label} on ${other.title}`);
+    }
+  }
+  return out;
+}
+
+function peopleOptions(ev, role) {
+  const need = ROLE_SKILL[role.role];
+  const free = [], busy = [], untrained = [];
+  for (const m of SEED.members) {
+    const sel = m.id === role.member ? ' selected' : '';
+    const trained = !need || (m.trained || []).includes(need);
+    const clashes = busyWith(m.id, ev, role);
+    if (!trained) {
+      untrained.push(`<option value="${m.id}"${sel}>${esc(m.known_as)}</option>`);
+    } else if (clashes.length) {
+      busy.push(`<option value="${m.id}"${sel}>${esc(`${m.known_as} — ${clashes[0]}`)}</option>`);
+    } else {
+      free.push(`<option value="${m.id}"${sel}>${esc(m.known_as)}</option>`);
+    }
+  }
+  const group = (label, opts) => opts.length ? `<optgroup label="${esc(label)}">${opts.join('')}</optgroup>` : '';
+  return group(need ? 'Free, and signed off' : 'Free', free)
+       + group('Already on something else', busy)
+       + group(need ? `Not signed off on ${need.replace(/_/g, ' ')}` : 'Unavailable', untrained);
+}
+
+// --- Search ---------------------------------------------------------------
+// One box, filtering whatever screen you are on. On the calendar it fades the
+// events that do not match rather than removing them, because a month with
+// holes punched in it stops being a month.
+let q = '';
+const hit = (...parts) => !q || parts.filter(Boolean).join(' ').toLowerCase().includes(q);
+const evHit = (e) => hit(e.title, e.venue, e.strand, e.brief,
+  (e.roles || []).map((r) => `${r.label} ${MEMBERS[r.member]?.known_as ?? ''}`).join(' '));
+
+// --- Overview -------------------------------------------------------------
+function renderOverview() {
+  const evs = [...DATA.events].sort((a, b) => a.date.localeCompare(b.date));
+  const open = totalOpen();
+  const gaps = evs.filter((e) => coverage(e).open > 0 && e.status !== 'cancelled');
+  const tasks = withDue(DATA.tasks || []);
+  const overdue = tasks.filter((t) => !t.done && t.left !== null && t.left < 0).length;
+  const soft = evs.filter((e) => e.confidence !== 'fixed').length;
+  const upcoming = evs.filter((e) => e.date >= TODAY);
+  const next = upcoming[0];
+
+  const clashPeople = new Set();
+  for (const ev of DATA.events) {
+    for (const r of ev.roles || []) if (CLASHES.has(r) && r.member) clashPeople.add(r.member);
+  }
+
+  // One sentence of context under the number, built from the data rather than
+  // padded out — "across 21 events, nearest in 35 days" is the shape of the
+  // problem; a second metric tile is not.
+  const nearest = gaps[0];
+  const lede = open
+    ? `<p>Across ${gaps.length} event${gaps.length === 1 ? '' : 's'}.
+        ${nearest ? `The nearest is <b>${esc(nearest.title)}</b>, ${relDay(daysBetween(TODAY, nearest.date))}.` : ''}</p>`
+    : '<p>Every role on every event has a name against it. That is the whole job.</p>';
+
+  const meta = (label, n, opts = {}) => {
+    const body = `<b>${n}</b> ${label}`;
+    return opts.view
+      ? `<button class="meta-item${opts.alert ? ' is-alert' : ''}" data-view="${opts.view}" type="button">${body}</button>`
+      : `<span class="meta-item">${body}</span>`;
+  };
+
+  const gapRows = gaps.slice(0, 7).map((e) => {
+    const cov = coverage(e);
+    const left = daysBetween(TODAY, e.date);
+    return `<button class="gap-row" data-ev="${e.id}" type="button">
+      <span class="gap-when num">${shortDate(e.date)}<br><span class="dimmed">${relDay(left)}</span></span>
+      <span class="gap-main">
+        <span class="gap-title">${esc(e.title)}</span>
+        <span class="gap-roles">${(e.roles || []).filter((r) => !r.member)
+          .map((r) => `<span class="tag tag-error">${esc(r.label)}</span>`).join('')}</span>
+      </span>
+      <span class="gap-n tag ${cov.open ? 'tag-error' : ''} num">${cov.filled}/${cov.total}</span>
+    </button>`;
+  }).join('');
+
+  document.getElementById('v-overview').innerHTML = `
+    <div class="page-head">
+      <div>
+        <h2 class="t-headline">Studio Overview</h2>
+        <p>The state of the year, and what still has nobody on it.</p>
+      </div>
+    </div>
+
+    <div class="meta-strip">
+      ${meta(`event${evs.length === 1 ? '' : 's'}, ${upcoming.length} still ahead`, evs.length, { view: 'schedule' })}
+      ${meta('dates still to confirm', soft, { view: 'calendar' })}
+      ${clashPeople.size ? meta(`${clashPeople.size === 1 ? 'person' : 'people'} double-booked`, clashPeople.size, { view: 'crew', alert: true }) : ''}
+      ${overdue
+        ? meta('to-dos overdue', overdue, { view: 'tasks', alert: true })
+        : meta('to-dos open', tasks.filter((t) => !t.done).length, { view: 'tasks' })}
+    </div>
+
+    <div class="dash">
+      <div class="card">
+        <div class="lede${open ? '' : ' is-clear'}">
+          <span class="lede-n">${open}</span>
+          <div>
+            <h3>${open === 1 ? 'role still has' : 'roles still have'} nobody on ${open === 1 ? 'it' : 'them'}</h3>
+            ${lede}
+          </div>
+        </div>
+        ${gapRows || '<div class="card-body" style="border-top:1px solid var(--outline-var)"><p class="empty">Nothing to close. Add an event and its roles will show up here.</p></div>'}
+        ${gaps.length > 7 ? `<div class="card-body" style="border-top:1px solid var(--outline-var)">
+          <button class="btn btn-ghost btn-block" data-view="schedule" type="button">See all ${gaps.length} in the schedule</button>
+        </div>` : ''}
+      </div>
+
+      <div class="stack">
+        <div class="card card-body">
+          <h3 class="t-subtitle" style="display:flex;align-items:center;gap:8px">${svg('calendar', 'icon')} Next up</h3>
+          ${next ? (() => {
+            const cov = coverage(next);
+            const left = daysBetween(TODAY, next.date);
+            return `<div class="next-count" style="margin-top:14px">
+              <span class="t-label">${left === 0 ? 'Happening' : 'Starts in'}</span>
+              <div class="next-days num">${left === 0 ? 'Today' : left}${left === 0 ? '' : '<small>days</small>'}</div>
+            </div>
+            <h4 class="t-body-lg" style="margin-top:14px;font-weight:600">${esc(next.title)}</h4>
+            <p class="dimmed" style="display:flex;align-items:center;gap:5px;margin-top:4px">
+              ${svg('pin')} ${esc(next.venue ?? 'venue to confirm')}</p>
+            <div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--outline-var)">
+              <p class="t-label dimmed" style="margin-bottom:8px">Crew ${cov.filled}/${cov.total}</p>
+              <div class="faces">
+                ${(next.roles || []).filter((r) => r.member).map((r) =>
+                  `<span class="avatar sm" title="${esc(MEMBERS[r.member]?.known_as ?? '')} — ${esc(r.label)}">${initials(MEMBERS[r.member])}</span>`).join('')}
+                ${cov.open ? `<span class="avatar sm" style="background:var(--error-c);color:var(--on-error-c)" title="${cov.open} open">+${cov.open}</span>` : ''}
+              </div>
+            </div>
+            <button class="btn btn-ghost btn-block" style="margin-top:16px" data-ev="${next.id}" type="button">Open event</button>`;
+          })() : '<p class="empty" style="margin-top:14px">Nothing left in the year.</p>'}
+        </div>
+
+        <div class="card card-body">
+          <h3 class="t-subtitle" style="margin-bottom:14px">Quick actions</h3>
+          <div class="quick">
+            <button data-add="${TODAY}" type="button">${svg('plus', 'icon')} Add event</button>
+            <button data-view="calendar" type="button">${svg('calendar', 'icon')} Month grid</button>
+            <button data-view="tasks" type="button">${svg('checklist', 'icon')} To do</button>
+            <button data-view="crew" type="button">${svg('group', 'icon')} Crew</button>
+          </div>
+        </div>
+      </div>
+    </div>`;
+}
+
+// --- Calendar: year ribbon ------------------------------------------------
+// Eleven months, August to June. Each carries the count of roles nobody is on
+// in that month, so the shape of the year's trouble is visible before you
+// choose which month to look at.
+function renderRibbon() {
+  const months = [];
+  for (let m = 7; m <= 17; m++) months.push({ y: 2026 + Math.floor(m / 12), m: m % 12 });
+  const now = parse(TODAY);
+  return `<div class="ribbon" id="ribbon">${months.map(({ y, m }) => {
+    const evs = DATA.events.filter((e) => {
+      const d = parse(e.date); return d.getFullYear() === y && d.getMonth() === m;
+    });
+    const openN = evs.reduce((n, e) => n + coverage(e).open, 0);
+    const isNow = y === now.getFullYear() && m === now.getMonth();
+    const isCur = y === cur.y && m === cur.m;
+    return `<button class="rib${isCur ? ' is-current' : ''}${isNow ? ' is-now' : ''}"
+              data-y="${y}" data-m="${m}" type="button"
+              title="${MONTHS[m]} ${y} — ${evs.length} event${evs.length === 1 ? '' : 's'}${openN ? `, ${openN} open` : ''}">
+      <span class="rib-m">${MON3[m]}</span>
+      <span class="rib-n num">${evs.length || '·'}</span>
+      <span class="rib-bar ${openN ? 'is-open' : evs.length ? 'is-clear' : ''}"></span>
+    </button>`;
+  }).join('')}</div>`;
+}
+
+// --- Calendar: the month grid ---------------------------------------------
+// Open on the month you are actually in. If that month is empty — most of
+// August, before term — fall forward to the next month that has something in
+// it, so the first thing you see is never a blank grid.
+let cur = (() => {
+  const t = parse(TODAY);
+  const here = SEED.events.some((e) => {
+    const d = parse(e.date);
+    return d.getFullYear() === t.getFullYear() && d.getMonth() === t.getMonth();
+  });
+  if (here) return { y: t.getFullYear(), m: t.getMonth() };
+  const next = [...SEED.events].sort((a, b) => a.date.localeCompare(b.date))
+    .find((e) => e.date >= TODAY);
+  const d = next ? parse(next.date) : t;
+  return { y: d.getFullYear(), m: d.getMonth() };
+})();
+let calFilter = 'all';
+
+function renderCalendar() {
+  const first = new Date(cur.y, cur.m, 1);
+  const lead = (first.getDay() + 6) % 7;               // Monday-first
+  const start = new Date(cur.y, cur.m, 1 - lead);
+
+  const pass = (e) => calFilter === 'all'
+    || (calFilter === 'open' && coverage(e).open > 0)
+    || (calFilter === 'soft' && e.confidence !== 'fixed');
+
+  // Whole weeks only. Six rows are laid out and a trailing week that lies
+  // entirely outside the month is dropped — but the test has to be per week,
+  // not per day: breaking mid-row leaves the grid's own background showing
+  // through the cells that were never emitted.
+  let cells = '';
+  for (let w = 0; w < 6; w++) {
+    const week = Array.from({ length: 7 }, (_, d) =>
+      new Date(start.getFullYear(), start.getMonth(), start.getDate() + w * 7 + d));
+    if (week.every((day) => day.getMonth() !== cur.m)) continue;
+    for (const day of week) {
+    const key = iso(day);
+    const outside = day.getMonth() !== cur.m;
+    const evs = DATA.events.filter((e) => e.date === key && pass(e));
+    cells += `<div class="day${outside ? ' is-outside' : ''}${key === TODAY ? ' is-today' : ''}" data-day="${key}">
+      <div class="day-head">
+        <span class="daynum">${day.getDate()}</span>
+        ${key === TODAY ? '<i class="today-dot"></i>' : ''}
+      </div>
+      ${evs.map((e) => {
+        const cov = coverage(e);
+        const cls = e.status === 'cancelled' ? 'is-cancelled'
+          : cov.open ? 'is-open' : cov.total ? '' : 'is-bare';
+        const t = e.start_time || e.call_time;
+        return `<button class="ev ${cls}${evHit(e) ? '' : ' is-faded'}" data-ev="${e.id}"
+                  draggable="true" type="button"
+                  title="${esc(e.title)} — ${cov.total ? `${cov.filled}/${cov.total} crewed` : 'no roles yet'}">
+          ${t ? `<span class="ev-time num">${t}</span> ` : ''}${esc(e.title)}
+        </button>`;
+      }).join('')}
+      <button class="day-add" data-add="${key}" type="button" aria-label="Add an event on ${key}">
+        ${svg('plus')}
+      </button>
+    </div>`;
+    }
+  }
+
+  const fchip = (id, label, dot) =>
+    `<button class="chip" data-cal-filter="${id}" aria-pressed="${calFilter === id}" type="button">
+      ${dot ? `<i class="dot ${dot}"></i>` : ''}${label}</button>`;
+
+  document.getElementById('v-calendar').innerHTML = `
+    <div class="page-head">
+      <div>
+        <h2 class="t-headline">Broadcast Calendar</h2>
+        <p>Drag an event to move it. Nothing in this year is confirmed until you say so.</p>
+      </div>
+      <div class="page-tools">
+        ${fchip('all', 'All')}
+        ${fchip('open', 'Needs crew', 'dot-error')}
+        ${fchip('soft', 'Date to confirm', 'dot-secondary')}
+      </div>
+    </div>
+
+    <div class="month-bar">
+      <div class="month-nav">
+        <button class="icon-btn" id="prev" type="button" aria-label="Previous month">${svg('left')}</button>
+        <h2 class="num" id="month-title">${MONTHS[cur.m]} ${cur.y}</h2>
+        <button class="icon-btn" id="next" type="button" aria-label="Next month">${svg('right')}</button>
+        <span class="sep"></span>
+        <button class="link" id="today" type="button">Today</button>
+      </div>
+    </div>
+
+    ${renderRibbon()}
+
+    <div class="card cal">
+      <div class="weekdays">${DAYS.map((d) => `<span>${d}</span>`).join('')}</div>
+      <div class="grid" id="weeks">${cells}</div>
+    </div>`;
+}
+
+// --- Schedule -------------------------------------------------------------
+// Stitch's Event Schedule, with the production list kept as its second mode.
+// A station runs about thirty events a year, so most weeks are empty and a
+// week-only view would be a wall of empty states.
+let schedMode = 'all';
+let selDay = TODAY;
+
+function renderSchedule() {
+  const sel = parse(selDay);
+  const weekStart = new Date(sel.getFullYear(), sel.getMonth(), sel.getDate() - ((sel.getDay() + 6) % 7));
+  const week = Array.from({ length: 7 }, (_, i) =>
+    new Date(weekStart.getFullYear(), weekStart.getMonth(), weekStart.getDate() + i));
+
+  const strip = week.map((d) => {
+    const key = iso(d);
+    const n = DATA.events.filter((e) => e.date === key).length;
+    return `<button class="dcard${key === selDay ? ' is-sel' : ''}${n ? '' : ' is-empty'}"
+              data-sel-day="${key}" type="button">
+      <span class="dcard-d">${DAYS[(d.getDay() + 6) % 7]}</span>
+      <span class="dcard-n">${d.getDate()}</span>
+      ${n ? '<i class="dcard-dot"></i>' : ''}
+    </button>`;
+  }).join('');
+
+  const inWeek = (e) => e.date >= iso(week[0]) && e.date <= iso(week[6]);
+  const evs = [...DATA.events]
+    .filter((e) => (schedMode === 'week' ? inWeek(e) : true) && evHit(e))
+    .sort((a, b) => a.date.localeCompare(b.date) || (a.start_time ?? '').localeCompare(b.start_time ?? ''));
+
+  let body = '', lastMonth = '';
+  for (const e of evs) {
+    const d = parse(e.date);
+    const cov = coverage(e);
+    const openRoles = (e.roles || []).map((r, i) => ({ r, i })).filter((x) => !x.r.member);
+    const mk = `${d.getFullYear()}-${d.getMonth()}`;
+    if (schedMode === 'all' && mk !== lastMonth) {
+      lastMonth = mk;
+      const mOpen = evs.filter((x) => { const xd = parse(x.date);
+        return `${xd.getFullYear()}-${xd.getMonth()}` === mk; })
+        .reduce((n, x) => n + coverage(x).open, 0);
+      body += `<div class="tl-month">
+        <span class="t-label">${MONTHS[d.getMonth()]} ${d.getFullYear()}</span>
+        <span class="tag ${mOpen ? 'tag-error' : ''} num">${mOpen ? `${mOpen} open` : 'crewed'}</span>
+      </div>`;
+    }
+    const state = e.status === 'cancelled' ? 'is-cancelled'
+      : cov.open ? 'is-open' : cov.total ? '' : 'is-bare';
+    body += `<div class="tl-row ${state}">
+      <div class="tl-when">
+        <span class="tl-day num">${d2(d.getDate())} ${MON3[d.getMonth()]}</span>
+        <span class="tl-time">${DAYS[(d.getDay() + 6) % 7].toUpperCase()}${
+          e.start_time ? ` · ${e.start_time}` : ''}</span>
+      </div>
+      <div class="tl-node"><i></i></div>
+      <div class="card tl-card">
+        <div class="tl-top">
+          <div style="flex:1;min-width:220px">
+            <div class="tl-meta">
+              <span class="tag ${e.status === 'cancelled' ? '' : cov.open ? 'tag-error' : 'tag-primary'}">${esc(e.strand)}</span>
+              ${e.venue ? `<span class="tl-place">${svg('pin')} ${esc(e.venue)}</span>` : ''}
+              ${e.confidence !== 'fixed' ? '<span class="tag tag-outline">Date to confirm</span>' : ''}
+              ${e.status === 'idea' ? '<span class="tag tag-outline">Idea</span>' : ''}
+            </div>
+            <h3 class="t-title" style="font-size:20px">${esc(e.title)}</h3>
+            ${e.brief ? `<p class="tl-brief">${esc(e.brief)}</p>` : ''}
+          </div>
+          ${openRoles.length ? `<div class="missing">
+            <div class="missing-h">${svg('warning')}<span>Missing Requirements</span></div>
+            <ul>${openRoles.map(({ r, i }) => `<li>
+              <span>${svg('person')} ${esc(r.label)}</span>
+              <button class="assign" data-assign="${e.id}:${i}" type="button">Assign</button>
+            </li>`).join('')}</ul>
+          </div>` : ''}
+        </div>
+        <div class="tl-foot">
+          <div class="faces">${(e.roles || []).filter((r) => r.member).map((r) =>
+            `<span class="avatar sm${CLASHES.has(r) ? '' : ''}" title="${esc(MEMBERS[r.member]?.known_as ?? '')} — ${esc(r.label)}${
+              CLASHES.has(r) ? ` (clash: ${esc(CLASHES.get(r))})` : ''}">${initials(MEMBERS[r.member])}</span>`).join('')
+            || '<span class="dimmed" style="font-size:12px">no roles yet</span>'}</div>
+          <span class="tag ${cov.open ? 'tag-error' : cov.total ? '' : 'tag-outline'} num">${
+            cov.total ? `${cov.filled}/${cov.total} crewed` : 'no roles yet'}</span>
+          ${(e.roles || []).some((r) => CLASHES.has(r))
+            ? `<span class="tag tag-error">${svg('warning')} Clash</span>` : ''}
+          <span class="spacer"></span>
+          <button class="btn btn-ghost" data-ev="${e.id}" type="button">Open</button>
+        </div>
+      </div>
+    </div>`;
+  }
+
+  document.getElementById('v-schedule').innerHTML = `
+    <div class="page-head">
+      <div>
+        <h2 class="t-headline">Event Schedule</h2>
+        <p>Every broadcast and what it still needs before it can happen.</p>
+      </div>
+      <div class="page-tools">
+        <div class="seg" role="group" aria-label="Range">
+          <button data-sched="week" aria-pressed="${schedMode === 'week'}" type="button">This week</button>
+          <button data-sched="all" aria-pressed="${schedMode === 'all'}" type="button">All</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="weekstrip">
+      <button class="round-btn" data-week="-7" type="button" aria-label="Previous week">${svg('left')}</button>
+      <div class="days">${strip}</div>
+      <button class="round-btn" data-week="7" type="button" aria-label="Next week">${svg('right')}</button>
+      <button class="btn btn-ghost" data-sel-day="${TODAY}" type="button">${svg('calendar')} Today</button>
+    </div>
+
+    <div class="timeline">${body || `<p class="empty">${
+      schedMode === 'week' ? 'Nothing on in this week. The strip above moves you around; “All” shows the whole year.'
+                           : 'No events match that search.'}</p>`}</div>`;
+}
+
+// --- To do ----------------------------------------------------------------
+// Everything actionable in the handover that is not tied to one event date.
+// Per-event work stays on the event as prep; this is the rest of the job.
+const AREAS = {
+  setup: 'Setup', training: 'Training', money: 'Money',
+  socials: 'Socials', team: 'Team', nasta: 'NaSTA', legacy: 'Legacy',
+};
+let areaFilter = 'all';
+let hideDone = false;
+let taskMode = 'board';
+let addingTask = false;
+
+// A task anchored to an event is due `lead_days` before it, so it moves when
+// the event moves. Given not one date this year is confirmed, that is the only
+// way the list stays true after you start correcting the calendar.
+function taskDue(t) {
+  if (t.due) return t.due;
+  if (!t.anchor) return null;
+  const ev = DATA.events.find((e) => e.id === t.anchor);
+  if (!ev) return null;                       // anchor deleted: no date, not a wrong one
+  const d = parse(ev.date);
+  return iso(new Date(d.getFullYear(), d.getMonth(), d.getDate() - (t.lead_days ?? 0)));
+}
+
+const withDue = (list) => list.map((t) => {
+  const due = taskDue(t);
+  return { ...t, due_on: due, left: due === null ? null : daysBetween(TODAY, due) };
+});
+
+const BUCKETS = [
+  ['Overdue',       (n) => n !== null && n < 0,            true],
+  ['Next 7 days',   (n) => n !== null && n >= 0 && n <= 7, false],
+  ['Next 30 days',  (n) => n !== null && n > 7 && n <= 30, false],
+  ['Later',         (n) => n !== null && n > 30,           false],
+  ['No date yet',   (n) => n === null,                     false],
+];
+
+// An empty column should say what the column is for. "Nothing here" is a
+// report on the absence of data; these say what it means that it is empty.
+const EMPTY_COL = {
+  'Overdue':      'Nothing late. This is the column to keep empty.',
+  'Next 7 days':  'Clear week. Anything dated in the next seven days lands here.',
+  'Next 30 days': 'Nothing due this month.',
+  'Later':        'Nothing parked further out.',
+  'No date yet':  'Everything has a date, either its own or one inherited from an event.',
+};
+
+function renderTasks() {
+  const tasks = withDue(DATA.tasks || []);
+  const done = tasks.filter((t) => t.done).length;
+  const shown = tasks.filter((t) =>
+    (areaFilter === 'all' || t.area === areaFilter)
+    && !(hideDone && t.done)
+    && hit(t.title, t.detail, t.owner_role, AREAS[t.area]));
+
+  const chips = ['all', ...Object.keys(AREAS)].map((a) => {
+    const n = tasks.filter((t) => a === 'all' || t.area === a).length;
+    const openN = tasks.filter((t) => (a === 'all' || t.area === a) && !t.done).length;
+    return `<button class="chip" data-area="${a}" aria-pressed="${areaFilter === a}" type="button">${
+      a === 'all' ? 'All' : AREAS[a]} <span class="num">${openN}/${n}</span></button>`;
+  }).join('');
+
+  const anchorNote = (t) => t.anchor
+    ? `${t.lead_days}d before ${DATA.events.find((e) => e.id === t.anchor)?.title ?? '—'}`
+    : '';
+
+  const groups = BUCKETS.map(([label, test, isOver]) => [
+    label, isOver,
+    shown.filter((t) => test(t.left))
+      .sort((a, b) => (a.due_on ?? '9999').localeCompare(b.due_on ?? '9999')),
+  ]);
+
+  const board = `<div class="board">${groups.map(([label, isOver, group]) => `
+    <div class="col${isOver && group.some((t) => !t.done) ? ' is-over' : ''}">
+      <div class="col-h">
+        <span class="t-label">${label}</span>
+        <span class="col-n num">${group.filter((t) => !t.done).length}</span>
+      </div>
+      <div class="col-body">${group.length ? group.map((t) => `
+        <div class="card tcard${t.done ? ' is-done' : ''}${!t.done && t.left !== null && t.left < 0 ? ' is-over' : ''}">
+          <div class="tcard-h">
+            <span class="tag ${t.done ? '' : t.left !== null && t.left < 0 ? 'tag-error' : ''}">${AREAS[t.area]}</span>
+            <span class="spacer"></span>
+            <input class="box" type="checkbox" data-task="${t.id}" ${t.done ? 'checked' : ''}
+                   aria-label="${esc(t.title)}">
+          </div>
+          <button class="tcard-x" data-task-del="${t.id}" type="button"
+                  aria-label="Delete: ${esc(t.title)}">${svg('trash')}</button>
+          <div class="tcard-t">${esc(t.title)}</div>
+          ${t.detail ? `<div class="tcard-d">${esc(t.detail)}</div>` : ''}
+          <div class="tcard-f">
+            ${t.due_on ? `<span class="tcard-due">${svg('clock')} ${shortDate(t.due_on)} · ${relDay(t.left)}</span>` : ''}
+            <span class="spacer"></span>
+            <span title="${t.source === 'you' ? 'Added by you' : `Handover ${esc(t.source)}`}">${esc(t.owner_role)}</span>
+          </div>
+          ${t.anchor ? `<div class="tcard-d" style="margin-top:6px">${esc(anchorNote(t))}</div>` : ''}
+        </div>`).join('') : `<p class="col-empty">${EMPTY_COL[label]}</p>`}
+      </div>
+    </div>`).join('')}</div>`;
+
+  const rows = groups.flatMap(([, , group]) => group).map((t) => `
+    <tr class="${t.done ? 'is-done' : ''}${!t.done && t.left !== null && t.left < 0 ? ' is-over' : ''}">
+      <td><input class="box" type="checkbox" data-task="${t.id}" ${t.done ? 'checked' : ''}
+                 aria-label="${esc(t.title)}"></td>
+      <td class="td-t">${esc(t.title)}
+        ${t.detail ? `<span class="rel">${esc(t.detail)}</span>` : ''}</td>
+      <td><span class="tag">${AREAS[t.area]}</span></td>
+      <td class="td-due">${t.due_on ? `${shortDate(t.due_on)}<span class="rel">${relDay(t.left)}</span>` : '<span class="dimmed">—</span>'}</td>
+      <td class="dimmed">${esc(t.owner_role)}<span class="rel">${
+        t.source === 'you' ? 'Added by you' : `Handover ${esc(t.source)}`}</span></td>
+      <td><span class="tag ${t.done ? 'tag-primary' : t.left !== null && t.left < 0 ? 'tag-error' : ''}">${
+        t.done ? 'Done' : t.left !== null && t.left < 0 ? 'Overdue' : 'To do'}</span></td>
+    </tr>`).join('');
+
+  const list = `<div class="tbl-wrap"><table class="tbl">
+    <thead><tr><th></th><th>Task</th><th>Area</th><th>Due</th><th>Owner</th><th>Status</th></tr></thead>
+    <tbody>${rows}</tbody>
+  </table></div>`;
+
+  const addForm = addingTask ? `
+    <form class="addbar" id="task-form">
+      <label>To do
+        <input name="title" required autocomplete="off" placeholder="What needs doing?"></label>
+      <label>Area
+        <select name="area">${Object.entries(AREAS).map(([k, v]) =>
+          `<option value="${k}"${k === (areaFilter === 'all' ? 'setup' : areaFilter) ? ' selected' : ''}>${v}</option>`).join('')}</select></label>
+      <label>Due
+        <input type="date" name="due" value=""></label>
+      <button class="btn btn-primary" type="submit">Add</button>
+      <button class="btn btn-ghost" type="button" id="task-cancel">Cancel</button>
+    </form>` : '';
+
+  document.getElementById('v-tasks').innerHTML = `
+    <div class="page-head">
+      <div>
+        <h2 class="t-headline">To do</h2>
+        <p>Everything the handover asks of a station manager, plus whatever else you add. ${done} of ${tasks.length} done.</p>
+      </div>
+      <div class="page-tools">
+        <button class="chip" id="hide-done" aria-pressed="${hideDone}" type="button">Hide done</button>
+        <div class="seg" role="group" aria-label="Layout">
+          <button data-task-mode="board" aria-pressed="${taskMode === 'board'}" type="button">Board</button>
+          <button data-task-mode="list" aria-pressed="${taskMode === 'list'}" type="button">List</button>
+        </div>
+        <button class="btn btn-primary" id="task-new" type="button">${svg('plus')} New to-do</button>
+      </div>
+    </div>
+    <div class="chips" style="margin-bottom:var(--gutter)">${chips}</div>
+    ${addForm}
+    ${shown.length ? (taskMode === 'board' ? board : list)
+      : `<p class="empty">Nothing here. Everything in ${
+        areaFilter === 'all' ? 'the handover' : AREAS[areaFilter]} is either done or filtered out.</p>`}`;
+}
+
+// --- Crew -----------------------------------------------------------------
+let skillFilter = 'all';
+
+function renderCrew() {
+  const skills = [...new Set(SEED.members.flatMap((m) => m.trained || []))].sort();
+  const people = SEED.members.filter((m) =>
+    (skillFilter === 'all' || (m.trained || []).includes(skillFilter))
+    && hit(m.known_as, m.full_name, m.committee_role, (m.trained || []).join(' ')));
+
+  const chips = ['all', ...skills].map((s) =>
+    `<button class="chip" data-skill="${s}" aria-pressed="${skillFilter === s}" type="button">${
+      s === 'all' ? 'All crew' : esc(s.replace(/_/g, ' '))}</button>`).join('');
+
+  const cards = people.map((m) => {
+    // Assignments are derived from the events, not stored on the person — the
+    // same rule as everywhere else, so moving an event updates the directory.
+    const mine = DATA.events
+      .filter((e) => (e.roles || []).some((r) => r.member === m.id))
+      .sort((a, b) => a.date.localeCompare(b.date));
+    const ahead = mine.filter((e) => e.date >= TODAY);
+    const clashes = mine.flatMap((e) => (e.roles || [])
+      .filter((r) => r.member === m.id && CLASHES.has(r))
+      .map((r) => ({ e, r, with: CLASHES.get(r) })));
+    const next = ahead[0];
+
+    return `<div class="card person${clashes.length ? ' is-clash' : ''}">
+      <div class="person-h">
+        <span class="avatar lg">${initials(m)}</span>
+        <div style="flex:1;min-width:0">
+          <h3>${esc(m.known_as)}</h3>
+          <p class="person-role">${esc(m.committee_role ?? 'Crew')}</p>
+        </div>
+        ${clashes.length
+          ? `<span class="tag tag-error">${svg('warning')} Clash</span>`
+          : `<span class="tag">${ahead.length} ahead</span>`}
+      </div>
+
+      <div class="person-grid">
+        <div>
+          <span class="kv-k">Trained on</span>
+          <span class="kv-v">${(m.trained || []).length
+            ? (m.trained || []).map((t) => `<span class="tag" style="margin:0 4px 4px 0">${esc(t.replace(/_/g, ' '))}</span>`).join('')
+            : '<span class="dimmed">nothing signed off</span>'}</span>
+        </div>
+        <div>
+          <span class="kv-k">Roles this year</span>
+          <span class="kv-v num" style="font-size:20px;font-weight:700">${
+            DATA.events.reduce((n, e) => n + (e.roles || []).filter((r) => r.member === m.id).length, 0)}</span>
+        </div>
+      </div>
+
+      ${clashes.length ? `<div class="note is-caution" style="margin-top:14px;margin-bottom:0">
+        <span class="note-k">Double-booked</span>
+        ${clashes.map((c) => `${esc(c.e.title)} — also ${esc(c.with)}`).join('<br>')}
+      </div>` : ''}
+
+      ${ahead.length ? `<div class="next-list">
+        <span class="kv-k">Next up</span>
+        ${ahead.slice(0, 3).map((e) => `<button class="next-item" data-ev="${e.id}" type="button">
+          <span class="d num">${shortDate(e.date)}</span>
+          <span class="t">${esc(e.title)}</span>
+          <span class="dimmed" style="font-size:11px">${esc((e.roles || [])
+            .filter((r) => r.member === m.id).map((r) => r.label).join(', '))}</span>
+        </button>`).join('')}
+      </div>` : `<div class="next-list"><span class="dimmed" style="font-size:12px">
+        ${next ? '' : 'Nothing booked ahead.'}</span></div>`}
+    </div>`;
+  }).join('');
+
+  document.getElementById('v-crew').innerHTML = `
+    <div class="page-head">
+      <div>
+        <h2 class="t-headline">Crew Directory</h2>
+        <p>Who can do what, and who is already committed. Names come from the handover — replace them before this ships.</p>
+      </div>
+    </div>
+    <div class="chips" style="margin-bottom:var(--gutter)">${chips}</div>
+    ${cards ? `<div class="people">${cards}</div>` : '<p class="empty">Nobody matches that.</p>'}`;
+}
+
+// --- Event sheet ----------------------------------------------------------
+// Everything editable applies on change rather than behind a Save button: the
+// sheet is where you correct a date you were never sure of, and a confirmation
+// step between "I know the real date" and "the calendar knows it" earns
+// nothing. Undo covers the mistakes.
+// Which role bay has its times/on-site detail open. View state, not data — it
+// deliberately survives a re-render of the sheet but nothing else.
+let bayEdit = null;
+// Which event the sheet is showing, so a mutation from anywhere — including an
+// Undo pressed on the toast, which is outside the sheet — can refresh it.
+let sheetId = null;
+
+// Building the sheet and opening it are separate. Undo re-runs render(), which
+// has to rebuild the sheet's contents; if that also moved focus, every undo
+// would yank the caret to the close button.
+function openSheet(id, refocus) {
+  if (!renderSheet(id)) return;
+  document.getElementById('sheet').classList.add('is-open');
+  document.getElementById('sheet').setAttribute('aria-hidden', 'false');
+  document.getElementById('scrim').classList.add('is-open');
+  const sheetIn = document.getElementById('sheet-in');
+  const back = refocus && sheetIn.querySelector(`[data-f="${refocus}"]`);
+  (back || document.getElementById('sheet-x')).focus();
+}
+
+function renderSheet(id) {
+  const e = DATA.events.find((x) => x.id === id);
+  if (!e) return false;
+  sheetId = id;
+  const d = parse(e.date);
+  const cov = coverage(e);
+  const soc = e.society ? SOCS[e.society] : null;
+
+  const STRANDS = ['freshers', 'sport', 'society', 'studio', 'ball', 'training', 'awards', 'admin', 'social'];
+  const STATUSES = ['idea', 'planned', 'confirmed', 'wrapped', 'cancelled'];
+  const opts = (list, sel) => list.map((v) =>
+    `<option value="${v}"${v === sel ? ' selected' : ''}>${v[0].toUpperCase() + v.slice(1)}</option>`).join('');
+
+  // Prep: the template lines that apply to this strand, plus the event's own.
+  const tmpl = (DATA.prep_templates || []).filter(
+    (t) => t.strand === '*' || t.strand === e.strand
+  );
+  const prep = [...tmpl, ...(e.prep || [])].map((p) => {
+    const due = new Date(d.getFullYear(), d.getMonth(), d.getDate() - p.lead_days);
+    const left = daysBetween(TODAY, iso(due));
+    return { ...p, due, left };
+  }).sort((a, b) => a.due - b.due);
+
+  document.getElementById('sheet-in').innerHTML = `
+    <div class="sheet-head">
+      <div style="flex:1;min-width:0">
+        <h2>${esc(e.title)}</h2>
+        <p class="sheet-when num">${DAYS[(d.getDay() + 6) % 7].toUpperCase()} ${d2(d.getDate())} ${MON3[d.getMonth()]} ${d.getFullYear()}
+          · ${e.confidence === 'estimated' ? 'date not confirmed' : 'date confirmed'}</p>
+      </div>
+      <button class="icon-btn" id="sheet-x" type="button" aria-label="Close">${svg('close', 'icon')}</button>
+    </div>
+
+    <label class="field">
+      <span class="field-k">Title</span>
+      <input type="text" data-f="title" value="${esc(e.title)}">
+    </label>
+
+    <div class="field-row">
+      <label class="field">
+        <span class="field-k">Date</span>
+        <input type="date" data-f="date" value="${e.date}">
+      </label>
+      <label class="field">
+        <span class="field-k">Confidence</span>
+        <select data-f="confidence">
+          <option value="estimated"${e.confidence !== 'fixed' ? ' selected' : ''}>Not confirmed</option>
+          <option value="fixed"${e.confidence === 'fixed' ? ' selected' : ''}>Confirmed</option>
+        </select>
+      </label>
+    </div>
+
+    <div class="field-row">
+      <label class="field">
+        <span class="field-k">Venue</span>
+        <input type="text" data-f="venue" value="${esc(e.venue ?? '')}" placeholder="—">
+      </label>
+      <label class="field">
+        <span class="field-k">Strand</span>
+        <select data-f="strand">${opts(STRANDS, e.strand)}</select>
+      </label>
+      <label class="field">
+        <span class="field-k">Status</span>
+        <select data-f="status">${opts(STATUSES, e.status)}</select>
+      </label>
+    </div>
+
+    <div class="rule">Times</div>
+    <div class="field-row">
+      <label class="field"><span class="field-k">Crew call</span>
+        <input type="time" data-f="call_time" value="${e.call_time ?? ''}"></label>
+      <label class="field"><span class="field-k">Doors</span>
+        <input type="time" data-f="doors_time" value="${e.doors_time ?? ''}"></label>
+      <label class="field"><span class="field-k">Start</span>
+        <input type="time" data-f="start_time" value="${e.start_time ?? ''}"></label>
+      <label class="field"><span class="field-k">Out</span>
+        <input type="time" data-f="end_time" value="${e.end_time ?? ''}"></label>
+    </div>
+
+    <div class="rule">Brief</div>
+    <textarea data-f="brief" placeholder="What are we actually making?">${esc(e.brief ?? '')}</textarea>
+
+    <div class="rule">Crew
+      <span class="tag ${cov.open ? 'tag-error' : cov.complete ? 'tag-primary' : ''} num">
+        ${cov.filled}/${cov.total}${cov.open ? ` · ${cov.open} open` : ''}</span>
+    </div>
+    ${cov.total ? `<div class="bank">${e.roles.map((r, i) => {
+      const clash = CLASHES.get(r);
+      const editing = bayEdit === i;
+      const when = r.on_site === false ? 'off site, no clash'
+        : r.from ? `${r.from}–${r.to ?? '?'}` : 'no times — treated as all day';
+      return `<div class="bay${r.member ? '' : ' is-open'}${editing ? ' is-editing' : ''}">
+        <div class="bay-h">
+          <input class="bay-k" data-role-label="${i}" value="${esc(r.label)}"
+                 list="role-presets" aria-label="Name of role ${i + 1}" spellcheck="false">
+          <button class="bay-x" data-role-del="${i}" type="button"
+                  aria-label="Remove the ${esc(r.label)} role">${svg('close')}</button>
+        </div>
+        <select data-role="${i}" aria-label="Who is on ${esc(r.label)}">
+          <option value=""${r.member ? '' : ' selected'}>Open — nobody yet</option>
+          ${peopleOptions(e, r)}
+        </select>
+        <button class="bay-toggle" data-role-edit="${i}" type="button" aria-expanded="${editing}">
+          ${when}${svg('chevron')}
+        </button>
+        ${editing ? `<div class="bay-edit">
+          <label>From<input type="time" data-role-time="${i}:from" value="${r.from ?? ''}"></label>
+          <label>To<input type="time" data-role-time="${i}:to" value="${r.to ?? ''}"></label>
+          <label class="bay-check" title="Off-site work never counts as a clash — an editor's job happens tomorrow, at a desk.">
+            <input type="checkbox" data-role-onsite="${i}" ${r.on_site === false ? '' : 'checked'}>
+            On site
+          </label>
+        </div>` : ''}
+        ${clash ? `<div class="bay-t bay-clash">Clash: ${esc(clash)}</div>` : ''}
+      </div>`;
+    }).join('')}</div>`
+    : `<p class="empty">No roles on this event yet. Add the jobs that need doing and
+        CTV OS can start telling you which of them nobody is on.</p>`}
+    <datalist id="role-presets">${ROLE_PRESETS.map((v) => `<option value="${v}">`).join('')}</datalist>
+    <button class="btn btn-ghost bank-add" id="role-add" type="button">
+      ${svg('plus')} Add a role
+    </button>
+
+    ${prep.length ? `<div class="rule">Prep</div>
+      <div class="rows">${prep.map((p) => {
+        const over = p.left < 0;
+        return `<div class="row">
+          <span class="row-l">
+            ${esc(p.label)}
+            ${p.owner_role ? `<span class="row-sub">${esc(p.owner_role)}</span>` : ''}
+            ${p.detail ? `<span class="row-d">${esc(p.detail)}</span>` : ''}
+          </span>
+          <span class="row-due num ${over ? 'is-over' : ''}">
+            <span class="row-date">${d2(p.due.getDate())} ${MON3[p.due.getMonth()]}</span>
+            <span class="row-rel">${relDay(p.left)}</span>
+          </span>
+        </div>`;
+      }).join('')}</div>` : ''}
+
+    ${soc ? `<div class="rule">${esc(soc.name)}</div>
+      ${soc.standing_terms ? `<div class="note"><span class="note-k">Always</span>${esc(soc.standing_terms)}</div>` : ''}
+      ${soc.cautions ? `<div class="note is-caution"><span class="note-k">Learned the hard way</span>${esc(soc.cautions)}</div>` : ''}
+      ${soc.charge_policy ? `<div class="note"><span class="note-k">Money</span>${esc(soc.charge_policy)}</div>` : ''}
+      ` : ''}
+
+    ${(e.deliverables || []).length ? `<div class="rule">Out of it</div>
+      <div class="rows">${e.deliverables.map((v) => `<div class="row">
+        <span class="row-l">${esc(v.title)}
+          ${v.nasta_category ? `<span class="row-sub">NaSTA · ${esc(v.nasta_category)}</span>` : ''}</span>
+        <span class="row-due num"><span class="row-date">+${v.due_offset}d</span></span>
+      </div>`).join('')}</div>` : ''}
+
+    <div class="sheet-foot">
+      <button class="btn btn-primary" id="sheet-done" type="button">Done</button>
+      <span class="spacer"></span>
+      <button class="btn btn-danger" id="sheet-del" type="button">Delete event</button>
+    </div>
+  `;
+
+  const sheetIn = document.getElementById('sheet-in');
+
+  // Field edits. `change` fires on blur for text and immediately for date,
+  // time and select, so typing is never interrupted by a re-render.
+  sheetIn.querySelectorAll('[data-f]').forEach((input) => {
+    input.onchange = () => {
+      const field = input.dataset.f;
+      const value = input.value.trim() === '' ? null : input.value;
+      const wasDate = e.date;
+      mutate(field === 'date' ? `Moved to ${value}` : `${e.title} updated`, (s) => {
+        const ev = s.events.find((x) => x.id === id);
+        ev[field] = value;
+        // Correcting a date is the moment the event stops being a guess.
+        if (field === 'date' && value !== wasDate) ev.confidence = 'fixed';
+      });
+      openSheet(id, field);
+    };
+  });
+
+  // Crew assignment.
+  sheetIn.querySelectorAll('[data-role]').forEach((sel) => {
+    sel.onchange = () => {
+      const i = Number(sel.dataset.role);
+      const who = sel.value || null;
+      mutate(who ? `${MEMBERS[who]?.known_as ?? who} added to ${e.roles[i].label}`
+                 : `${e.roles[i].label} reopened`, (s) => {
+        s.events.find((x) => x.id === id).roles[i].member = who;
+      });
+      openSheet(id, null);
+      sheetIn.querySelector(`[data-role="${i}"]`)?.focus();
+    };
+  });
+
+  // --- Editing the roles themselves ---------------------------------------
+  // Until this existed, an event created by hand could never be crewed: the
+  // sheet said its roles had to be named and offered no way to name them.
+  const roleEdit = (i, label, fn, refocus) => {
+    mutate(label, (s) => fn(s.events.find((x) => x.id === id).roles[i]));
+    openSheet(id, null);
+    if (refocus) sheetIn.querySelector(refocus)?.focus();
+  };
+
+  sheetIn.querySelectorAll('[data-role-label]').forEach((input) => {
+    input.onchange = () => {
+      const i = Number(input.dataset.roleLabel);
+      const label = input.value.trim().toUpperCase() || 'ROLE';
+      roleEdit(i, `Renamed to ${label}`, (r) => {
+        r.label = label;
+        // Re-derive the skill the role needs, so a renamed role still filters
+        // the crew list correctly.
+        if (LABEL_ROLE[label]) r.role = LABEL_ROLE[label];
+      }, `[data-role-label="${i}"]`);
+    };
+  });
+
+  sheetIn.querySelectorAll('[data-role-del]').forEach((btn) => {
+    btn.onclick = () => {
+      const i = Number(btn.dataset.roleDel);
+      const gone = e.roles[i].label;
+      bayEdit = null;
+      mutate(`Removed ${gone}`, (s) => { s.events.find((x) => x.id === id).roles.splice(i, 1); });
+      openSheet(id, null);
+    };
+  });
+
+  // Times and on-site collapse behind one line; this only toggles disclosure,
+  // so it is view state and never goes through mutate().
+  sheetIn.querySelectorAll('[data-role-edit]').forEach((btn) => {
+    btn.onclick = () => {
+      const i = Number(btn.dataset.roleEdit);
+      bayEdit = bayEdit === i ? null : i;
+      openSheet(id, null);
+      sheetIn.querySelector(`[data-role-edit="${i}"]`)?.focus();
+    };
+  });
+
+  sheetIn.querySelectorAll('[data-role-time]').forEach((input) => {
+    input.onchange = () => {
+      const [i, field] = input.dataset.roleTime.split(':');
+      roleEdit(Number(i), `${e.roles[Number(i)].label} times updated`,
+        (r) => { r[field] = input.value || null; }, `[data-role-time="${i}:${field}"]`);
+    };
+  });
+
+  sheetIn.querySelectorAll('[data-role-onsite]').forEach((box) => {
+    box.onchange = () => {
+      const i = Number(box.dataset.roleOnsite);
+      roleEdit(i, box.checked ? `${e.roles[i].label} is on site` : `${e.roles[i].label} moved off site`,
+        (r) => { r.on_site = box.checked; }, `[data-role-onsite="${i}"]`);
+    };
+  });
+
+  document.getElementById('role-add').onclick = () => {
+    const at = e.roles.length;
+    bayEdit = null;
+    mutate('Role added', (s) => {
+      s.events.find((x) => x.id === id).roles.push(
+        { label: 'NEW ROLE', role: null, member: null, from: null, to: null, on_site: true });
+    });
+    openSheet(id, null);
+    const input = sheetIn.querySelector(`[data-role-label="${at}"]`);
+    input?.focus();
+    input?.select();
+  };
+
+  document.getElementById('sheet-x').onclick = closeSheet;
+  document.getElementById('sheet-done').onclick = closeSheet;
+  document.getElementById('sheet-del').onclick = () => {
+    closeSheet();
+    mutate(`Deleted ${e.title}`, (s) => {
+      s.events = s.events.filter((x) => x.id !== id);
+    });
+  };
+
+  return true;
+}
+
+function closeSheet() {
+  bayEdit = null;
+  sheetId = null;
+  document.getElementById('sheet').classList.remove('is-open');
+  document.getElementById('sheet').setAttribute('aria-hidden', 'true');
+  document.getElementById('scrim').classList.remove('is-open');
+}
+
+// --- Navigation -----------------------------------------------------------
+const VIEWS = [
+  ['overview', 'Overview', 'dashboard'],
+  ['calendar', 'Calendar', 'calendar'],
+  ['schedule', 'Schedule', 'timeline'],
+  ['tasks',    'To do',    'checklist'],
+  ['crew',     'Crew',     'group'],
+];
+let view = 'overview';
+
+// Previous pill values, so a count that moved can say so. Closing a crew gap
+// happens in the sheet, three hundred pixels from the number it changes.
+let lastPills = {};
+
+function renderNav() {
+  const open = totalOpen();
+  const overdue = withDue(DATA.tasks || []).filter((t) => !t.done && t.left !== null && t.left < 0).length;
+  const next = {};
+  document.getElementById('nav').innerHTML = VIEWS.map(([id, label, icon]) => {
+    const pill = id === 'calendar' || id === 'schedule' ? open : id === 'tasks' ? overdue : null;
+    if (pill !== null) next[id] = pill;
+    const moved = pill !== null && lastPills[id] !== undefined && lastPills[id] !== pill;
+    return `<button class="nav-item" data-view="${id}" aria-current="${view === id}" type="button">
+      ${svg(icon, 'icon')} <span>${label}</span>
+      ${pill !== null ? `<span class="nav-pill num ${pill ? '' : 'is-clear'}${moved ? ' is-hit' : ''}">${pill}</span>` : ''}
+    </button>`;
+  }).join('');
+  lastPills = next;
+}
+
+function setView(v) {
+  view = v;
+  for (const [id] of VIEWS) document.getElementById(`v-${id}`).hidden = id !== v;
+  renderNav();
+  // Leaving for another screen closes the sheet. Otherwise the drawer sits
+  // over a screen it has nothing to do with, and the scrim swallows the first
+  // click you make there.
+  closeSheet();
+  setSide(false);
+  window.scrollTo({ top: 0 });
+}
+
+// --- Wiring ---------------------------------------------------------------
+document.addEventListener('click', (ev) => {
+  const t = ev.target;
+
+  const nav = t.closest('[data-view]');
+  if (nav) { setView(nav.dataset.view); return; }
+
+  const add = t.closest('[data-add]');
+  if (add) { addEvent(add.dataset.add); return; }
+
+  // "Assign" jumps to the sheet with that role's select focused, so closing a
+  // gap from the schedule is one click and one choice.
+  const assign = t.closest('[data-assign]');
+  if (assign) {
+    const [id, i] = assign.dataset.assign.split(':');
+    openSheet(id, null);
+    document.querySelector(`[data-role="${i}"]`)?.focus();
+    return;
+  }
+
+  const evBtn = t.closest('[data-ev]');
+  if (evBtn) { openSheet(evBtn.dataset.ev); return; }
+
+  const rib = t.closest('.rib');
+  if (rib) { cur = { y: +rib.dataset.y, m: +rib.dataset.m }; renderCalendar(); return; }
+
+  const cf = t.closest('[data-cal-filter]');
+  if (cf) { calFilter = cf.dataset.calFilter; renderCalendar(); return; }
+
+  const sd = t.closest('[data-sel-day]');
+  if (sd) { selDay = sd.dataset.selDay; renderSchedule(); return; }
+
+  const wk = t.closest('[data-week]');
+  if (wk) {
+    const d = parse(selDay);
+    selDay = iso(new Date(d.getFullYear(), d.getMonth(), d.getDate() + Number(wk.dataset.week)));
+    renderSchedule(); return;
+  }
+
+  const sm = t.closest('[data-sched]');
+  if (sm) { schedMode = sm.dataset.sched; renderSchedule(); return; }
+
+  const tm = t.closest('[data-task-mode]');
+  if (tm) { taskMode = tm.dataset.taskMode; renderTasks(); return; }
+
+  const area = t.closest('[data-area]');
+  if (area) { areaFilter = area.dataset.area; renderTasks(); return; }
+
+  const skill = t.closest('[data-skill]');
+  if (skill) { skillFilter = skill.dataset.skill; renderCrew(); return; }
+
+  if (t.closest('#hide-done')) { hideDone = !hideDone; renderTasks(); return; }
+  if (t.closest('#task-new')) {
+    addingTask = true; renderTasks();
+    document.querySelector('#task-form [name=title]')?.focus();
+    return;
+  }
+  if (t.closest('#task-cancel')) { addingTask = false; renderTasks(); return; }
+
+  const tdel = t.closest('[data-task-del]');
+  if (tdel) {
+    const id = tdel.dataset.taskDel;
+    const task = DATA.tasks.find((x) => x.id === id);
+    mutate(`Deleted: ${task.title}`, (s) => { s.tasks = s.tasks.filter((x) => x.id !== id); });
+    return;
+  }
+  if (t.closest('#prev')) { cur.m--; if (cur.m < 0) { cur.m = 11; cur.y--; } renderCalendar(); return; }
+  if (t.closest('#next')) { cur.m++; if (cur.m > 11) { cur.m = 0; cur.y++; } renderCalendar(); return; }
+  if (t.closest('#today')) {
+    const d = parse(TODAY); cur = { y: d.getFullYear(), m: d.getMonth() }; renderCalendar(); return;
+  }
+});
+
+// The sidebar and its backdrop move together, so there is no state where one
+// is showing and the other is not.
+function setSide(open) {
+  document.getElementById('side').classList.toggle('is-open', open);
+  document.getElementById('side-scrim').classList.toggle('is-open', open);
+  document.getElementById('menu').setAttribute('aria-expanded', String(open));
+}
+document.getElementById('menu').onclick = () =>
+  setSide(!document.getElementById('side').classList.contains('is-open'));
+document.getElementById('side-scrim').onclick = () => setSide(false);
+document.getElementById('add-event').onclick = () => addEvent(TODAY);
+document.getElementById('help').onclick = () => toast(
+  'Prototype: edits persist in this browser only. Export writes a corrected year.json.',
+  () => {});
+
+document.getElementById('scrim').onclick = closeSheet;
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') { closeSheet(); setSide(false); }
+});
+
+// Search re-renders every list view; the calendar fades non-matches instead of
+// removing them.
+let qTimer;
+document.getElementById('q').addEventListener('input', (e) => {
+  clearTimeout(qTimer);
+  qTimer = setTimeout(() => { q = e.target.value.trim().toLowerCase(); render(); }, 120);
+});
+
+// A to-do you add is a to-do like any other: same store, same undo, and it
+// leaves in the export. `source: 'you'` distinguishes it from the handover's
+// own items, which carry a section reference instead.
+document.addEventListener('submit', (ev) => {
+  if (ev.target.id !== 'task-form') return;
+  ev.preventDefault();
+  const f = new FormData(ev.target);
+  const title = String(f.get('title')).trim();
+  if (!title) return;
+  addingTask = false;
+  mutate(`Added: ${title}`, (s) => {
+    s.tasks.push({
+      id: `you-${Date.now().toString(36)}`,
+      title, detail: null, area: f.get('area'), source: 'you',
+      owner_role: 'Station Manager',
+      anchor: null, lead_days: null, due: f.get('due') || null, done: false,
+    });
+  });
+});
+
+// Ticking a box is a mutation like any other, so it is persisted and undoable
+// on the same path as moving an event.
+document.addEventListener('change', (ev) => {
+  const box = ev.target.closest('[data-task]');
+  if (!box) return;
+  const id = box.dataset.task;
+  const t = DATA.tasks.find((x) => x.id === id);
+  mutate(box.checked ? `Done: ${t.title}` : `Reopened: ${t.title}`, (s) => {
+    s.tasks.find((x) => x.id === id).done = box.checked;
+  });
+});
+
+// --- Moving events across dates -------------------------------------------
+// Drag is the enhancement; the date field in the sheet is the real mechanism,
+// because HTML5 drag-and-drop does not exist on touch and half the use of this
+// product is on a phone.
+let dragId = null;
+
+document.addEventListener('dragstart', (ev) => {
+  const chip = ev.target.closest('.ev');
+  if (!chip) return;
+  dragId = chip.dataset.ev;
+  chip.classList.add('is-dragging');
+  ev.dataTransfer.effectAllowed = 'move';
+  ev.dataTransfer.setData('text/plain', dragId);
+});
+
+document.addEventListener('dragend', (ev) => {
+  ev.target.closest('.ev')?.classList.remove('is-dragging');
+  document.querySelectorAll('.day.is-drop').forEach((d) => d.classList.remove('is-drop'));
+  dragId = null;
+});
+
+document.addEventListener('dragover', (ev) => {
+  const day = ev.target.closest('.day');
+  if (!day || !dragId) return;
+  ev.preventDefault();
+  ev.dataTransfer.dropEffect = 'move';
+  document.querySelectorAll('.day.is-drop').forEach((d) => d.classList.remove('is-drop'));
+  day.classList.add('is-drop');
+});
+
+document.addEventListener('drop', (ev) => {
+  const day = ev.target.closest('.day');
+  if (!day || !dragId) return;
+  ev.preventDefault();
+  const id = dragId, to = day.dataset.day;
+  const moved = DATA.events.find((x) => x.id === id);
+  if (!moved || moved.date === to) return;
+  const from = moved.date;
+  mutate(`${moved.title}: ${from} → ${to}`, (s) => {
+    const target = s.events.find((x) => x.id === id);
+    target.date = to;
+    // Dragging something onto a date is a decision, so it stops being inferred.
+    target.confidence = 'fixed';
+  });
+});
+
+// --- Adding events --------------------------------------------------------
+function addEvent(date) {
+  const id = `new-${Date.now().toString(36)}`;
+  mutate('Event added', (s) => {
+    s.events.push({
+      id, title: 'New event', date, strand: 'society', status: 'idea',
+      confidence: 'fixed', venue: null, roles: [],
+    });
+  });
+  openSheet(id, 'title');
+}
+
+// --- Export ---------------------------------------------------------------
+// The point of letting you correct the year is getting the corrections back.
+function exportYear() {
+  const out = { ...SEED, events: DATA.events, tasks: DATA.tasks,
+                exported_at: new Date().toISOString() };
+  const url = URL.createObjectURL(
+    new Blob([JSON.stringify(out, null, 2)], { type: 'application/json' })
+  );
+  const a = document.createElement('a');
+  a.href = url; a.download = 'year.json'; a.click();
+  URL.revokeObjectURL(url);
+}
+
+document.getElementById('export').onclick = exportYear;
+
+document.getElementById('reset').onclick = () => {
+  const before = clone(DATA);
+  DATA = clone(SEED);
+  persist();
+  render();
+  toast('Reset to the seed year', () => { DATA = before; persist(); render(); });
+};
+
+// --- Render ---------------------------------------------------------------
+function render() {
+  CLASHES = findClashes();
+  renderNav();
+  renderOverview();
+  renderCalendar();
+  renderSchedule();
+  renderTasks();
+  renderCrew();
+  // The sheet is part of the render, not a thing that happens to be on top of
+  // it. Without this, Undo restored the data and left the sheet showing the
+  // state you had just undone — and if the undone change was a deletion, the
+  // sheet stayed open over an event that no longer existed.
+  if (sheetId) {
+    if (!renderSheet(sheetId)) closeSheet();
+  }
+}
+
+// Materialise the working copy on first load. The working copy is the truth
+// (the seed is only a fallback), so it should exist from the first visit
+// rather than springing into being on the first edit.
+persist();
+setView('overview');
+render();
+</script>

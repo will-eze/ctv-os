@@ -1,0 +1,422 @@
+<!DOCTYPE html><html class="light" lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>CampusTV - Gear Locker</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "surface-container-low": "#f2f3ff",
+                      "on-surface": "#131b2e",
+                      "inverse-surface": "#283044",
+                      "tertiary-fixed": "#d3e4fe",
+                      "on-error": "#ffffff",
+                      "surface-container-highest": "#dae2fd",
+                      "surface-dim": "#d2d9f4",
+                      "surface": "#faf8ff",
+                      "surface-container-lowest": "#ffffff",
+                      "on-error-container": "#93000a",
+                      "error-container": "#ffdad6",
+                      "secondary-fixed-dim": "#c4c7c9",
+                      "on-primary-container": "#92d2a1",
+                      "tertiary-container": "#425268",
+                      "background": "#faf8ff",
+                      "primary": "#004421",
+                      "outline-variant": "#c0c9be",
+                      "on-tertiary": "#ffffff",
+                      "secondary": "#5c5f61",
+                      "on-secondary-fixed-variant": "#444749",
+                      "inverse-primary": "#95d5a4",
+                      "surface-bright": "#faf8ff",
+                      "on-primary-fixed": "#00210d",
+                      "tertiary": "#2b3b50",
+                      "on-background": "#131b2e",
+                      "outline": "#707970",
+                      "on-secondary-container": "#626567",
+                      "inverse-on-surface": "#eef0ff",
+                      "on-tertiary-container": "#b5c5df",
+                      "surface-variant": "#dae2fd",
+                      "tertiary-fixed-dim": "#b7c8e1",
+                      "on-surface-variant": "#404941",
+                      "surface-tint": "#2c6a42",
+                      "secondary-fixed": "#e0e3e5",
+                      "primary-fixed": "#b0f2be",
+                      "primary-container": "#1d5c35",
+                      "on-tertiary-fixed-variant": "#38485d",
+                      "on-primary": "#ffffff",
+                      "secondary-container": "#e0e3e5",
+                      "on-secondary-fixed": "#191c1e",
+                      "primary-fixed-dim": "#95d5a4",
+                      "on-tertiary-fixed": "#0b1c30",
+                      "surface-container-high": "#e2e7ff",
+                      "on-secondary": "#ffffff",
+                      "error": "#ba1a1a",
+                      "on-primary-fixed-variant": "#0f512c",
+                      "surface-container": "#eaedff"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "sidebar-width": "260px",
+                      "stack-sm": "8px",
+                      "gutter": "24px",
+                      "margin": "32px",
+                      "stack-md": "16px",
+                      "stack-lg": "24px"
+              },
+              "fontFamily": {
+                      "body-md": [
+                              "Inter"
+                      ],
+                      "title-lg": [
+                              "Inter"
+                      ],
+                      "display-lg": [
+                              "Inter"
+                      ],
+                      "body-lg": [
+                              "Inter"
+                      ],
+                      "headline-lg": [
+                              "Inter"
+                      ],
+                      "headline-lg-mobile": [
+                              "Inter"
+                      ],
+                      "headline-md": [
+                              "Inter"
+                      ],
+                      "label-md": [
+                              "Inter"
+                      ]
+              },
+              "fontSize": {
+                      "body-md": [
+                              "14px",
+                              {
+                                      "lineHeight": "20px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "title-lg": [
+                              "20px",
+                              {
+                                      "lineHeight": "28px",
+                                      "fontWeight": "500"
+                              }
+                      ],
+                      "display-lg": [
+                              "48px",
+                              {
+                                      "lineHeight": "56px",
+                                      "letterSpacing": "-0.02em",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "body-lg": [
+                              "16px",
+                              {
+                                      "lineHeight": "24px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "headline-lg": [
+                              "32px",
+                              {
+                                      "lineHeight": "40px",
+                                      "letterSpacing": "-0.01em",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "headline-lg-mobile": [
+                              "28px",
+                              {
+                                      "lineHeight": "36px",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "headline-md": [
+                              "24px",
+                              {
+                                      "lineHeight": "32px",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "label-md": [
+                              "12px",
+                              {
+                                      "lineHeight": "16px",
+                                      "letterSpacing": "0.05em",
+                                      "fontWeight": "600"
+                              }
+                      ]
+              }
+      },
+          },
+        }
+    </script>
+<style>
+        body {
+            background-color: #F8FAFC;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .material-symbols-outlined[data-weight="fill"] {
+            font-variation-settings: 'FILL' 1;
+        }
+        
+        /* Custom Scrollbar for better UI */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #e0e3e5;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #c4c7c9;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background font-body-md text-body-md antialiased overflow-hidden flex h-screen w-screen">
+<!-- SideNavBar -->
+<nav class="fixed left-0 top-0 h-screen w-[260px] bg-surface-container flex flex-col h-full py-margin px-stack-sm z-20">
+<div class="mb-8 px-4 flex items-center gap-3">
+<div class="w-10 h-10 rounded-lg bg-primary flex items-center justify-center text-on-primary font-bold">
+                C
+            </div>
+<div>
+<h1 class="font-headline-md text-headline-md font-bold text-primary">CampusTV</h1>
+<p class="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Internal OS</p>
+</div>
+</div>
+<button class="mb-8 mx-2 bg-primary text-on-primary py-2 px-4 rounded-lg font-body-md flex items-center justify-center gap-2 hover:opacity-90 transition-opacity">
+<span class="material-symbols-outlined">add</span>
+            New Broadcast
+        </button>
+<ul class="flex flex-col gap-1 flex-1">
+<li>
+<a class="flex items-center gap-3 text-on-surface-variant py-2.5 px-4 rounded-lg hover:bg-surface-container-high transition-colors font-body-md text-body-md" href="#">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+                    Dashboard
+                </a>
+</li>
+<li>
+<a class="flex items-center gap-3 text-on-surface-variant py-2.5 px-4 rounded-lg hover:bg-surface-container-high transition-colors font-body-md text-body-md" href="#">
+<span class="material-symbols-outlined" data-icon="live_tv">live_tv</span>
+                    Broadcasts
+                </a>
+</li>
+<li>
+<a class="flex items-center gap-3 text-on-surface-variant py-2.5 px-4 rounded-lg hover:bg-surface-container-high transition-colors font-body-md text-body-md" href="#">
+<span class="material-symbols-outlined" data-icon="video_library">video_library</span>
+                    Library
+                </a>
+</li>
+<li>
+<a class="flex items-center gap-3 text-primary font-bold border-l-2 border-primary bg-primary-fixed-dim/10 py-2.5 px-4 rounded-r-lg font-body-md text-body-md" href="#">
+<span class="material-symbols-outlined" data-icon="inventory_2" data-weight="fill">inventory_2</span>
+                    Gear Locker
+                </a>
+</li>
+<li>
+<a class="flex items-center gap-3 text-on-surface-variant py-2.5 px-4 rounded-lg hover:bg-surface-container-high transition-colors font-body-md text-body-md" href="#">
+<span class="material-symbols-outlined" data-icon="groups">groups</span>
+                    Crew
+                </a>
+</li>
+</ul>
+<div class="mt-auto pt-4 border-t border-outline-variant/30">
+<ul class="flex flex-col gap-1">
+<li>
+<a class="flex items-center gap-3 text-on-surface-variant py-2 px-4 rounded-lg hover:bg-surface-container-high transition-colors font-label-md text-label-md uppercase" href="#">
+<span class="material-symbols-outlined text-[18px]" data-icon="settings">settings</span>
+                        Settings
+                    </a>
+</li>
+<li>
+<a class="flex items-center gap-3 text-on-surface-variant py-2 px-4 rounded-lg hover:bg-surface-container-high transition-colors font-label-md text-label-md uppercase" href="#">
+<span class="material-symbols-outlined text-[18px]" data-icon="help_outline">help_outline</span>
+                        Support
+                    </a>
+</li>
+</ul>
+</div>
+</nav>
+<!-- Main Content Area -->
+<div class="flex-1 ml-[260px] flex flex-col h-full bg-[#F8FAFC]">
+<!-- TopNavBar -->
+<header class="h-16 bg-surface flex justify-between items-center px-gutter w-full max-w-[1440px] mx-auto border-b border-outline-variant shadow-sm z-10 shrink-0">
+<div class="flex items-center gap-4 flex-1">
+<div class="relative w-96">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant">search</span>
+<input class="w-full bg-surface-container-lowest border border-outline-variant rounded-lg pl-10 pr-4 py-2 font-body-md text-body-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all" placeholder="Search equipment..." type="text">
+</div>
+</div>
+<div class="flex items-center gap-4">
+<button class="w-10 h-10 rounded-full flex items-center justify-center text-on-surface-variant hover:bg-surface-container-high transition-colors relative">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+<span class="absolute top-2 right-2 w-2 h-2 bg-error rounded-full"></span>
+</button>
+<button class="w-10 h-10 rounded-full flex items-center justify-center text-on-surface-variant hover:bg-surface-container-high transition-colors">
+<span class="material-symbols-outlined" data-icon="help">help</span>
+</button>
+<div class="w-8 h-8 rounded-full bg-tertiary-fixed flex items-center justify-center overflow-hidden border border-outline-variant ml-2 cursor-pointer">
+<img alt="User Profile" class="w-full h-full object-cover" data-alt="A professional headshot of a user in a well-lit modern office environment, corporate attire, soft lighting, sharp focus, high-quality photography." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBjA_wfoyT4A2xnJtoFvNOUaS7wsInl6PkzEhP25yqyGwT45pX59ooMo_39GT73YSQm6fUuLLJJBr0M7C6PjRF2UaOQAyv9E5xG6kJqKoyEa8DCd7-h05ZbESYv9ZJ0ouRBdKi_XwWIsM4WqfSupj7qv2Be6oc9qRVoaQnvvmEPoU98JqGboBYLBXbF-lXLS_aHFzoa_ncNAPNpgJY7EdyqmhgMIsElZbfUSK_FoBSG6zCwqnzFhRnl">
+</div>
+</div>
+</header>
+<!-- Main Canvas -->
+<main class="flex-1 overflow-y-auto p-margin w-full max-w-[1440px] mx-auto">
+<!-- Page Header & Filters -->
+<div class="flex flex-col gap-stack-lg mb-8">
+<div class="flex justify-between items-end">
+<div>
+<h2 class="font-headline-lg text-headline-lg font-bold text-on-surface tracking-tight">Gear Locker</h2>
+<p class="font-body-md text-body-md text-on-surface-variant mt-1">Manage and track production equipment inventory.</p>
+</div>
+<button class="bg-primary text-on-primary px-4 py-2 rounded-lg font-label-md text-label-md uppercase tracking-wider hover:opacity-90 transition-opacity shadow-sm flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px]">add_circle</span>
+                        Add Item
+                    </button>
+</div>
+<!-- Filters Bar -->
+<div class="flex gap-4 items-center bg-surface-container-lowest p-2 rounded-xl border border-outline-variant/50 shadow-[0_4px_12px_rgba(0,0,0,0.02)]">
+<button class="px-4 py-1.5 rounded-lg bg-surface-container-high text-on-surface font-label-md text-label-md uppercase transition-colors">All Gear</button>
+<button class="px-4 py-1.5 rounded-lg text-on-surface-variant hover:bg-surface-container font-label-md text-label-md uppercase transition-colors">Cameras</button>
+<button class="px-4 py-1.5 rounded-lg text-on-surface-variant hover:bg-surface-container font-label-md text-label-md uppercase transition-colors">Lenses</button>
+<button class="px-4 py-1.5 rounded-lg text-on-surface-variant hover:bg-surface-container font-label-md text-label-md uppercase transition-colors">Audio</button>
+<button class="px-4 py-1.5 rounded-lg text-on-surface-variant hover:bg-surface-container font-label-md text-label-md uppercase transition-colors">Lighting</button>
+<div class="w-[1px] h-6 bg-outline-variant/50 mx-2"></div>
+<button class="flex items-center gap-2 px-3 py-1.5 rounded-lg text-on-surface-variant hover:bg-surface-container font-label-md text-label-md uppercase transition-colors ml-auto">
+<span class="material-symbols-outlined text-[16px]">filter_list</span>
+                        More Filters
+                    </button>
+</div>
+</div>
+<!-- Bento Grid layout for inventory -->
+<div class="grid grid-cols-12 gap-stack-lg pb-margin">
+<!-- Summary Card -->
+<div class="col-span-12 lg:col-span-4 bg-surface-container-lowest rounded-xl border border-outline-variant/50 p-6 shadow-[0_4px_12px_rgba(0,0,0,0.02)] flex flex-col justify-between min-h-[200px]">
+<div>
+<h3 class="font-title-lg text-title-lg font-medium text-on-surface mb-1">Inventory Status</h3>
+<p class="font-body-md text-body-md text-on-surface-variant">Real-time availability overview.</p>
+</div>
+<div class="flex gap-4 mt-6">
+<div class="flex-1 bg-surface-container-low p-4 rounded-lg border border-outline-variant/30">
+<div class="font-display-lg text-display-lg text-primary mb-1">142</div>
+<div class="font-label-md text-label-md text-on-surface-variant uppercase flex items-center gap-1">
+<span class="w-2 h-2 rounded-full bg-primary inline-block"></span> Available
+                            </div>
+</div>
+<div class="flex-1 bg-surface-container-low p-4 rounded-lg border border-outline-variant/30">
+<div class="font-display-lg text-display-lg text-tertiary mb-1">28</div>
+<div class="font-label-md text-label-md text-on-surface-variant uppercase flex items-center gap-1">
+<span class="w-2 h-2 rounded-full bg-tertiary inline-block"></span> In Use
+                            </div>
+</div>
+</div>
+</div>
+<!-- High Priority Item (Maintenance) -->
+<div class="col-span-12 lg:col-span-8 bg-error-container/20 rounded-xl border border-error/20 p-6 flex items-center gap-6 shadow-[0_4px_12px_rgba(0,0,0,0.02)]">
+<div class="w-32 h-32 rounded-lg bg-surface-container-lowest border border-error/30 flex items-center justify-center p-2 shrink-0">
+<img class="w-full h-full object-contain mix-blend-multiply opacity-80" data-alt="A professional studio lighting fixture, highly detailed, modern minimalist design, isolated on a stark white background with subtle reflections." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAUzVT0mFgP-UtZ1wqRqT7Z0v1leiXyaef8OqJBStjKl3Z-1iOF-vR6c1Y3SPVdYQYD1w2aVBNdELas43qSzJpGjQZTuLjVW11zjFhbwu6B3Ckyk0XcIA7ctujaz02YrdrOmACnm5vozuahbbmA7PMllcOuRWTJLOjIAajGCmrEma64plqeSqYwq4Yo_WCyyd8ezXlHvWVZWl_HoNf9IhunFUpQl9_ACoSE0tH75PVv9GW2KdVwwTR8">
+</div>
+<div class="flex-1">
+<div class="flex items-center gap-3 mb-2">
+<span class="bg-error/10 text-error px-2 py-0.5 rounded-full font-label-md text-[10px] uppercase font-bold tracking-wider">Maintenance</span>
+<span class="font-label-md text-label-md text-error flex items-center gap-1"><span class="material-symbols-outlined text-[14px]">warning</span> Action Required</span>
+</div>
+<h3 class="font-headline-md text-headline-md font-bold text-on-surface mb-1">Aputure LS 600d Pro</h3>
+<div class="font-body-md text-body-md text-on-surface-variant mb-4 flex items-center gap-4">
+<span>ID: LGT-042</span>
+<span class="text-outline-variant">•</span>
+<span>Reported issue: Ballast fan noise</span>
+</div>
+<button class="bg-white border border-outline-variant text-on-surface px-4 py-1.5 rounded-lg font-label-md text-label-md uppercase hover:bg-surface-container-low transition-colors shadow-sm">View Ticket</button>
+</div>
+</div>
+<!-- Grid List of Standard Items -->
+<!-- Item 1 -->
+<div class="col-span-12 md:col-span-6 lg:col-span-4 bg-surface-container-lowest rounded-xl border border-outline-variant/60 overflow-hidden shadow-[0_4px_12px_rgba(0,0,0,0.03)] flex flex-col group hover:shadow-[0_8px_24px_rgba(0,0,0,0.06)] transition-all">
+<div class="h-40 bg-surface-container-low p-4 flex items-center justify-center relative border-b border-outline-variant/30">
+<div class="absolute top-3 left-3 bg-primary/10 text-primary px-2 py-0.5 rounded-full font-label-md text-[10px] uppercase font-bold tracking-wider backdrop-blur-sm border border-primary/20">Available</div>
+<button class="absolute top-3 right-3 w-8 h-8 rounded-full bg-white/80 flex items-center justify-center text-on-surface-variant hover:text-primary backdrop-blur-sm shadow-sm opacity-0 group-hover:opacity-100 transition-opacity">
+<span class="material-symbols-outlined text-[18px]">more_horiz</span>
+</button>
+<img class="h-full object-contain mix-blend-multiply drop-shadow-sm" data-alt="A professional cinema camera body, Sony FX6, black matte finish, isolated on a light grey background, sharp focus, studio lighting." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAHGNVgaft6OqfX42plvrJtdIOj5LSRhbsfUoXwIYNYzmwJYXRAZ50bX7bFZnxJOjQlQW4aFVwe3XcFQvHC3tzkqq60kHasotRPmf-XbPUUPvE6YoWqKGEZJtcdGDTC5HOm-zZ8bocrVmaYj2opuxAFmi8LWhqs8fBWRJSIUI_DjhuL5WnHz3_-5MyjX29cr4Qowhmkr5lxo2kWkt4iw1abejrHRtAjDK3La86a4W5GU4tTP0FAsw--">
+</div>
+<div class="p-4 flex flex-col flex-1">
+<div class="flex justify-between items-start mb-1">
+<span class="font-label-md text-[10px] text-on-surface-variant font-mono">CAM-101</span>
+<span class="font-label-md text-[10px] text-on-surface-variant flex items-center gap-1"><span class="material-symbols-outlined text-[12px]">location_on</span> Studio A</span>
+</div>
+<h4 class="font-title-lg text-title-lg font-semibold text-on-surface mb-4 line-clamp-1">Sony FX6 Cinema Camera</h4>
+<div class="mt-auto pt-4 border-t border-outline-variant/30">
+<button class="w-full bg-primary text-on-primary py-2 rounded-lg font-label-md text-label-md uppercase tracking-wide hover:bg-primary-container transition-colors shadow-sm">Reserve</button>
+</div>
+</div>
+</div>
+<!-- Item 2 -->
+<div class="col-span-12 md:col-span-6 lg:col-span-4 bg-surface-container-lowest rounded-xl border border-outline-variant/60 overflow-hidden shadow-[0_4px_12px_rgba(0,0,0,0.03)] flex flex-col group hover:shadow-[0_8px_24px_rgba(0,0,0,0.06)] transition-all">
+<div class="h-40 bg-surface-container-low p-4 flex items-center justify-center relative border-b border-outline-variant/30">
+<div class="absolute top-3 left-3 bg-tertiary/10 text-tertiary px-2 py-0.5 rounded-full font-label-md text-[10px] uppercase font-bold tracking-wider backdrop-blur-sm border border-tertiary/20">In Use</div>
+<button class="absolute top-3 right-3 w-8 h-8 rounded-full bg-white/80 flex items-center justify-center text-on-surface-variant hover:text-primary backdrop-blur-sm shadow-sm opacity-0 group-hover:opacity-100 transition-opacity">
+<span class="material-symbols-outlined text-[18px]">more_horiz</span>
+</button>
+<img class="h-full object-contain mix-blend-multiply drop-shadow-sm" data-alt="A professional wireless audio microphone kit, Sennheiser EW100, black matte finish, isolated on a light grey background, sharp focus, studio lighting." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCtWiYZYNis0CGtzjQ-ruieLtPA5jwkzNAr0lDkmsZUpKH65OTBbcl7PpDxYb3yhxuQmqgRwrgW980mSRebdPNHOe5f2olAzHU6UyI4R9j9KdGK4N5vekJCM0NdiY3BnSlY8sQ0A38parfGTYRajQdh-ieM25dcUsZVQwgAnQKY4Ae7mN2VdrDbpIDoeqoCZFz-8EFAjT_SnFPLzuDuHfwueCJCPflVlKIRmOio7BlPu32j3FpX59QS">
+</div>
+<div class="p-4 flex flex-col flex-1">
+<div class="flex justify-between items-start mb-1">
+<span class="font-label-md text-[10px] text-on-surface-variant font-mono">AUD-214</span>
+<span class="font-label-md text-[10px] text-on-surface-variant flex items-center gap-1"><span class="material-symbols-outlined text-[12px]">location_on</span> Field (Team B)</span>
+</div>
+<h4 class="font-title-lg text-title-lg font-semibold text-on-surface mb-4 line-clamp-1">Sennheiser EW 100 G4</h4>
+<div class="mt-auto pt-4 border-t border-outline-variant/30">
+<div class="flex items-center justify-between font-label-md text-[11px] text-on-surface-variant mb-2">
+<span>Expected Return:</span>
+<span>Today, 5:00 PM</span>
+</div>
+<button class="w-full bg-white border border-outline-variant text-on-surface py-1.5 rounded-lg font-label-md text-label-md uppercase tracking-wide hover:bg-surface-container-low transition-colors">Details</button>
+</div>
+</div>
+</div>
+<!-- Item 3 -->
+<div class="col-span-12 md:col-span-6 lg:col-span-4 bg-surface-container-lowest rounded-xl border border-outline-variant/60 overflow-hidden shadow-[0_4px_12px_rgba(0,0,0,0.03)] flex flex-col group hover:shadow-[0_8px_24px_rgba(0,0,0,0.06)] transition-all">
+<div class="h-40 bg-surface-container-low p-4 flex items-center justify-center relative border-b border-outline-variant/30">
+<div class="absolute top-3 left-3 bg-primary/10 text-primary px-2 py-0.5 rounded-full font-label-md text-[10px] uppercase font-bold tracking-wider backdrop-blur-sm border border-primary/20">Available</div>
+<button class="absolute top-3 right-3 w-8 h-8 rounded-full bg-white/80 flex items-center justify-center text-on-surface-variant hover:text-primary backdrop-blur-sm shadow-sm opacity-0 group-hover:opacity-100 transition-opacity">
+<span class="material-symbols-outlined text-[18px]">more_horiz</span>
+</button>
+<img class="h-full object-contain mix-blend-multiply drop-shadow-sm" data-alt="A professional heavy-duty tripod, Manfrotto, black and silver metal, isolated on a light grey background, sharp focus, studio lighting." src="https://lh3.googleusercontent.com/aida-public/AB6AXuB92sZ85mXB0D_IYyoLcOqQX2eAx4pHxeb5r3yno38Rzb7gP5cQJtruBx75vVY__wX-aiWypQri0xFKbldCxKUPjAQTeJnrrkTvH2Lt1OaazOMVgndJnblLe5zuNsknEkpBmL9SCK-2zepS5D5kzut-dyT9arKxmKSZE1CKbk_kjSOPPOUjaVUIRyNVYxiO2eBjLyveC3pCBIkG77Hr2YReHozuGYtnoOsBSgS39EaOKpo2aGQCmt94">
+</div>
+<div class="p-4 flex flex-col flex-1">
+<div class="flex justify-between items-start mb-1">
+<span class="font-label-md text-[10px] text-on-surface-variant font-mono">GRIP-088</span>
+<span class="font-label-md text-[10px] text-on-surface-variant flex items-center gap-1"><span class="material-symbols-outlined text-[12px]">location_on</span> Storage Room C</span>
+</div>
+<h4 class="font-title-lg text-title-lg font-semibold text-on-surface mb-4 line-clamp-1">Manfrotto 504X Fluid Video Head</h4>
+<div class="mt-auto pt-4 border-t border-outline-variant/30">
+<button class="w-full bg-primary text-on-primary py-2 rounded-lg font-label-md text-label-md uppercase tracking-wide hover:bg-primary-container transition-colors shadow-sm">Reserve</button>
+</div>
+</div>
+</div>
+</div>
+</main>
+</div>
+</body></html>

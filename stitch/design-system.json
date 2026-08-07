@@ -1,0 +1,137 @@
+{
+  "name": "assets/fb33c188e24246edb57a80ee90bb1660",
+  "designSystem": {
+    "displayName": "Studio Essential",
+    "styleGuidelines": "## Brand & Style\n\nThis design system reimagines the internal OS for CampusTV, shifting from a technical \"broadcast booth\" aesthetic to a refined, **Corporate / Modern** professional workspace. The brand personality is efficient, reliable, and editorial. It prioritizes clarity over visual noise, ensuring that content creators and administrators can manage complex media schedules without fatigue.\n\nThe visual language focuses on high legibility and structural organization. It utilizes a sophisticated balance of negative space and subtle tonal layering to create a \"zen-like\" environment for high-productivity tasks. The emotional response should be one of confidence and calm, moving away from high-contrast urgency toward steady, professional execution.\n\n## Layout & Spacing\n\nThis design system uses a **fixed-fluid hybrid grid** model optimized for desktop efficiency.\n\n1.  **Sidebar:** A fixed 260px left-hand navigation allows for persistent access to high-level modules (Broadcast, Library, Schedule).\n2.  **Content Area:** A fluid container with a maximum width of 1440px, centered on larger displays to prevent line-length issues.\n3.  **Grid:** A 12-column system for internal card layouts.\n4.  **Rhythm:** An 8px base unit governs all padding and margins. Vertical stacking typically follows 16px (md) for related items and 24px (lg) for distinct sections.\n\n## Elevation & Depth\n\nHierarchy is established through **Tonal Layers** supplemented by **Ambient Shadows**.\n\n- **Level 0 (Base):** The main background (`#F8FAFC`).\n- **Level 1 (Cards):** Pure white (`#FFFFFF`) surfaces with a 1px border (`#E2E8F0`) and a very soft, diffused shadow (0px 4px 12px rgba(0,0,0,0.05)).\n- **Level 2 (Popovers/Modals):** Floating elements use a more pronounced shadow (0px 12px 24px rgba(0,0,0,0.1)) to indicate focus and separation from the grid.\n\nAvoid heavy dark shadows; the goal is to make elements appear \"lifted\" by light, not separated by void.\n\n## Components\n\n### Buttons\n- **Primary:** Solid primary green with white text. 8px radius.\n- **Secondary:** White fill with 1px gray border and dark text. Subtle lift on hover.\n- **Ghost:** No fill or border, primary green text. Used for secondary actions within cards.\n\n### Input Fields\n- White background with a 1px soft gray border. \n- On focus, the border transitions to the primary green with a subtle 2px glow.\n- Labels are always positioned above the input in the `label-md` style.\n\n### Cards\n- The primary vehicle for content organization. \n- Features a header section with 16px padding, a divider line, and a body section. \n- For media previews, the image/video thumbnail should occupy the top half with a 16px top-corner radius.\n\n### Chips & Badges\n- Used for \"Live,\" \"Draft,\" or \"Scheduled\" statuses.\n- High-contrast background (low opacity version of the status color) with bolded text for instant recognition.\n\n### Sidebars\n- Uses a slightly darker secondary background (`#F1F5F9`) to visually \"anchor\" the navigation.\n- Nav items use the primary green for the active state icon and a subtle 2px left-accent bar.",
+    "theme": {
+      "colorMode": "LIGHT",
+      "font": "INTER",
+      "roundness": "ROUND_EIGHT",
+      "customColor": "#1d5c35",
+      "headlineFont": "INTER",
+      "bodyFont": "INTER",
+      "labelFont": "INTER",
+      "namedColors": {
+        "background": "#faf8ff",
+        "error": "#ba1a1a",
+        "error_container": "#ffdad6",
+        "inverse_on_surface": "#eef0ff",
+        "inverse_primary": "#95d5a4",
+        "inverse_surface": "#283044",
+        "on_background": "#131b2e",
+        "on_error": "#ffffff",
+        "on_error_container": "#93000a",
+        "on_primary": "#ffffff",
+        "on_primary_container": "#92d2a1",
+        "on_primary_fixed": "#00210d",
+        "on_primary_fixed_variant": "#0f512c",
+        "on_secondary": "#ffffff",
+        "on_secondary_container": "#626567",
+        "on_secondary_fixed": "#191c1e",
+        "on_secondary_fixed_variant": "#444749",
+        "on_surface": "#131b2e",
+        "on_surface_variant": "#404941",
+        "on_tertiary": "#ffffff",
+        "on_tertiary_container": "#b5c5df",
+        "on_tertiary_fixed": "#0b1c30",
+        "on_tertiary_fixed_variant": "#38485d",
+        "outline": "#707970",
+        "outline_variant": "#c0c9be",
+        "primary": "#004421",
+        "primary_container": "#1d5c35",
+        "primary_fixed": "#b0f2be",
+        "primary_fixed_dim": "#95d5a4",
+        "secondary": "#5c5f61",
+        "secondary_container": "#e0e3e5",
+        "secondary_fixed": "#e0e3e5",
+        "secondary_fixed_dim": "#c4c7c9",
+        "surface": "#faf8ff",
+        "surface_bright": "#faf8ff",
+        "surface_container": "#eaedff",
+        "surface_container_high": "#e2e7ff",
+        "surface_container_highest": "#dae2fd",
+        "surface_container_low": "#f2f3ff",
+        "surface_container_lowest": "#ffffff",
+        "surface_dim": "#d2d9f4",
+        "surface_tint": "#2c6a42",
+        "surface_variant": "#dae2fd",
+        "tertiary": "#2b3b50",
+        "tertiary_container": "#425268",
+        "tertiary_fixed": "#d3e4fe",
+        "tertiary_fixed_dim": "#b7c8e1"
+      },
+      "designMd": "---\nname: Studio Essential\ncolors:\n  surface: '#faf8ff'\n  surface-dim: '#d2d9f4'\n  surface-bright: '#faf8ff'\n  surface-container-lowest: '#ffffff'\n  surface-container-low: '#f2f3ff'\n  surface-container: '#eaedff'\n  surface-container-high: '#e2e7ff'\n  surface-container-highest: '#dae2fd'\n  on-surface: '#131b2e'\n  on-surface-variant: '#404941'\n  inverse-surface: '#283044'\n  inverse-on-surface: '#eef0ff'\n  outline: '#707970'\n  outline-variant: '#c0c9be'\n  surface-tint: '#2c6a42'\n  primary: '#004421'\n  on-primary: '#ffffff'\n  primary-container: '#1d5c35'\n  on-primary-container: '#92d2a1'\n  inverse-primary: '#95d5a4'\n  secondary: '#5c5f61'\n  on-secondary: '#ffffff'\n  secondary-container: '#e0e3e5'\n  on-secondary-container: '#626567'\n  tertiary: '#2b3b50'\n  on-tertiary: '#ffffff'\n  tertiary-container: '#425268'\n  on-tertiary-container: '#b5c5df'\n  error: '#ba1a1a'\n  on-error: '#ffffff'\n  error-container: '#ffdad6'\n  on-error-container: '#93000a'\n  primary-fixed: '#b0f2be'\n  primary-fixed-dim: '#95d5a4'\n  on-primary-fixed: '#00210d'\n  on-primary-fixed-variant: '#0f512c'\n  secondary-fixed: '#e0e3e5'\n  secondary-fixed-dim: '#c4c7c9'\n  on-secondary-fixed: '#191c1e'\n  on-secondary-fixed-variant: '#444749'\n  tertiary-fixed: '#d3e4fe'\n  tertiary-fixed-dim: '#b7c8e1'\n  on-tertiary-fixed: '#0b1c30'\n  on-tertiary-fixed-variant: '#38485d'\n  background: '#faf8ff'\n  on-background: '#131b2e'\n  surface-variant: '#dae2fd'\ntypography:\n  display-lg:\n    fontFamily: Inter\n    fontSize: 48px\n    fontWeight: '700'\n    lineHeight: 56px\n    letterSpacing: -0.02em\n  headline-lg:\n    fontFamily: Inter\n    fontSize: 32px\n    fontWeight: '600'\n    lineHeight: 40px\n    letterSpacing: -0.01em\n  headline-md:\n    fontFamily: Inter\n    fontSize: 24px\n    fontWeight: '600'\n    lineHeight: 32px\n  title-lg:\n    fontFamily: Inter\n    fontSize: 20px\n    fontWeight: '500'\n    lineHeight: 28px\n  body-lg:\n    fontFamily: Inter\n    fontSize: 16px\n    fontWeight: '400'\n    lineHeight: 24px\n  body-md:\n    fontFamily: Inter\n    fontSize: 14px\n    fontWeight: '400'\n    lineHeight: 20px\n  label-md:\n    fontFamily: Inter\n    fontSize: 12px\n    fontWeight: '600'\n    lineHeight: 16px\n    letterSpacing: 0.05em\n  headline-lg-mobile:\n    fontFamily: Inter\n    fontSize: 28px\n    fontWeight: '600'\n    lineHeight: 36px\nrounded:\n  sm: 0.25rem\n  DEFAULT: 0.5rem\n  md: 0.75rem\n  lg: 1rem\n  xl: 1.5rem\n  full: 9999px\nspacing:\n  sidebar-width: 260px\n  gutter: 24px\n  margin: 32px\n  stack-sm: 8px\n  stack-md: 16px\n  stack-lg: 24px\n---\n\n## Brand & Style\n\nThis design system reimagines the internal OS for CampusTV, shifting from a technical \"broadcast booth\" aesthetic to a refined, **Corporate / Modern** professional workspace. The brand personality is efficient, reliable, and editorial. It prioritizes clarity over visual noise, ensuring that content creators and administrators can manage complex media schedules without fatigue.\n\nThe visual language focuses on high legibility and structural organization. It utilizes a sophisticated balance of negative space and subtle tonal layering to create a \"zen-like\" environment for high-productivity tasks. The emotional response should be one of confidence and calm, moving away from high-contrast urgency toward steady, professional execution.\n\n## Colors\n\nThe palette is anchored by the legacy **CampusTV Forest Green**, used purposefully as a primary accent for key actions and brand presence. To ensure a modern desktop feel, the background is shifted to a crisp white and off-white (secondary) base.\n\n- **Primary:** The hallmark green is reserved for active states, primary call-to-actions, and brand iconography.\n- **Surface:** We use a tiered system of grays (`#F8FAFC` to `#F1F5F9`) to define container areas against the white background.\n- **Status:** Standard semantic colors apply (Red for live/error, Amber for warnings), but are softened to integrate with the professional palette.\n- **Neutral:** Deep slates are used for text to maintain high contrast while avoiding the harshness of pure black.\n\n## Typography\n\nThe design system utilizes **Inter** for all roles to achieve a systematic, utilitarian, and clean feel. The hierarchy is strictly enforced through weight variations rather than color changes.\n\nHeadlines use a tighter letter-spacing to appear more cohesive, while labels use an uppercase treatment with increased tracking to improve scannability in dense data views. The base body size is 14px for typical SaaS density, scaling to 16px for long-form reading or settings descriptions.\n\n## Layout & Spacing\n\nThis design system uses a **fixed-fluid hybrid grid** model optimized for desktop efficiency.\n\n1.  **Sidebar:** A fixed 260px left-hand navigation allows for persistent access to high-level modules (Broadcast, Library, Schedule).\n2.  **Content Area:** A fluid container with a maximum width of 1440px, centered on larger displays to prevent line-length issues.\n3.  **Grid:** A 12-column system for internal card layouts.\n4.  **Rhythm:** An 8px base unit governs all padding and margins. Vertical stacking typically follows 16px (md) for related items and 24px (lg) for distinct sections.\n\n## Elevation & Depth\n\nHierarchy is established through **Tonal Layers** supplemented by **Ambient Shadows**.\n\n- **Level 0 (Base):** The main background (`#F8FAFC`).\n- **Level 1 (Cards):** Pure white (`#FFFFFF`) surfaces with a 1px border (`#E2E8F0`) and a very soft, diffused shadow (0px 4px 12px rgba(0,0,0,0.05)).\n- **Level 2 (Popovers/Modals):** Floating elements use a more pronounced shadow (0px 12px 24px rgba(0,0,0,0.1)) to indicate focus and separation from the grid.\n\nAvoid heavy dark shadows; the goal is to make elements appear \"lifted\" by light, not separated by void.\n\n## Shapes\n\nThe design system follows a **Rounded** (ROUND_EIGHT) philosophy. \n\n- **Standard Components:** Buttons, input fields, and small tags use a **0.5rem (8px)** corner radius.\n- **Containers:** Content cards and larger panels use **1rem (16px)** to create a softer, more approachable frame for the interface.\n- **Interactive States:** Focus rings should follow the radius of the element they surround, with a 2px offset for clarity.\n\n## Components\n\n### Buttons\n- **Primary:** Solid primary green with white text. 8px radius.\n- **Secondary:** White fill with 1px gray border and dark text. Subtle lift on hover.\n- **Ghost:** No fill or border, primary green text. Used for secondary actions within cards.\n\n### Input Fields\n- White background with a 1px soft gray border. \n- On focus, the border transitions to the primary green with a subtle 2px glow.\n- Labels are always positioned above the input in the `label-md` style.\n\n### Cards\n- The primary vehicle for content organization. \n- Features a header section with 16px padding, a divider line, and a body section. \n- For media previews, the image/video thumbnail should occupy the top half with a 16px top-corner radius.\n\n### Chips & Badges\n- Used for \"Live,\" \"Draft,\" or \"Scheduled\" statuses.\n- High-contrast background (low opacity version of the status color) with bolded text for instant recognition.\n\n### Sidebars\n- Uses a slightly darker secondary background (`#F1F5F9`) to visually \"anchor\" the navigation.\n- Nav items use the primary green for the active state icon and a subtle 2px left-accent bar.",
+      "colorVariant": "FIDELITY",
+      "overridePrimaryColor": "#1d5c35",
+      "overrideSecondaryColor": "#f8fafc",
+      "overrideTertiaryColor": "#64748b",
+      "overrideNeutralColor": "#0f172a",
+      "spacingScale": 2,
+      "typography": {
+        "body-lg": {
+          "fontFamily": "Inter",
+          "fontSize": "16px",
+          "fontWeight": "400",
+          "lineHeight": "24px"
+        },
+        "body-md": {
+          "fontFamily": "Inter",
+          "fontSize": "14px",
+          "fontWeight": "400",
+          "lineHeight": "20px"
+        },
+        "display-lg": {
+          "fontFamily": "Inter",
+          "fontSize": "48px",
+          "fontWeight": "700",
+          "lineHeight": "56px",
+          "letterSpacing": "-0.02em"
+        },
+        "headline-lg": {
+          "fontFamily": "Inter",
+          "fontSize": "32px",
+          "fontWeight": "600",
+          "lineHeight": "40px",
+          "letterSpacing": "-0.01em"
+        },
+        "headline-lg-mobile": {
+          "fontFamily": "Inter",
+          "fontSize": "28px",
+          "fontWeight": "600",
+          "lineHeight": "36px"
+        },
+        "headline-md": {
+          "fontFamily": "Inter",
+          "fontSize": "24px",
+          "fontWeight": "600",
+          "lineHeight": "32px"
+        },
+        "label-md": {
+          "fontFamily": "Inter",
+          "fontSize": "12px",
+          "fontWeight": "600",
+          "lineHeight": "16px",
+          "letterSpacing": "0.05em"
+        },
+        "title-lg": {
+          "fontFamily": "Inter",
+          "fontSize": "20px",
+          "fontWeight": "500",
+          "lineHeight": "28px"
+        }
+      },
+      "spacing": {
+        "gutter": "24px",
+        "margin": "32px",
+        "sidebar-width": "260px",
+        "stack-lg": "24px",
+        "stack-md": "16px",
+        "stack-sm": "8px"
+      },
+      "headlineFontFamily": "Inter",
+      "bodyFontFamily": "Inter",
+      "labelFontFamily": "Inter"
+    }
+  },
+  "version": "1"
+}
