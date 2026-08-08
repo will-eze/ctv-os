@@ -25,6 +25,16 @@ const headers = Object.fromEntries(
     .map((h) => [h.key, h.value])
 );
 
+// The one origin the artifact is allowed to reach, read out of the artifact
+// itself rather than out of the config — so a build pointed at a project the
+// CSP does not name fails here instead of on the deployed URL.
+const cfg = (() => {
+  const m = html.toString().match(/const CFG = (\{.*?\}|null);/);
+  if (!m || m[1] === 'null') return null;
+  try { return JSON.parse(m[1]); } catch { return null; }
+})();
+const dbHost = cfg ? new URL(cfg.url).host : null;
+
 const server = createServer((req, res) => {
   res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', ...headers });
   res.end(html);
@@ -32,9 +42,25 @@ const server = createServer((req, res) => {
 await new Promise((r) => server.listen(0, '127.0.0.1', r));
 const url = `http://127.0.0.1:${server.address().port}/`;
 
+// The database host is made unresolvable for this whole run.
+//
+// This check is about the artifact, and the artifact must not need a database
+// to be a working page — a phone at the Rec with no signal is the normal case,
+// not the edge one. Depending on the real project would also make the result
+// depend on whether someone happened to have seeded it: an earlier version of
+// this file asserted that database requests *failed*, which quietly turned
+// "the fallback works" into "the database is down" and started failing the
+// moment the schema was pushed.
+//
+// Blocking at DNS rather than by intercepting requests, because it takes the
+// WebSocket with it. It also leaves the CSP check intact: connect-src is
+// enforced before name resolution, so a policy that forbade this host would
+// still raise a violation here.
+const cspArgs = dbHost ? [`--host-resolver-rules=MAP ${dbHost} ~NOTFOUND`] : [];
 const browser = await puppeteer.launch({
   executablePath: '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
   headless: 'new',
+  args: cspArgs,
 });
 const page = await browser.newPage();
 
@@ -51,9 +77,13 @@ page.on('console', (m) => {
   // itself, so it cannot be suppressed from inside the page. Counting it as a
   // page error would mean this check could only pass against a live database,
   // which is exactly the dependency the artifact is supposed to not have.
+  // Matched on the text as well as the location: a failed fetch is reported
+  // against the request URL, but a failed WebSocket is reported against the
+  // script that opened it, so the location alone misses exactly half of it.
   const where = m.location()?.url ?? '';
-  if (dbHost && where.includes(dbHost)) dbNoise.push(where);
-  else errors.push(`console: ${m.text()}`);
+  const text = m.text();
+  if (dbHost && (where.includes(dbHost) || text.includes(dbHost))) dbNoise.push(where || text);
+  else errors.push(`console: ${text}`);
 });
 await page.evaluateOnNewDocument(() => {
   window.__csp = [];
@@ -61,16 +91,6 @@ await page.evaluateOnNewDocument(() => {
     window.__csp.push(`${e.violatedDirective} blocked ${e.blockedURI}`);
   });
 });
-
-// The one origin the artifact is allowed to reach, read out of the artifact
-// itself rather than out of the config — so a build pointed at a project the
-// CSP does not name fails here instead of on the deployed URL.
-const cfg = (() => {
-  const m = html.toString().match(/const CFG = (\{.*?\}|null);/);
-  if (!m || m[1] === 'null') return null;
-  try { return JSON.parse(m[1]); } catch { return null; }
-})();
-const dbHost = cfg ? new URL(cfg.url).host : null;
 
 const external = [];
 page.on('request', (r) => {
@@ -99,7 +119,7 @@ check('no page or console errors', errors.length === 0, errors.slice(0, 2).join(
 // database behind it, and that is the point.
 check('survives an unreachable database', dbNoise.length > 0 || !dbHost,
   dbHost
-    ? `${dbNoise.length} failed database requests, page carried on from the seed`
+    ? `${dbHost} blocked at DNS, ${dbNoise.length} requests failed, page carried on`
     : 'no database configured');
 check('no requests beyond the database', external.length === 0,
   external.join(' | ') || (dbHost ? `self-contained + ${dbHost}` : 'self-contained'));

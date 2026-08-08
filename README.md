@@ -5,11 +5,9 @@ Internal operating system for **CampusTV**, University of Bath.
 Built from the 2026 station manager handover document. Named to sit beside
 [Cue](../Cue) and [Prism](../Prism).
 
-> **Status: built, one step from live.** Strategy, visual system, data model,
-> a working prototype and multi-client sync are done and verified. What is left
-> is a single credential: creating the tables needs an access token or the
-> database password, and neither Supabase key can run DDL. Until the schema is
-> pushed, every client falls back to the seed year and says so — see
+> **Status: live.** The schema is pushed, the year is seeded, and several
+> people can edit it at once — an edit lands in a second browser in about a
+> second. Reads are open to anyone with the link; writes need an account. See
 > [Sharing the year](#sharing-the-year).
 
 ## The one-line version
@@ -68,20 +66,25 @@ takes one click. Every change is persisted to `localStorage` and **undoable**;
 **Export** downloads your corrected `year.json`, and **Reset** returns to the
 seed.
 
-Nothing talks to a server yet.
+Every change is also written to Supabase as a row, so several people editing
+the year converge — see [Sharing the year](#sharing-the-year). With no network
+the page is exactly the self-contained tool described above, and the edits wait
+in an outbox.
 
 ## Verification
 
 ```bash
 npm install
 npm run verify            # tokens + contrast, schema on real Postgres, deploy artifact
-npm run e2e               # 39 interaction checks in real Chrome
+npm run e2e               # 41 interaction checks in real Chrome, database blocked
 npm run shots             # 9 screenshots + the design-system audit
+npm run verify:api        # 12 checks against the DEPLOYED API
+npm run e2e:sync          # 10 checks: two browsers, one live database
 ```
 
 - **`verify:contrast`** does two jobs. It compares all 21 palette tokens back to
   `stitch/design-system.json`, because the CSS hand-copies them — the CSP blocks
-  Tailwind — and a hand-copied palette rots quietly. Then it measures the 29
+  Tailwind — and a hand-copied palette rots quietly. Then it measures the 31
   foreground/background pairs the interface actually paints, compositing the ones
   set with opacity, since white text at 85% on a green pill is not white text.
   Every row names where it is used; a pair nobody renders is a pair nobody
@@ -92,19 +95,37 @@ npm run shots             # 9 screenshots + the design-system audit
   role reads as open, that one person in two places at once is detected exactly
   once, that an off-site editor never causes a false clash, that prep due dates
   follow an event when it moves, that kit which went out and did not come back
-  is findable, that only `events` and `tasks` have a DELETE policy, and that the
-  safeguarding table is unreadable by the anon key. 27 checks.
+  is findable, that only plans (`events`, `tasks`, `event_roles`) have a DELETE
+  policy while records do not, that every write policy requires a session while
+  every read stays open, and that the safeguarding table is unreadable by the
+  anon key. 29 checks.
 
 - **`verify:deploy`** serves `dist/index.html` with the exact headers from
   `vercel.json` and drives it in real Chrome. The CSP we ship is deliberately
   tight, and a CSP that is slightly too tight does not fail the build — it fails
   silently on the deployed URL in front of whoever opened it. This asserts no
   policy violations, that Inter actually rendered, and that a real edit still
-  reaches `localStorage`.
+  reaches `localStorage`. It runs with the database blocked at DNS, so it proves
+  the artifact is a working page on its own rather than proving the database
+  happened to be up.
+
+- **`verify:api`** goes at the deployed project from outside, through the same
+  door the browser uses. The assertion that matters is not "the write was
+  rejected": row level security does not reject an UPDATE, it filters the rows
+  the statement can see, and a PATCH that matches nothing returns 204 exactly
+  like one that worked. So every check asks what actually changed. It plants a
+  safeguarding row with the secret key to prove the anon key cannot see it —
+  against an empty table that check would pass either way.
+
+- **`e2e:sync`** opens two real browsers on the real project, signs one in
+  through the interface, edits an event, and waits for the *other browser's
+  rendered calendar* to show it. About one second, over the Realtime socket. It
+  also asserts the signed-out browser cannot write, and puts the year back.
 
 - **`shots`** drives real Chrome and enforces what a screenshot cannot show: no
-  external requests from any screen, Inter and nothing else, every radius on the
-  8px scale, and no state carried by colour alone. The last of those is four
+  requests to any origin except the one configured database — read out of the
+  built page, so it cannot drift from what shipped — Inter and nothing else,
+  every radius on the 8px scale, and no state carried by colour alone. The last of those is four
   assertions — every Missing Requirements panel worded and carrying its own
   Assign control, every card stating coverage as a fraction, every overdue task
   saying how late it is, every calendar badge naming its coverage in its
@@ -245,12 +266,18 @@ INSERT, UPDATE and DELETE policy in `schema.sql` requires a real session.
 
 ```bash
 npm run db:migration     # schema.sql -> supabase/migrations/
-#   push that migration  (needs SUPABASE_ACCESS_TOKEN, the database password,
-#                         or a paste into the dashboard SQL editor)
+npm run db:push          # push it   (needs SUPABASE_ACCESS_TOKEN — an sbp_ token;
+                         #            neither Supabase key can create a table)
 npm run seed             # load data/year.json into it
-npm run verify:remote    # assert the deployed database behaves
+npm run verify:api       # assert the deployed API enforces the rules
 npm run build:prototype  # bake SUPABASE_URL + the publishable key into the page
+npm run e2e:sync         # two real browsers, one database, one year
 ```
+
+Accounts are created in the Supabase dashboard under Authentication, or with the
+secret key against `/auth/v1/admin/users`. There is no sign-up in the page: this
+is a committee of about seven, and an open sign-up form on a public URL would
+undo the reason writes are gated at all.
 
 `vercel.json`'s `connect-src` names the project **by host**. Point the build at
 a different project and you must edit it too — `npm run verify:deploy` fails

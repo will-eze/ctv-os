@@ -14,10 +14,29 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const url = pathToFileURL(join(root, 'prototype/ctv-os.html')).href;
 
+// The database host is made unresolvable, so this suite is genuinely offline.
+//
+// It used to be offline by accident: the project had no tables, so every
+// request failed and the page fell back to the seed. The moment the schema was
+// pushed, three checks broke — a remote pull replaced the document mid-suite
+// and the edits under test vanished. They were right to break. What they had
+// been proving was "the database happens to be empty", and the claim this file
+// is for is that the page is a complete, working tool with no network at all.
+//
+// The online claims are tested separately, against the real project, by
+// scripts/e2e_sync.mjs.
+const dbHost = (() => {
+  const m = readFileSync(join(root, 'prototype/ctv-os.html'), 'utf8')
+    .match(/const CFG = (\{.*?\}|null);/);
+  if (!m || m[1] === 'null') return null;
+  try { return new URL(JSON.parse(m[1]).url).host; } catch { return null; }
+})();
+const dbBlock = dbHost ? [`--host-resolver-rules=MAP ${dbHost} ~NOTFOUND`] : [];
+
 const browser = await puppeteer.launch({
   executablePath: '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
   headless: 'new',
-  args: ['--allow-file-access-from-files'],
+  args: ['--allow-file-access-from-files', ...dbBlock],
 });
 const page = await browser.newPage();
 await page.setViewport({ width: 1280, height: 900 });
@@ -31,21 +50,17 @@ await page.setViewport({ width: 1280, height: 900 });
 // page, so it cannot be silenced in JavaScript. Those are separated out rather
 // than counted as page errors — see the same reasoning in verify_deploy.mjs,
 // which asserts the fallback that produces them.
-const dbHost = (() => {
-  const m = readFileSync(join(root, 'prototype/ctv-os.html'), 'utf8')
-    .match(/const CFG = (\{.*?\}|null);/);
-  if (!m || m[1] === 'null') return null;
-  try { return new URL(JSON.parse(m[1]).url).host; } catch { return null; }
-})();
-
 const errors = [];
 const offlineNoise = [];
 page.on('pageerror', (e) => errors.push(e.message));
 page.on('console', (m) => {
   if (m.type() !== 'error') return;
+  // Matched on text as well as location: a failed fetch is reported against
+  // the request URL, a failed WebSocket against the script that opened it.
   const where = m.location()?.url ?? '';
-  if (dbHost && where.includes(dbHost)) offlineNoise.push(where);
-  else errors.push(m.text());
+  const text = m.text();
+  if (dbHost && (where.includes(dbHost) || text.includes(dbHost))) offlineNoise.push(where || text);
+  else errors.push(text);
 });
 
 await page.goto(url, { waitUntil: 'networkidle0' });
@@ -754,6 +769,7 @@ console.log('\n  OFFLINE\n  ' + '-'.repeat(70));
 
 await check('an unreachable database is stated, not hidden', async () => {
   if (!dbHost) return 'built with no database — nothing to state';
+  // The host is blocked at DNS for this whole run; see the launch args.
   // The failure that matters is the silent one: a page that looks live, is
   // hours stale, and tells you nothing. Whatever it says, it has to say it in
   // words — the dot beside it is redundant by design.

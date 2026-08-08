@@ -117,12 +117,15 @@ npm install
 npm run build:prototype   # template + data -> ctv-os.html
 npm run tasks             # rebuild the to-do list into data/year.json
 npm run verify            # 21 token-drift + 31 contrast + 29 schema + 11 deploy
-npm run e2e               # 41 interaction checks in real Chrome
+npm run e2e               # 41 interaction checks in real Chrome, offline
+npm run e2e:sync          # 10 checks: TWO browsers against the live project
 npm run shots             # 9 screenshots + the design-system audit
 npm run db:migration      # regenerate the Supabase migration from schema.sql
 npm run db:provision      # create the Supabase project + push schema (needs a PAT)
+npm run db:push           # push the migration (needs SUPABASE_ACCESS_TOKEN)
 npm run seed              # load data/year.json into the DEPLOYED database
-npm run verify:remote     # behavioural checks against the DEPLOYED database
+npm run verify:api        # 12 RLS/Realtime checks through PostgREST, live
+npm run verify:remote     # behavioural checks over a direct Postgres connection
 npm run deploy            # build -> dist/, then vercel deploy --prod
 ```
 
@@ -236,12 +239,18 @@ rows — build the data first), the post-production board, money (`ledger`,
 still **no Next.js app**: the page is one self-contained file. Export gives back
 a corrected `year.json`.
 
-**The schema is written and verified but not yet pushed.** The project
-(`uciyizhmuiopetrdpovy`) exists and is reachable, and the page is built to talk
-to it, but nothing has run the migration — creating tables needs a credential
-neither key in `.env.local` provides. Until it does, every client falls back to
-the inlined seed and says "Offline" in the sidebar, which `npm run e2e` and
-`npm run verify:deploy` both assert.
+**The database is live.** Project `uciyizhmuiopetrdpovy` (eu-west-1) has the
+schema pushed and the year seeded: 31 events, 78 roles (44 open), 56 tasks.
+`npm run verify:api` asserts the deployed API enforces the rules, and
+`npm run e2e:sync` drives two real browsers against it.
+
+**Offline is tested by blocking DNS, not by hoping.** `e2e` and `verify:deploy`
+launch Chrome with `--host-resolver-rules=MAP <db-host> ~NOTFOUND`. Both suites
+were briefly passing for the wrong reason — the project had no tables, so every
+request failed and the fallback engaged by accident. Pushing the schema broke
+three checks, correctly: a remote pull was replacing the document mid-suite. If
+you find yourself explaining why a test needs the database to be down, it does
+not — block it.
 
 **Deploying.** `vercel.json` builds to `dist/` and ships a tight CSP whose
 `connect-src` names the Supabase project **by host**. Change projects and you

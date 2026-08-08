@@ -1,6 +1,6 @@
 -- GENERATED FILE — do not edit.
 --
--- Source: supabase/schema.sql   (sha256 d487f23491f47981)
+-- Source: supabase/schema.sql   (sha256 e1a2369e04de643a)
 -- Regenerate: npm run db:migration
 --
 -- schema.sql is what `npm run verify:sql` executes against real Postgres. This
@@ -179,7 +179,12 @@ create index if not exists events_strand_idx on events (strand, date);
 create table if not exists event_roles (
   id           uuid primary key default gen_random_uuid(),
   event_id     uuid not null references events(id) on delete cascade,
-  role         crew_role not null,
+  -- Nullable, because "a job that needs doing, type not decided yet" is a real
+  -- state and the interface has always been able to produce it: Add role gives
+  -- you a row called NEW ROLE, and the type is inferred when you name it. The
+  -- open role is the primary object here, and refusing to store one until
+  -- somebody classifies it would be the tail wagging the dog.
+  role         crew_role,
   -- The operational name, which is not the same as the role type: two rows are
   -- both `camera` but one is 'GANTRY' and one is 'ROAMING' and they are not
   -- interchangeable on the day.
@@ -250,14 +255,32 @@ create or replace view prep_due as
 -- then editable, because the rule is not the truth (JSS's lesson, kept).
 create table if not exists prep_templates (
   id           uuid primary key default gen_random_uuid(),
-  strand       strand not null,
+  -- NULL means every strand. Three of these apply to anything we point a camera
+  -- at — the planner and risk assessment to Helen at T-14, kit booked out at
+  -- T-3, roles advertised at T-10 — and they are the ones that actually get
+  -- forgotten. data/year.json writes that as "*"; the enum has no wildcard
+  -- member and should not get one, because 'freshers' and 'sport' name real
+  -- editorial pillars and "*" would not.
+  strand       strand,
   label        text not null,
   detail       text,
   lead_days    int not null default 0,
   owner_role   text,
-  sort_order   int not null default 0,
-  unique (strand, label)
+  sort_order   int not null default 0
 );
+
+-- Not `unique (strand, label)`: two NULL strands never compare equal, so that
+-- constraint would accept the same universal template twice and the seed would
+-- stop being idempotent.
+--
+-- Two partial indexes rather than one on `coalesce(strand::text, '*')`, because
+-- casting an enum to text is only STABLE — the cast depends on the enum's
+-- current labels — and Postgres refuses a non-IMMUTABLE function in an index
+-- expression. These say the same thing and are indexable.
+create unique index if not exists prep_templates_key
+  on prep_templates (strand, label) where strand is not null;
+create unique index if not exists prep_templates_any_key
+  on prep_templates (label) where strand is null;
 
 -- ---------------------------------------------------------------------------
 -- kit — the register and the check-out log
@@ -421,6 +444,15 @@ create trigger tasks_clear_lead before update on tasks
 -- to rename a column. Run the alters after the view and the second run of this
 -- supposedly re-runnable file fails. `npm run verify:sql` catches it, which is
 -- the only reason it is not still broken.
+
+-- Two columns loosened, for the same reason the block exists at all: this file
+-- promises to be re-runnable, and `create table if not exists` skips the whole
+-- definition on a database that already has the table. Editing the CREATE above
+-- changes nothing for a project that was created before the edit, which is
+-- every project that already exists. Both of these were caught that way — the
+-- schema pushed clean and the seed then failed against the older columns.
+alter table prep_templates alter column strand drop not null;
+alter table event_roles    alter column role   drop not null;
 
 alter table members   add column if not exists slug text;
 alter table societies add column if not exists slug text;

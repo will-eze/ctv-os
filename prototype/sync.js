@@ -239,7 +239,9 @@ const Sync = (() => {
         cautions: s.cautions, charge_policy: s.charge_policy,
       })),
       prep_templates: rows.prep_templates.map((p) => ({
-        strand: p.strand, label: p.label, lead_days: p.lead_days,
+        // NULL is the table's way of saying every strand; the interface
+        // matches on "*", so it is translated back on the way out.
+        strand: p.strand ?? '*', label: p.label, lead_days: p.lead_days,
         owner_role: p.owner_role, detail: p.detail,
       })),
       events: [...rows.events]

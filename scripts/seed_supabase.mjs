@@ -129,15 +129,28 @@ const memId = new Map(mems.map((m) => [m.slug, m.id]));
 step('2/7', `${mems.length} members`);
 
 // prep templates -------------------------------------------------------------
-const tpl = await upsert('prep_templates', year.prep_templates.map((p, i) => ({
-  strand: p.strand,
-  label: p.label,
-  detail: nz(p.detail),
-  lead_days: p.lead_days ?? 0,
-  owner_role: nz(p.owner_role),
-  sort_order: i,
-})), 'strand,label');
-step('3/7', `${tpl.length} prep templates`);
+// Replaced outright rather than upserted. Their uniqueness is enforced by two
+// partial indexes (one for a named strand, one for the universal ones), and
+// PostgREST's on_conflict cannot name a partial index. Nothing edits these from
+// any screen — they are the lead-time rules the handover states, copied into a
+// table — so replacing them is both safe and the honest description of what
+// re-seeding a set of templates means.
+await rest('prep_templates?id=not.is.null', { method: 'DELETE' });
+const tpl = await rest('prep_templates', {
+  method: 'POST',
+  headers: { Prefer: 'return=representation' },
+  body: JSON.stringify(year.prep_templates.map((p, i) => ({
+    // "*" in the document means every strand; NULL is how the table says it.
+    strand: p.strand === '*' ? null : p.strand,
+    label: p.label,
+    detail: nz(p.detail),
+    lead_days: p.lead_days ?? 0,
+    owner_role: nz(p.owner_role),
+    sort_order: i,
+  }))),
+});
+const universal = tpl.filter((t) => t.strand === null).length;
+step('3/7', `${tpl.length} prep templates — ${universal} apply to every strand`);
 
 // events ---------------------------------------------------------------------
 const evs = await upsert('events', year.events.map((e) => ({
@@ -231,8 +244,8 @@ step('7/7', `${tasks.length} tasks`);
 // Read it back through the view the interface reads, rather than trusting the
 // inserts. The number that matters is the open-role count: if the seed had
 // quietly filled them, every screen would look finished and be wrong.
-const coverage = await rest('event_coverage?select=open_roles');
-const totalOpen = coverage.reduce((n, r) => n + Number(r.open_roles), 0);
+const coverage = await rest('event_coverage?select=roles_open');
+const totalOpen = coverage.reduce((n, r) => n + Number(r.roles_open), 0);
 
 console.log(`
   ${'-'.repeat(66)}
