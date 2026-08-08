@@ -87,6 +87,10 @@
   --z-scrim:         60;
   --z-sheet:         70;
   --z-toast:         80;   /* above the sheet: undo must never be unreachable */
+  /* Above the toast, and the only thing that is. Sign-in is the one blocking
+     dialog in the product: while it is open there is nothing to undo, and a
+     toast peeking over a modal scrim reads as a bug. */
+  --z-modal:         90;
 
   --dur:             160ms;
   --ease:            cubic-bezier(0.2, 0, 0, 1);
@@ -186,6 +190,56 @@ ul { margin: 0; padding: 0; list-style: none; }
   transition: background var(--dur) var(--ease), color var(--dur) var(--ease);
 }
 .side-link:hover { background: var(--container); color: var(--on-surface); }
+
+/* Sync state.
+   The dot is a redundant cue, never the cue: every state names itself in
+   words beside it, and .sync-note spells out the consequence when there is
+   one ("Changes are saved here until you are back"). Four assertions in
+   scripts/shots.mjs hold that line across the whole interface. */
+.sync { padding: 8px 8px 10px; display: grid; gap: 4px; }
+.sync-line {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 12px; font-weight: 600; color: var(--on-surface-var);
+}
+.sync-dot {
+  width: 7px; height: 7px; border-radius: 999px; flex: none;
+  background: var(--outline); border: 1px solid var(--outline);
+}
+.sync.is-live    .sync-dot { background: var(--primary);  border-color: var(--primary); }
+.sync.is-synced  .sync-dot { background: var(--primary-c); border-color: var(--primary-c); }
+/* Offline is hollow rather than red: it is a normal state on a phone at a
+   venue, not an error, and the note underneath says what it means. */
+.sync.is-offline .sync-dot { background: none; border-color: var(--on-surface-var); }
+.sync.is-error   .sync-dot { background: var(--error); border-color: var(--error); }
+.sync-note { font-size: 11px; line-height: 1.4; color: var(--secondary); }
+.sync.is-error .sync-note { color: var(--error); }
+
+/* Sign in */
+.modal {
+  position: fixed; inset: 0; z-index: var(--z-modal);
+  display: flex; align-items: center; justify-content: center; padding: 24px;
+  background: rgba(0, 0, 0, 0.32);
+}
+.modal[hidden] { display: none; }
+.modal-card {
+  width: 100%; max-width: 360px; display: grid; gap: 12px;
+  background: var(--card); border: 1px solid var(--outline-var);
+  border-radius: var(--r-card); padding: 24px; box-shadow: var(--shadow-lg);
+}
+.modal-card h2 { font-size: 18px; font-weight: 700; }
+.modal-sub { font-size: 12px; line-height: 1.5; color: var(--on-surface-var); }
+.fld { display: grid; gap: 4px; font-size: 12px; font-weight: 600; color: var(--on-surface-var); }
+.fld input {
+  font: inherit; font-weight: 400; font-size: 14px; color: var(--on-surface);
+  padding: 9px 12px; border-radius: var(--r); background: var(--card);
+  border: 1px solid var(--outline);
+}
+.fld input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 2px rgba(0, 68, 33, 0.2); }
+.modal-err {
+  font-size: 12px; padding: 8px 10px; border-radius: var(--r);
+  background: var(--error-c); color: var(--on-error-c);
+}
+.modal-act { display: flex; gap: 8px; justify-content: flex-end; margin-top: 4px; }
 
 .main { flex: 1; min-width: 0; margin-left: var(--side-w); display: flex; flex-direction: column; }
 
@@ -945,6 +999,14 @@ button.meta-item.is-alert b { color: var(--error); }
     </div>
     <div class="side-nav" id="nav"></div>
     <div class="side-foot">
+      <!-- Sync state, in words. Whether the year on this screen is the year
+           everyone else is looking at is not a decorative detail, and it is
+           never carried by a colour alone — see scripts/shots.mjs. -->
+      <div class="sync" id="sync" hidden>
+        <p class="sync-line"><span class="sync-dot" id="sync-dot" aria-hidden="true"></span><span id="sync-state">Connecting…</span></p>
+        <p class="sync-note" id="sync-note" hidden></p>
+        <button class="side-link" id="sign" type="button" hidden></button>
+      </div>
       <button class="side-link" id="export" type="button" title="Download your corrected year.json">
         <svg class="icon icon-sm"><use href="#i-download"/></svg> Export year.json
       </button>
@@ -989,6 +1051,28 @@ button.meta-item.is-alert b { color: var(--error); }
   <span id="toast-t"></span><button id="toast-undo" type="button">Undo</button>
 </div>
 
+<!-- Sign in. Reading the year needs no account; changing it does. The whole
+     dialog stays out of the way until someone tries to edit, because most
+     visits are someone checking whether they are called on Saturday. -->
+<div class="modal" id="auth" hidden role="dialog" aria-modal="true" aria-labelledby="auth-h">
+  <form class="modal-card" id="auth-form">
+    <h2 id="auth-h">Sign in to edit</h2>
+    <p class="modal-sub">Anyone can read the year. Changing it needs an account,
+      because the key that reaches this database ships inside this page.</p>
+    <label class="fld"><span>Email</span>
+      <input type="email" name="email" autocomplete="username" required></label>
+    <label class="fld"><span>Password</span>
+      <input type="password" name="password" autocomplete="current-password" required></label>
+    <p class="modal-err" id="auth-err" hidden role="alert"></p>
+    <div class="modal-act">
+      <button class="btn" type="button" id="auth-x">Cancel</button>
+      <button class="btn btn-primary" type="submit" id="auth-go">Sign in</button>
+    </div>
+  </form>
+</div>
+
+<script>__SYNC_JS__</script>
+
 <script>
 const SEED = __DATA__;
 const TODAY = '2026-08-07';   // the prototype's "now"
@@ -1025,14 +1109,55 @@ const persist = () => {
   try { localStorage.setItem(STORE, JSON.stringify(DATA)); } catch { /* private mode */ }
 };
 
+// A role had no identity of its own: the interface addressed it by its position
+// in the array, which is fine until somebody else inserts one above it. Stamping
+// an id on the way past is enough to key it in the database, and costs the rest
+// of the code nothing — index-based addressing still works.
+function stampRoleIds(d) {
+  for (const ev of d.events ?? []) {
+    for (const r of ev.roles ?? []) {
+      if (!r.id) r.id = crypto.randomUUID();
+    }
+  }
+  return d;
+}
+
 // Every mutation goes through here, so every mutation is undoable. That is
 // what makes offering Delete safe rather than reckless.
+//
+// It is also, now, the one place a change becomes a database write. The clone
+// taken for undo is the same clone the sync layer diffs against, so all
+// thirteen call sites got multi-client sync without being touched — and an
+// undo is just another diff, applied by the same path in the other direction.
 function mutate(label, fn) {
   const before = clone(DATA);
   fn(DATA);
+  stampRoleIds(DATA);
   persist();
   render();
-  toast(label, () => { DATA = before; persist(); render(); });
+  Sync.push(before, DATA);
+  toast(label, () => {
+    const undone = clone(DATA);
+    DATA = before;
+    persist();
+    render();
+    Sync.push(undone, DATA);
+  });
+}
+
+// The year arrived from somebody else. Replace the document wholesale — it is
+// the server's copy of every row, including the ones this client wrote — and
+// re-render.
+//
+// An open sheet survives this: it is keyed by event id and re-reads DATA on
+// render, so someone else moving a different event does not close what you are
+// working on. If they deleted the event you have open, the sheet closes,
+// because the alternative is editing something that no longer exists.
+function applyRemote(doc) {
+  DATA = stampRoleIds(doc);
+  persist();
+  if (sheetId && !DATA.events.some((e) => e.id === sheetId)) closeSheet();
+  render();
 }
 
 let toastTimer;
@@ -2328,10 +2453,20 @@ document.getElementById('export').onclick = exportYear;
 
 document.getElementById('reset').onclick = () => {
   const before = clone(DATA);
-  DATA = clone(SEED);
+  DATA = stampRoleIds(clone(SEED));
   persist();
   render();
-  toast('Reset to the seed year', () => { DATA = before; persist(); render(); });
+  // Reset predates sync and never went through mutate(), so it has to push by
+  // hand. Against a shared database this is not a local undo any more: it puts
+  // the seed year back for everyone, which is the honest meaning of the button.
+  Sync.push(before, DATA);
+  toast('Reset to the seed year', () => {
+    const undone = clone(DATA);
+    DATA = before;
+    persist();
+    render();
+    Sync.push(undone, DATA);
+  });
 };
 
 // --- Render ---------------------------------------------------------------
@@ -2352,10 +2487,123 @@ function render() {
   }
 }
 
+// --- Sync ------------------------------------------------------------------
+// Everything below is inert when the page was built without a Supabase project:
+// Sync.enabled() is false, the status block stays hidden, and this is the
+// single-file localStorage prototype it has always been. That is the mode
+// `npm run e2e` drives, from a file:// URL with no network.
+
+const syncEl = document.getElementById('sync');
+const signBtn = document.getElementById('sign');
+
+function renderSync(s) {
+  if (!Sync.enabled()) return;
+  syncEl.hidden = false;
+
+  // state: the short name. note: what it means for you, when that is not
+  // obvious. Both are text — the dot beside them is redundant by design.
+  let cls = '', state = '', note = '';
+  if (s.mode === 'offline') {
+    cls = 'is-offline';
+    state = 'Offline';
+    note = s.pending
+      ? `${s.pending} change${s.pending === 1 ? '' : 's'} saved here, waiting to send`
+      : 'Showing the last year you loaded';
+  } else if (s.mode === 'empty') {
+    cls = 'is-error';
+    state = 'Database is empty';
+    note = 'Showing the seed year. Run npm run seed.';
+  } else if (s.mode === 'connecting') {
+    state = 'Connecting…';
+  } else if (!s.signedIn) {
+    cls = 'is-synced';
+    state = 'Read only';
+    note = 'Sign in to change anything';
+  } else if (s.live) {
+    cls = 'is-live';
+    state = 'Live';
+    note = s.pending ? `${s.pending} change${s.pending === 1 ? '' : 's'} sending…` : `Signed in as ${s.user}`;
+  } else {
+    cls = 'is-synced';
+    state = 'Synced';
+    note = `Checking every 20s · ${s.user}`;
+  }
+  // Errors are shown when there is something to do about them, and not
+  // otherwise. "Offline" already says everything a person needs; replacing that
+  // with `404 societies: {"code":"PGRST205"…}` tells them nothing they can act
+  // on and makes a normal state look broken. The detail stays reachable on
+  // hover, where somebody debugging will look for it.
+  if (s.error && (s.mode === 'synced' || s.mode === 'empty')) {
+    cls = s.mode === 'empty' ? 'is-error' : cls;
+    note = s.error;
+  }
+
+  syncEl.className = `sync ${cls}`;
+  syncEl.title = s.error || '';
+  document.getElementById('sync-state').textContent = state;
+  const noteEl = document.getElementById('sync-note');
+  noteEl.textContent = note;
+  noteEl.hidden = !note;
+
+  signBtn.hidden = false;
+  signBtn.textContent = s.signedIn ? 'Sign out' : 'Sign in to edit';
+}
+
+// --- Sign in ---------------------------------------------------------------
+const authEl = document.getElementById('auth');
+const authErr = document.getElementById('auth-err');
+
+function openAuth() {
+  authErr.hidden = true;
+  authEl.hidden = false;
+  authEl.querySelector('input[name=email]').focus();
+}
+function closeAuth() {
+  authEl.hidden = true;
+  document.getElementById('auth-form').reset();
+}
+
+document.getElementById('auth-x').onclick = closeAuth;
+authEl.onclick = (ev) => { if (ev.target === authEl) closeAuth(); };
+document.addEventListener('keydown', (ev) => {
+  if (ev.key === 'Escape' && !authEl.hidden) closeAuth();
+});
+
+signBtn.onclick = () => {
+  if (Sync.status().signedIn) { Sync.signOut(); toast('Signed out', () => {}); }
+  else openAuth();
+};
+
+document.getElementById('auth-form').onsubmit = async (ev) => {
+  ev.preventDefault();
+  const f = new FormData(ev.target);
+  const go = document.getElementById('auth-go');
+  go.disabled = true;
+  go.textContent = 'Signing in…';
+  try {
+    await Sync.signIn(String(f.get('email')).trim(), String(f.get('password')));
+    closeAuth();
+    toast('Signed in — your changes are shared now', () => {});
+  } catch (err) {
+    authErr.textContent = String(err.message || err);
+    authErr.hidden = false;
+  } finally {
+    go.disabled = false;
+    go.textContent = 'Sign in';
+  }
+};
+
 // Materialise the working copy on first load. The working copy is the truth
 // (the seed is only a fallback), so it should exist from the first visit
 // rather than springing into being on the first edit.
+stampRoleIds(DATA);
 persist();
 setView('overview');
 render();
+
+Sync.init({
+  getDoc: () => DATA,
+  setDoc: applyRemote,
+  onStatus: renderSync,
+});
 </script>

@@ -10,9 +10,14 @@
 // is only worth having if a script can fail on it — so these are the rules
 // that actually constrain a ported design system:
 //
-//   1. No external requests. Tailwind's CDN, Google Fonts and Material Symbols
-//      are all blocked by the artifact CSP, so the port had to replace them.
-//      This proves it did, and keeps the file working offline and over file://.
+//   1. No external requests except the one configured database. Tailwind's CDN,
+//      Google Fonts and Material Symbols are all blocked by the artifact CSP, so
+//      the port had to replace them. The page now talks to Supabase, which is
+//      the whole point of it being shared — so the rule is not "no network" but
+//      "nothing the deploy CSP does not name". A font, an analytics beacon or a
+//      second API creeping in still fails, which is what the rule was for.
+//      Everything else still has to be inlined, and the page still has to work
+//      over file:// with no signal.
 //   2. One family, Inter. A missing @font-face silently falls back and nobody
 //      notices in review.
 //   3. Radius conformance. ROUND_EIGHT plus the pill; an arbitrary value is
@@ -22,7 +27,7 @@
 //      product exists to surface, so it must say so in words, not only in red.
 
 import puppeteer from 'puppeteer-core';
-import { mkdirSync } from 'node:fs';
+import { mkdirSync, readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
@@ -41,13 +46,26 @@ const failures = [];
 const shots = [];
 const go = (v) => `document.querySelector('[data-view=${v}]').click()`;
 
+// The single origin the built page is allowed to reach, taken from the same
+// place the page took it — so this cannot drift from what was actually built.
+// Requests to it are expected and are not failures; they will not succeed here
+// anyway, because these shots load over file:// and the page falls back to the
+// seed, which is exactly the behaviour being photographed.
+const allowedOrigin = (() => {
+  const m = readFileSync(join(root, 'prototype/ctv-os.html'), 'utf8')
+    .match(/const CFG = (\{.*?\}|null);/);
+  if (!m || m[1] === 'null') return null;
+  try { return new URL(JSON.parse(m[1]).url).host; } catch { return null; }
+})();
+const foreign = (u) =>
+  !u.startsWith('file:') && !u.startsWith('data:')
+  && !(allowedOrigin && new URL(u).host === allowedOrigin);
+
 async function shot(name, { width, height, prep }) {
   const page = await browser.newPage();
   await page.setViewport({ width, height, deviceScaleFactor: 2 });
   const external = [];
-  page.on('request', (r) => {
-    if (!r.url().startsWith('file:') && !r.url().startsWith('data:')) external.push(r.url());
-  });
+  page.on('request', (r) => { if (foreign(r.url())) external.push(r.url()); });
   await page.goto(url, { waitUntil: 'networkidle0' });
   if (prep) await page.evaluate(prep);
   await new Promise((r) => setTimeout(r, 350));       // let fonts settle
@@ -55,7 +73,7 @@ async function shot(name, { width, height, prep }) {
   shots.push(`${name}.png  ${width}×${height}`);
   // Rule 1, checked on every screen rather than once: a stray asset could be
   // referenced from any one of them.
-  for (const u of external) failures.push(`${name}: external request to ${u}`);
+  for (const u of external) failures.push(`${name}: unexpected request to ${u}`);
   return page;
 }
 
@@ -207,7 +225,10 @@ console.log(`  radii in use: ${Object.keys(radii).sort((a, b) => a - b).join(', 
 console.log(`  sheet transition under prefers-reduced-motion: ${reduced}`);
 console.log(`  undo reachable over an open sheet: ${undoOnTop.reachable}`);
 if (failures.length === 0) {
-  console.log('\n  no external requests; one family; radii on scale; every state carries words.\n');
+  console.log(
+    `\n  no requests beyond ${allowedOrigin ?? 'the page itself'}; one family; `
+    + `radii on scale; every state carries words.\n`
+  );
 } else {
   console.log('');
   for (const f of failures) console.log(`  FAIL  ${f}`);

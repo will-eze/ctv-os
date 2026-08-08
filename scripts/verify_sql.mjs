@@ -380,16 +380,49 @@ await check('RLS is on for every table', async () => {
   return 'all tables';
 });
 
-await check('only events and tasks can be deleted', async () => {
+await check('only plans can be deleted, never records', async () => {
   // The year was reconstructed from a handover, so a fixture that was never
   // real has to be removable. A kit booking or a ledger line is a record of
   // something that happened and must not be.
+  //
+  // event_roles joined the list when the store moved to Postgres. Removing a
+  // role has always been an offered action; against localStorage it was a
+  // shorter array, and against a shared database it has to be a DELETE or the
+  // role reappears on the next pull. It is a slot in a plan, not a record.
   const { rows } = await db.query(
     `select tablename from pg_policies
       where schemaname = 'public' and cmd = 'DELETE' order by tablename`
   );
-  eq(rows.map((r) => r.tablename), ['events', 'tasks'], 'tables with a DELETE policy');
+  eq(rows.map((r) => r.tablename), ['event_roles', 'events', 'tasks'],
+     'tables with a DELETE policy');
   return 'kit, ledger, deliverables and incidents stay put';
+});
+
+await check('writing anything requires a session', async () => {
+  // Reads are open with the publishable key; writes are not. The key ships
+  // inside the deployed page, so an unguessable URL protects nothing.
+  const { rows } = await db.query(
+    `select tablename, cmd, qual, with_check from pg_policies
+      where schemaname = 'public' and cmd in ('INSERT','UPDATE','DELETE')`
+  );
+  const open = rows.filter(
+    (r) => !/authenticated/.test(`${r.qual ?? ''} ${r.with_check ?? ''}`)
+  );
+  eq(open.map((r) => `${r.tablename}.${r.cmd}`), [], 'write policies open to anon');
+  return `${rows.length} write policies, all authenticated-only`;
+});
+
+await check('reading stays open without a session', async () => {
+  // The counterpart to the check above, and the reason it is safe: shutting
+  // anon out of writes must not shut the station out of looking at the year.
+  // incidents is the deliberate exception and is asserted separately below.
+  const { rows } = await db.query(
+    `select tablename, qual from pg_policies
+      where schemaname = 'public' and cmd = 'SELECT' and tablename <> 'incidents'`
+  );
+  const shut = rows.filter((r) => r.qual !== 'true');
+  eq(shut.map((r) => r.tablename), [], 'tables anon cannot read');
+  return `${rows.length} tables readable with the publishable key`;
 });
 
 await check('incidents is not readable with the anon role', async () => {

@@ -1,6 +1,7 @@
 dist/
 node_modules/
 .vercel/
+.claude/
 supabase/.temp/
 .env.local
 .env*.local

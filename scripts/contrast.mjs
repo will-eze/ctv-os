@@ -131,8 +131,14 @@ const PAIRS = [
   ['on-surface-var',  'bg',        4.5, 'brief text on the canvas'],
   ['on-surface-var',  'highest',   4.5, '.tag default'],
   ['on-surface-var',  'high',      4.5, '.col-n board column count'],
+  // The sync line lives in the sidebar, so it is measured against --low rather
+  // than --card. Whether the year on screen is the year everyone else is seeing
+  // is not a decorative detail, and it is set in the one place in the interface
+  // whose background is not white.
+  ['on-surface-var',  'low',       4.5, '.sync-line — Live / Offline / Read only'],
+  ['error',           'low',       4.5, '.sync-note when the database rejects a write'],
   ['secondary',       'card',      4.5, '.dimmed, table meta, .stat-note'],
-  ['secondary',       'low',       4.5, 'sidebar nav labels, weekday header'],
+  ['secondary',       'low',       4.5, 'sidebar nav labels, weekday header, .sync-note'],
   ['secondary',       'bg',        4.5, 'crew card key labels'],
   ['secondary',       'container', 4.5, '.seg unselected'],
   ['primary',         'card',      4.5, 'links, Today, .person-role'],

@@ -13,11 +13,13 @@ would have been ~180 KB for the same result.
 """
 import base64
 import json
+import os
 import pathlib
 import sys
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 TEMPLATE = ROOT / "prototype" / "template.html"
+SYNC = ROOT / "prototype" / "sync.js"
 OUT = ROOT / "prototype" / "ctv-os.html"
 FONTS = ROOT / "prototype" / "fonts"
 # The deploy artifact. Kept separate from prototype/ so that publishing the site
@@ -30,6 +32,40 @@ def b64(name: str) -> str:
     if not path.exists():
         sys.exit(f"missing font: {path}\nrun scripts/fetch_fonts.py first")
     return base64.b64encode(path.read_bytes()).decode()
+
+
+def supabase_config() -> str:
+    """The project the built page talks to, as a JSON literal, or `null`.
+
+    Exactly two values cross into the page: the REST URL and the publishable
+    key. The publishable key is designed to sit in a browser — row level
+    security is what protects the data, and supabase/schema.sql requires a real
+    session for every write. The secret key is deliberately not read here; it
+    belongs to scripts/seed_supabase.mjs and nowhere near a build artifact.
+
+    With no .env.local, this returns `null` and the build produces the
+    self-contained localStorage prototype that came before any of this. That is
+    not a degraded mode — it is what `npm run e2e` drives, from a file:// URL.
+    """
+    env = {}
+    path = ROOT / ".env.local"
+    if path.exists():
+        for line in path.read_text().splitlines():
+            line = line.strip()
+            if line and not line.startswith("#") and "=" in line:
+                k, v = line.split("=", 1)
+                env[k.strip()] = v.strip()
+
+    url = os.environ.get("SUPABASE_URL") or env.get("SUPABASE_URL")
+    key = os.environ.get("SUPABASE_ANON_KEY") or env.get("SUPABASE_ANON_KEY")
+    if not url or not key:
+        return "null"
+    if "secret" in key or key.startswith("sbp_"):
+        sys.exit(
+            "refusing to build: SUPABASE_ANON_KEY looks like a secret or an\n"
+            "access token. Only the publishable key may be inlined into the page."
+        )
+    return json.dumps({"url": url.rstrip("/"), "key": key})
 
 
 def main() -> None:
@@ -55,10 +91,14 @@ def main() -> None:
         "tasks": data["tasks"],
     }
 
+    cfg = supabase_config()
+    sync = SYNC.read_text().replace("__SUPABASE__", cfg)
+
     html = TEMPLATE.read_text()
     for token, value in (
         ("__DATA__", json.dumps(payload, ensure_ascii=False, separators=(",", ":"))),
         ("__FONT_INTER__", b64("Inter.woff2")),
+        ("__SYNC_JS__", sync),
     ):
         if token not in html:
             sys.exit(f"template no longer contains {token}")
@@ -76,6 +116,11 @@ def main() -> None:
         f"{len(data['events'])} events  {open_roles} open roles"
     )
     print(f"{DIST.relative_to(ROOT)}  (deploy artifact)")
+    print(
+        "supabase: local only — no .env.local"
+        if cfg == "null"
+        else f"supabase: {json.loads(cfg)['url']}"
+    )
 
 
 if __name__ == "__main__":

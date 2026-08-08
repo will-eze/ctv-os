@@ -34,6 +34,18 @@ do $$ begin
 exception when duplicate_object then null; end $$;
 
 do $$ begin
+  -- Not one date in 2026/27 is confirmed. The handover states exactly two —
+  -- National Television Day on 21 November, and welcome weekend being the
+  -- Friday-to-Sunday before freshers — and everything else was inferred from
+  -- phrases like "Rugby at the Rec in October".
+  --
+  -- The interface renders 'estimated' as "date to confirm", which is the whole
+  -- reason events are movable. Storing the date without storing how much it is
+  -- worth would turn 31 guesses into 31 facts on the way into the database.
+  create type date_confidence as enum ('fixed', 'estimated');
+exception when duplicate_object then null; end $$;
+
+do $$ begin
   -- Handover Ib/Id: vision mix + PTZ on arena nights, gantry/box/roaming at
   -- the Rec, interviewer + cam op pairs everywhere.
   create type crew_role as enum (
@@ -122,6 +134,10 @@ create table if not exists events (
   venue         text,
   strand        strand not null default 'society',
   status        event_status not null default 'planned',
+  -- How much the date above is worth. See the enum for why this is not
+  -- optional. New events created in the interface default to 'estimated',
+  -- because a date somebody typed in August is a guess like any other.
+  date_confidence date_confidence not null default 'estimated',
   society_id    uuid references societies(id) on delete set null,
   -- Handover IIa: we do not usually charge sport, but do charge for ticketed
   -- events and things like kickboxing.
@@ -372,6 +388,44 @@ drop trigger if exists tasks_clear_lead on tasks;
 create trigger tasks_clear_lead before update on tasks
   for each row execute function tasks_clear_orphan_lead();
 
+-- ---------------------------------------------------------------------------
+-- Multi-client sync — columns
+-- ---------------------------------------------------------------------------
+-- The prototype stopped being one station manager's local file the moment more
+-- than one person opened it. Six tables are editable from the interface, so
+-- those six are the ones that have to converge. Two things are needed, and
+-- neither is exotic.
+--
+-- `slug` gives members and societies a stable identity that survives seeding.
+-- events and tasks already had one, and prep_templates has a natural key in
+-- unique (strand, label). Without it, re-running the seed would mint fresh
+-- uuids and every client would disagree about who 'ela' is — a role strip
+-- reads `member: "ela"`, so that string has to mean something. The slug is the
+-- id from data/year.json, so the seed is idempotent and the export can
+-- round-trip back to the same file.
+--
+-- `updated_at` is what lets a client ask what changed since it last looked.
+-- Only events had it, because until now nothing else was ever read back.
+--
+-- This block sits HERE, above task_due, and not in the Triggers section with
+-- the rest of the sync plumbing. task_due is `select t.*`, so adding a column
+-- to tasks reorders the view's columns — and `create or replace view` refuses
+-- to rename a column. Run the alters after the view and the second run of this
+-- supposedly re-runnable file fails. `npm run verify:sql` catches it, which is
+-- the only reason it is not still broken.
+
+alter table members   add column if not exists slug text;
+alter table societies add column if not exists slug text;
+
+create unique index if not exists members_slug_key   on members (slug);
+create unique index if not exists societies_slug_key on societies (slug);
+
+alter table members        add column if not exists updated_at timestamptz not null default now();
+alter table societies      add column if not exists updated_at timestamptz not null default now();
+alter table prep_templates add column if not exists updated_at timestamptz not null default now();
+alter table event_roles    add column if not exists updated_at timestamptz not null default now();
+alter table tasks          add column if not exists updated_at timestamptz not null default now();
+
 -- The list the To do screen reads. An anchored task with a deleted anchor has
 -- no date rather than a wrong one.
 create or replace view task_due as
@@ -560,12 +614,63 @@ drop trigger if exists events_touch on events;
 create trigger events_touch before update on events
   for each row execute function touch_updated_at();
 
+-- Sync bookkeeping, part two: the triggers that keep `updated_at` honest.
+-- The columns themselves are added further up, before task_due — see the note
+-- there for why the order is load-bearing.
+do $$
+declare t text;
+begin
+  foreach t in array array[
+    'members','societies','prep_templates','event_roles','tasks'
+  ] loop
+    execute format('drop trigger if exists %I on %I', t || '_touch', t);
+    execute format(
+      'create trigger %I before update on %I for each row execute function touch_updated_at()',
+      t || '_touch', t);
+  end loop;
+end $$;
+
+-- Realtime. A poll every few seconds would converge too, and the client keeps
+-- one as a fallback because a dropped socket must not mean stale crew lists.
+-- But the case this product exists for is two people filling the same open role
+-- at the same time, and that wants to resolve in a second, not on the next tick.
+--
+-- `add table` throws if the table is already published, and this file promises
+-- to be re-runnable, so each one is guarded.
+do $$
+declare t text;
+begin
+  foreach t in array array[
+    'members','societies','events','event_roles','tasks','prep_templates'
+  ] loop
+    if not exists (
+      select 1 from pg_publication_tables
+      where pubname = 'supabase_realtime' and schemaname = 'public' and tablename = t
+    ) then
+      execute format('alter publication supabase_realtime add table %I', t);
+    end if;
+  end loop;
+exception
+  -- A bare Postgres (PGlite, under npm run verify:sql) has no supabase_realtime
+  -- publication. The schema is still valid; there is just nothing to publish to.
+  when undefined_object then null;
+end $$;
+
 -- ---------------------------------------------------------------------------
 -- Row level security
 -- ---------------------------------------------------------------------------
--- v1 is single-operator behind an unguessable URL, exactly as JSS Organiser —
--- but incidents holds safeguarding material, so it is the one table that is
--- NOT readable by the anon key even with the link. It requires a real session.
+-- Reading is open with the publishable key. Writing needs a real session.
+--
+-- v1 was single-operator behind an unguessable URL. That stopped being the
+-- shape of the problem once the site went up on a public host and more than one
+-- person started editing it: the publishable key ships inside the page, so
+-- "knows the URL" and "holds the key" are the same thing, and an unguessable
+-- URL is not an access control. Anyone can still read the year — that is the
+-- point of putting it on the web — but moving a fixture, filling a role or
+-- ticking off a deadline now requires an account.
+--
+-- incidents remains stricter than everything else: safeguarding material is not
+-- readable at all without a session, not merely unwritable.
 
 alter table members         enable row level security;
 alter table societies       enable row level security;
@@ -593,10 +698,12 @@ begin
   ] loop
     execute format('drop policy if exists %I on %I', t || '_read',  t);
     execute format('drop policy if exists %I on %I', t || '_write', t);
-    execute format('create policy %I on %I for select using (true)', t || '_read', t);
-    execute format('create policy %I on %I for insert with check (true)', t || '_write', t);
     execute format('drop policy if exists %I on %I', t || '_update', t);
-    execute format('create policy %I on %I for update using (true) with check (true)', t || '_update', t);
+    execute format('create policy %I on %I for select using (true)', t || '_read', t);
+    execute format('create policy %I on %I for insert with check (auth.role() = ''authenticated'')',
+                   t || '_write', t);
+    execute format('create policy %I on %I for update using (auth.role() = ''authenticated'') '
+                   'with check (auth.role() = ''authenticated'')', t || '_update', t);
   end loop;
 end $$;
 
@@ -617,9 +724,20 @@ declare t text;
 begin
   foreach t in array array['events', 'tasks'] loop
     execute format('drop policy if exists %I on %I', t || '_delete', t);
-    execute format('create policy %I on %I for delete using (true)', t || '_delete', t);
+    execute format('create policy %I on %I for delete using (auth.role() = ''authenticated'')',
+                   t || '_delete', t);
   end loop;
 end $$;
+
+-- event_roles is deletable too, and it is the one addition the multi-client
+-- move forced. Removing a role from an event is an edit the interface has
+-- always offered; while the document lived in localStorage that was just a
+-- shorter array, but against the database it has to be a DELETE or the role
+-- comes back on the next pull. The record being protected here is the event,
+-- and the event survives.
+drop policy if exists event_roles_delete on event_roles;
+create policy event_roles_delete on event_roles for delete
+  using (auth.role() = 'authenticated');
 
 -- incidents: authenticated only, both directions.
 drop policy if exists incidents_read on incidents;

@@ -40,8 +40,21 @@ const page = await browser.newPage();
 
 const violations = [];
 const errors = [];
+const dbNoise = [];
 page.on('pageerror', (e) => errors.push(`pageerror: ${e.message}`));
-page.on('console', (m) => { if (m.type() === 'error') errors.push(`console: ${m.text()}`); });
+page.on('console', (m) => {
+  if (m.type() !== 'error') return;
+  // A failed request to the database is not a defect in the artifact. It is the
+  // most ordinary thing that can happen to this page — no signal at the Rec, a
+  // project not yet seeded — and the page is built to carry on from the seed
+  // when it happens. Chrome logs it regardless, and the browser writes that log
+  // itself, so it cannot be suppressed from inside the page. Counting it as a
+  // page error would mean this check could only pass against a live database,
+  // which is exactly the dependency the artifact is supposed to not have.
+  const where = m.location()?.url ?? '';
+  if (dbHost && where.includes(dbHost)) dbNoise.push(where);
+  else errors.push(`console: ${m.text()}`);
+});
 await page.evaluateOnNewDocument(() => {
   window.__csp = [];
   document.addEventListener('securitypolicyviolation', (e) => {
@@ -49,9 +62,22 @@ await page.evaluateOnNewDocument(() => {
   });
 });
 
+// The one origin the artifact is allowed to reach, read out of the artifact
+// itself rather than out of the config — so a build pointed at a project the
+// CSP does not name fails here instead of on the deployed URL.
+const cfg = (() => {
+  const m = html.toString().match(/const CFG = (\{.*?\}|null);/);
+  if (!m || m[1] === 'null') return null;
+  try { return JSON.parse(m[1]); } catch { return null; }
+})();
+const dbHost = cfg ? new URL(cfg.url).host : null;
+
 const external = [];
 page.on('request', (r) => {
-  if (r.url() !== url && !r.url().startsWith('data:')) external.push(r.url());
+  const u = r.url();
+  if (u === url || u.startsWith('data:')) return;
+  if (dbHost && new URL(u).host === dbHost) return;
+  external.push(u);
 });
 
 await page.goto(url, { waitUntil: 'networkidle0' });
@@ -65,7 +91,32 @@ check('served with a CSP at all', !!headers['Content-Security-Policy'],
   headers['Content-Security-Policy']?.slice(0, 52) + '…');
 check('no CSP violations on load', violations.length === 0, violations.join(' | ') || 'none');
 check('no page or console errors', errors.length === 0, errors.slice(0, 2).join(' | ') || 'clean');
-check('no external requests', external.length === 0, external.join(' | ') || 'self-contained');
+
+// The counterpart to the filter above. This run reaches a database that is
+// there but has no tables in it, which is indistinguishable from being offline
+// — so it is the free opportunity to prove the fallback works. Every check
+// below this line about rendering and interaction is running with no usable
+// database behind it, and that is the point.
+check('survives an unreachable database', dbNoise.length > 0 || !dbHost,
+  dbHost
+    ? `${dbNoise.length} failed database requests, page carried on from the seed`
+    : 'no database configured');
+check('no requests beyond the database', external.length === 0,
+  external.join(' | ') || (dbHost ? `self-contained + ${dbHost}` : 'self-contained'));
+
+// The CSP and the built page have to agree about which database exists. They
+// are set in two different files by two different mechanisms — vercel.json by
+// hand, the page from .env.local — and when they disagree the page loads
+// perfectly and then silently cannot reach its data. That is the exact failure
+// mode a CSP check is supposed to catch, so it is asserted rather than assumed.
+const csp = headers['Content-Security-Policy'] ?? '';
+check('the CSP names the database the page was built for',
+  !dbHost || (csp.includes(`https://${dbHost}`) && csp.includes(`wss://${dbHost}`)),
+  dbHost
+    ? (csp.includes(`https://${dbHost}`) && csp.includes(`wss://${dbHost}`)
+        ? `connect-src allows https and wss to ${dbHost}`
+        : `page targets ${dbHost}, CSP connect-src does not allow it`)
+    : 'no database configured — nothing to allow');
 
 // The font is the thing a CSP most often kills, and its absence is invisible in
 // a smoke test that only checks for errors.

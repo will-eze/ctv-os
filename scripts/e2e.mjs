@@ -7,6 +7,7 @@
 // an internal function directly, because the bugs live in the wiring.
 
 import puppeteer from 'puppeteer-core';
+import { readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
@@ -21,9 +22,31 @@ const browser = await puppeteer.launch({
 const page = await browser.newPage();
 await page.setViewport({ width: 1280, height: 900 });
 
+// Everything below runs against a file:// URL with no reachable database, which
+// is the mode the product has to be strongest in: a phone at a venue, or a
+// laptop before anyone has run the seed. Every edit here is made offline, held
+// in localStorage, and would be sent on the next successful write.
+//
+// Chrome logs each failed request to the database itself, from outside the
+// page, so it cannot be silenced in JavaScript. Those are separated out rather
+// than counted as page errors — see the same reasoning in verify_deploy.mjs,
+// which asserts the fallback that produces them.
+const dbHost = (() => {
+  const m = readFileSync(join(root, 'prototype/ctv-os.html'), 'utf8')
+    .match(/const CFG = (\{.*?\}|null);/);
+  if (!m || m[1] === 'null') return null;
+  try { return new URL(JSON.parse(m[1]).url).host; } catch { return null; }
+})();
+
 const errors = [];
+const offlineNoise = [];
 page.on('pageerror', (e) => errors.push(e.message));
-page.on('console', (m) => { if (m.type() === 'error') errors.push(m.text()); });
+page.on('console', (m) => {
+  if (m.type() !== 'error') return;
+  const where = m.location()?.url ?? '';
+  if (dbHost && where.includes(dbHost)) offlineNoise.push(where);
+  else errors.push(m.text());
+});
 
 await page.goto(url, { waitUntil: 'networkidle0' });
 
@@ -727,10 +750,59 @@ await check('the sidebar is reachable and dismissable on a phone', async () => {
   return `${menu.w}x${menu.h} target, backdrop and nav both dismiss`;
 });
 
+console.log('\n  OFFLINE\n  ' + '-'.repeat(70));
+
+await check('an unreachable database is stated, not hidden', async () => {
+  if (!dbHost) return 'built with no database — nothing to state';
+  // The failure that matters is the silent one: a page that looks live, is
+  // hours stale, and tells you nothing. Whatever it says, it has to say it in
+  // words — the dot beside it is redundant by design.
+  //
+  // Wait for the status to settle rather than reading it mid-flight.
+  // "Connecting…" is a truthful thing to say for the 80ms before the request
+  // fails, and an earlier version of this check asserted exactly that and
+  // called it a pass — the same mistake as asserting a CSS class on a sheet
+  // that is still sliding.
+  // `Sync` is a top-level const, so it is a script-scoped binding and never a
+  // property of window — reachable by name, absent from `window.Sync`.
+  await page.waitForFunction(
+    () => typeof Sync !== 'undefined' && Sync.status().mode !== 'connecting',
+    { timeout: 10000 },
+  );
+  const said = await page.evaluate(() => {
+    const el = document.getElementById('sync');
+    if (!el || el.hidden) return null;
+    return {
+      state: document.getElementById('sync-state').textContent.trim(),
+      note: document.getElementById('sync-note').textContent.trim(),
+    };
+  });
+  if (said && said.state === 'Connecting…') throw new Error('status never settled');
+  if (!said) throw new Error('the sync status block never appeared');
+  if (!said.state) throw new Error('sync status rendered with no words in it');
+  return `"${said.state}" — ${said.note || 'no note'}`;
+});
+
+await check('edits made offline are queued rather than lost', async () => {
+  if (!dbHost) return 'built with no database — nothing to queue';
+  // Every edit this suite just made happened with no database. They are all in
+  // localStorage, and the outbox is what will replay them on the next write.
+  const queued = await page.evaluate(() =>
+    JSON.parse(localStorage.getItem('ctvos.outbox.v1') || '[]').length);
+  if (queued === 0) throw new Error('no operations queued after a whole suite of edits');
+  const kinds = await page.evaluate(() => {
+    const ops = JSON.parse(localStorage.getItem('ctvos.outbox.v1') || '[]');
+    return [...new Set(ops.map((o) => `${o.table}.${o.op}`))].sort().join(', ');
+  });
+  return `${queued} operations held: ${kinds}`;
+});
+
 console.log('\n  CONSOLE\n  ' + '-'.repeat(70));
 await check('no page errors throughout', async () => {
   if (errors.length) throw new Error(errors.slice(0, 3).join(' | '));
-  return 'clean';
+  return offlineNoise.length
+    ? `clean — ${offlineNoise.length} database requests failed, all handled`
+    : 'clean';
 });
 
 await browser.close();

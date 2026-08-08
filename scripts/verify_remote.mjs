@@ -129,12 +129,25 @@ await check('RLS is enabled on every table', async () => {
   return 'all tables';
 });
 
-await check('only events and tasks can be deleted', async () => {
+await check('only plans can be deleted, never records', async () => {
   const rows = await all(
     `select tablename from pg_policies
       where schemaname = 'public' and cmd = 'DELETE' order by tablename`);
-  eq([...new Set(rows.map((r) => r.tablename))], ['events', 'tasks'], 'tables with a DELETE policy');
+  eq([...new Set(rows.map((r) => r.tablename))], ['event_roles', 'events', 'tasks'],
+     'tables with a DELETE policy');
   return 'kit, ledger, deliverables and incidents stay put';
+});
+
+await check('writing anything requires a session', async () => {
+  // The deployed page carries the publishable key, so this policy set is the
+  // only thing standing between a stranger with the URL and the crew list.
+  const rows = await all(
+    `select tablename, cmd, qual, with_check from pg_policies
+      where schemaname = 'public' and cmd in ('INSERT','UPDATE','DELETE')`);
+  const open = rows.filter(
+    (r) => !/authenticated/.test(`${r.qual ?? ''} ${r.with_check ?? ''}`));
+  eq(open.map((r) => `${r.tablename}.${r.cmd}`), [], 'write policies open to anon');
+  return `${rows.length} write policies, all authenticated-only`;
 });
 
 await check('safeguarding requires a real session', async () => {

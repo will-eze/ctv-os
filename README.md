@@ -5,9 +5,12 @@ Internal operating system for **CampusTV**, University of Bath.
 Built from the 2026 station manager handover document. Named to sit beside
 [Cue](../Cue) and [Prism](../Prism).
 
-> **Status: design, not deployed.** The strategy, visual system, data model and
-> a working prototype are done and verified. The Next.js + Supabase app is not
-> built yet — see [What is not built](#what-is-not-built).
+> **Status: built, one step from live.** Strategy, visual system, data model,
+> a working prototype and multi-client sync are done and verified. What is left
+> is a single credential: creating the tables needs an access token or the
+> database password, and neither Supabase key can run DDL. Until the schema is
+> pushed, every client falls back to the seed year and says so — see
+> [Sharing the year](#sharing-the-year).
 
 ## The one-line version
 
@@ -26,6 +29,7 @@ screen.
 | [DESIGN.md](DESIGN.md) | Tokens with measured contrast, type, layout, the signature component |
 | [supabase/schema.sql](supabase/schema.sql) | The data model, with the reasoning in comments |
 | [data/year.json](data/year.json) | The real 2026/27 year, pulled out of the handover |
+| [prototype/sync.js](prototype/sync.js) | How several people edit the same year at once |
 
 ## The prototype
 
@@ -34,9 +38,10 @@ python3 scripts/build_prototype.py
 open prototype/ctv-os.html
 ```
 
-One self-contained file — data and Inter inlined as base64, no external
-requests at all, so it works from `file://`, from a phone with no signal, and
-inside a strict CSP. Rebuild it after any change to `data/year.json`.
+One self-contained file — data, Inter and the sync engine all inlined, so the
+only host it ever contacts is its own database. It works from `file://`, from a
+phone with no signal, and inside a strict CSP. Rebuild it after any change to
+`data/year.json`.
 
 The look is **Studio Essential**, a Google Stitch design system ported by hand;
 `DESIGN.md` records how, and the two places the port departs from it on
@@ -201,6 +206,56 @@ names in `event_coverage` before a project existed.
 `supabase/migrations/20260807000000_ctv_os_init.sql` is generated from
 `schema.sql`, and `verify:sql` fails if the two have drifted — so what gets
 pushed is the schema that was verified, not a second hand-edited copy of it.
+
+## Sharing the year
+
+The prototype kept the whole year as one document in `localStorage` and rewrote
+all of it on every edit. That is exactly right for one person and exactly wrong
+for several: two people editing different events would clobber each other,
+because the unit of writing was the entire year.
+
+The document stayed. The unit of *writing* became the row.
+
+`mutate()` already cloned the year before every change so that undo could put it
+back, and that clone turns out to be the other half of a diff. Comparing before
+against after yields the handful of rows that actually moved, and only those are
+written. Every one of the thirteen places that edit something got sync without
+being modified, and an undo is the same diff applied in the other direction.
+
+What that buys:
+
+- two people editing different events never conflict — they write disjoint rows;
+- two people editing the same field, last write wins, and the loser sees it
+  within about a second over a Realtime socket;
+- a dropped socket falls back to a 20-second poll, not to stale crew lists;
+- no signal at all falls back to `localStorage`, with edits held in an outbox
+  and replayed on the next successful write.
+
+Reading pulls every table in full rather than asking for rows changed since a
+watermark. A watermark cannot see a delete, so a fixture somebody else removed
+would sit on your calendar until you reloaded — and a calendar showing an event
+nobody is running is the precise failure this product exists to prevent. A year
+is about 60 KB.
+
+Writing needs an account. Reading does not. The publishable key is inside the
+page, so "knows the URL" and "holds the key" are the same thing, and every
+INSERT, UPDATE and DELETE policy in `schema.sql` requires a real session.
+
+### Turning it on
+
+```bash
+npm run db:migration     # schema.sql -> supabase/migrations/
+#   push that migration  (needs SUPABASE_ACCESS_TOKEN, the database password,
+#                         or a paste into the dashboard SQL editor)
+npm run seed             # load data/year.json into it
+npm run verify:remote    # assert the deployed database behaves
+npm run build:prototype  # bake SUPABASE_URL + the publishable key into the page
+```
+
+`vercel.json`'s `connect-src` names the project **by host**. Point the build at
+a different project and you must edit it too — `npm run verify:deploy` fails
+when the CSP and the built page disagree, rather than letting the page load
+perfectly and silently fail to reach its data.
 
 ## What is not built
 
