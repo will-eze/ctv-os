@@ -29,14 +29,20 @@
 }
 
 :root {
-  /* --- Studio Essential named colours, verbatim ------------------------- */
-  --bg:              #faf8ff;   /* background / surface / surface-bright     */
-  --card:            #ffffff;   /* surface-container-lowest                  */
-  --low:             #f2f3ff;   /* surface-container-low  — the sidebar      */
-  --container:       #eaedff;   /* surface-container                         */
-  --high:            #e2e7ff;   /* surface-container-high                    */
-  --highest:         #dae2fd;   /* surface-container-highest / surface-variant */
-  --dim:             #d2d9f4;   /* surface-dim                               */
+  /* --- Surfaces: neutral, not blue -------------------------------------
+     Studio Essential's surfaces are a cool blue-grey ramp (background #faf8ff,
+     sidebar #f2f3ff, containers up to #dae2fd). The station manager asked for
+     that blue tint gone, so the surface ramp is retuned to a warm neutral grey
+     — the green primary, the error reds and every text/outline token are still
+     Stitch's, verbatim. This is a deliberate departure; scripts/contrast.mjs
+     pins these six values so a neutral surface cannot drift unnoticed either. */
+  --bg:              #f7f7f5;   /* canvas / surface                          */
+  --card:            #ffffff;   /* surface-container-lowest (unchanged)      */
+  --low:             #f3f3f1;   /* surface-container-low — the sidebar       */
+  --container:       #ededea;   /* surface-container — hover                 */
+  --high:            #e6e6e2;   /* surface-container-high — active nav       */
+  --highest:         #e0e0dc;   /* surface-container-highest — tag fill      */
+  --dim:             #d6d6d1;   /* surface-dim                               */
 
   --primary:         #004421;
   --primary-c:       #1d5c35;   /* primary-container                         */
@@ -55,11 +61,10 @@
   --on-error-c:      #93000a;
   --tertiary:        #2b3b50;
 
-  /* Stitch's own calendar CSS steps outside the token set for the grid rules
-     and uses slate-200. Kept, because a warm outline-variant grid over white
-     cells reads green at 1px, and the month grid is mostly rules. */
-  --grid:            #e2e8f0;
-  --grid-bg:         #f8fafc;
+  /* Month-grid rules and the out-of-month cell fill. Neutral, to match the
+     retuned surfaces rather than Stitch's slate (which read blue). */
+  --grid:            #e6e6e2;
+  --grid-bg:         #f4f4f2;
 
   /* --- Shape and depth -------------------------------------------------- */
   /* roundness: ROUND_EIGHT. Cards take 12px (Stitch's rounded-xl), controls 8. */
@@ -70,9 +75,22 @@
   --shadow:          0 4px 12px rgba(0, 0, 0, 0.05);
   --shadow-lg:       0 12px 24px rgba(0, 0, 0, 0.08);
 
-  /* --- Spacing scale --------------------------------------------------- */
-  --gutter:          24px;
-  --margin:          32px;
+  /* --- Spacing scale ----------------------------------------------------
+     A 4px step. Before this existed the CSS carried about forty distinct
+     padding values — 9px 11px, 5px 6px, 3px 7px — each individually
+     defensible and collectively the reason the page read as unresolved.
+     Every gap, pad and margin below resolves to one of these. */
+  --s1:               4px;
+  --s2:               8px;
+  --s3:              12px;
+  --s4:              16px;
+  --s5:              20px;
+  --s6:              24px;
+  --s7:              32px;
+  --s8:              48px;
+
+  --gutter:          var(--s6);
+  --margin:          var(--s7);
   --side-w:          260px;
   --top-h:           64px;
 
@@ -92,6 +110,11 @@
      toast peeking over a modal scrim reads as a bug. */
   --z-modal:         90;
 
+  /* One focus treatment. Drawn as an outline rather than a box-shadow so it
+     survives forced-colors mode, where shadows are dropped entirely. */
+  --ring:            2px solid var(--primary);
+  --ring-offset:     2px;
+
   --dur:             160ms;
   --ease:            cubic-bezier(0.2, 0, 0, 1);
 }
@@ -108,7 +131,12 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 button, input, select, textarea { font: inherit; color: inherit; }
-button { cursor: pointer; }
+/* Chrome pads every <button> by 1px 6px. Buttons sized by width/height — the
+   icon buttons, the day-cell add, the round nav arrows — inherited it, which
+   put their glyphs a pixel off centre and put 6px, which is on no scale, into
+   the layout in three places. Reset once; every button that wants padding says
+   so itself, and all of them already did. */
+button { cursor: pointer; padding: 0; }
 h1, h2, h3, h4 { margin: 0; text-wrap: balance; }
 p { margin: 0; text-wrap: pretty; }
 ul { margin: 0; padding: 0; list-style: none; }
@@ -145,7 +173,7 @@ ul { margin: 0; padding: 0; list-style: none; }
   border-right: 1px solid var(--high);
   display: flex; flex-direction: column;
 }
-.side-head { padding: 22px var(--gutter); border-bottom: 1px solid var(--high); }
+.side-head { padding: var(--s5) var(--gutter); border-bottom: 1px solid var(--high); }
 .side-head h1 { font-size: 24px; font-weight: 700; color: var(--primary); letter-spacing: -0.01em; }
 .side-head p { margin-top: 2px; color: var(--secondary); }
 .side-cta { padding: 16px; }
@@ -168,9 +196,9 @@ ul { margin: 0; padding: 0; list-style: none; }
 /* The open-role count rides the nav item it belongs to, so the one number the
    product exists to drive down is visible from every screen. */
 .nav-pill {
-  margin-left: auto; min-width: 22px; padding: 1px 6px; border-radius: var(--r-pill);
+  margin-left: auto; min-width: 22px; padding: 1px 8px; border-radius: var(--r-pill);
   background: var(--error-c); color: var(--on-error-c);
-  font-size: 11px; font-weight: 700; letter-spacing: 0; text-align: center;
+  font-size: 12px; font-weight: 700; letter-spacing: 0; text-align: center;
 }
 .nav-pill.is-clear { background: var(--container); color: var(--on-surface-var); }
 /* Assigning someone moves this number while you are looking at the sheet, not
@@ -186,7 +214,7 @@ ul { margin: 0; padding: 0; list-style: none; }
 .side-link {
   display: flex; align-items: center; gap: 12px; width: 100%;
   padding: 8px; border: 0; background: none; border-radius: var(--r);
-  color: var(--secondary); font-size: 13px; text-align: left;
+  color: var(--secondary); font-size: 14px; text-align: left;
   transition: background var(--dur) var(--ease), color var(--dur) var(--ease);
 }
 .side-link:hover { background: var(--container); color: var(--on-surface); }
@@ -196,7 +224,7 @@ ul { margin: 0; padding: 0; list-style: none; }
    words beside it, and .sync-note spells out the consequence when there is
    one ("Changes are saved here until you are back"). Four assertions in
    scripts/shots.mjs hold that line across the whole interface. */
-.sync { padding: 8px 8px 10px; display: grid; gap: 4px; }
+.sync { padding: 8px 8px 12px; display: grid; gap: 4px; }
 .sync-line {
   display: flex; align-items: center; gap: 8px;
   font-size: 12px; font-weight: 600; color: var(--on-surface-var);
@@ -211,7 +239,7 @@ ul { margin: 0; padding: 0; list-style: none; }
    venue, not an error, and the note underneath says what it means. */
 .sync.is-offline .sync-dot { background: none; border-color: var(--on-surface-var); }
 .sync.is-error   .sync-dot { background: var(--error); border-color: var(--error); }
-.sync-note { font-size: 11px; line-height: 1.4; color: var(--secondary); }
+.sync-note { font-size: 12px; line-height: 1.4; color: var(--secondary); }
 .sync.is-error .sync-note { color: var(--error); }
 
 /* Sign in */
@@ -226,20 +254,59 @@ ul { margin: 0; padding: 0; list-style: none; }
   background: var(--card); border: 1px solid var(--outline-var);
   border-radius: var(--r-card); padding: 24px; box-shadow: var(--shadow-lg);
 }
-.modal-card h2 { font-size: 18px; font-weight: 700; }
+.modal-card h2 { font-size: 20px; font-weight: 700; }
 .modal-sub { font-size: 12px; line-height: 1.5; color: var(--on-surface-var); }
 .fld { display: grid; gap: 4px; font-size: 12px; font-weight: 600; color: var(--on-surface-var); }
 .fld input {
   font: inherit; font-weight: 400; font-size: 14px; color: var(--on-surface);
-  padding: 9px 12px; border-radius: var(--r); background: var(--card);
+  padding: 8px 12px; border-radius: var(--r); background: var(--card);
   border: 1px solid var(--outline);
 }
-.fld input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 2px rgba(0, 68, 33, 0.2); }
+.fld input:focus { border-color: var(--primary); outline: var(--ring); outline-offset: var(--ring-offset); }
 .modal-err {
-  font-size: 12px; padding: 8px 10px; border-radius: var(--r);
+  font-size: 12px; padding: 8px 12px; border-radius: var(--r);
   background: var(--error-c); color: var(--on-error-c);
 }
 .modal-act { display: flex; gap: 8px; justify-content: flex-end; margin-top: 4px; }
+.link-btn {
+  font-size: 12px; font-weight: 600; color: var(--primary);
+  background: none; border: none; padding: 0; cursor: pointer;
+  justify-self: start; text-align: left;
+}
+.link-btn:hover { text-decoration: underline; }
+.link-btn[hidden] { display: none; }
+.modal-wide { max-width: 560px; }
+
+/* Account control and its dropdown menu. */
+.acct-wrap { position: relative; }
+.acct-menu {
+  position: absolute; right: 0; top: calc(100% + 8px); z-index: var(--z-modal);
+  min-width: 220px; display: grid; gap: 2px; padding: 8px;
+  background: var(--card); border: 1px solid var(--outline-var);
+  border-radius: var(--r-card); box-shadow: var(--shadow-lg);
+}
+.acct-menu[hidden] { display: none; }
+.acct-email { padding: 8px; font-size: 12px; color: var(--on-surface-var); word-break: break-all; }
+.acct-badge { display: inline-block; margin-top: 4px; font-size: 12px; font-weight: 700; color: var(--primary); }
+.acct-item {
+  display: flex; align-items: center; gap: 8px; width: 100%; padding: 8px 12px;
+  border: 0; background: none; border-radius: 6px; text-align: left; font-size: 14px; color: var(--on-surface);
+}
+.acct-item:hover { background: var(--low); }
+
+/* The read-only state: hide the affordances that start an edit. */
+body.is-readonly .needs-edit { display: none !important; }
+
+/* Manage-access modal. */
+.access-head { display: flex; align-items: center; justify-content: space-between; }
+#access-body { display: grid; gap: var(--gutter); max-height: 60vh; overflow-y: auto; }
+.access-invite { display: grid; gap: 8px; padding: 16px; border: 1px solid var(--outline-var); border-radius: var(--r); }
+.access-invite h3, .access-people h3 { font-size: 14px; font-weight: 700; }
+.grant-grid { display: grid; gap: 6px; }
+.grant-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.grant-row .who { flex: 1; min-width: 140px; font-size: 14px; }
+.grant-opt { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; color: var(--on-surface-var); }
+.invite-link { font-size: 12px; word-break: break-all; padding: 8px 12px; background: var(--low); border-radius: 6px; border: 1px solid var(--outline-var); }
 
 .main { flex: 1; min-width: 0; margin-left: var(--side-w); display: flex; flex-direction: column; }
 
@@ -262,13 +329,13 @@ ul { margin: 0; padding: 0; list-style: none; }
    Cards and grid rules keep outline-variant, because they are separators, not
    affordances. scripts/contrast.mjs holds the line. */
 .search input {
-  width: 100%; padding: 9px 12px 9px 40px;
+  width: 100%; padding: 8px 12px 8px 40px;
   background: var(--low); border: 1px solid var(--outline);
   border-radius: var(--r); outline: 0;
   transition: border-color var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
 }
 .search input::placeholder { color: var(--secondary); }
-.search input:focus { border-color: var(--primary); box-shadow: 0 0 0 2px rgba(0, 68, 33, 0.2); background: var(--card); }
+.search input:focus { border-color: var(--primary); outline: var(--ring); outline-offset: var(--ring-offset); background: var(--card); }
 .top-right { margin-left: auto; display: flex; align-items: center; gap: 4px; }
 .icon-btn {
   display: grid; place-items: center; width: 36px; height: 36px;
@@ -286,12 +353,14 @@ ul { margin: 0; padding: 0; list-style: none; }
   display: grid; place-items: center; flex: none;
   width: 32px; height: 32px; border-radius: var(--r-pill);
   background: var(--primary-c); color: var(--on-primary-c);
-  font-size: 11px; font-weight: 700; letter-spacing: 0.02em;
+  font-size: 12px; font-weight: 700; letter-spacing: 0.02em;
   border: 1px solid var(--outline-var);
 }
+/* The "+2" face standing in for roles nobody is on. Was an inline style. */
+.avatar.is-open { background: var(--error-c); color: var(--on-error-c); }
 /* Nobody has uploaded a photograph and the page makes no network requests, so
    every face in this product is a pair of initials. */
-.avatar.sm { width: 26px; height: 26px; font-size: 10px; }
+.avatar.sm { width: 26px; height: 26px; font-size: 12px; }
 .avatar.lg { width: 52px; height: 52px; font-size: 16px; border-width: 2px; border-color: var(--high); }
 
 .canvas { flex: 1; width: 100%; max-width: 1440px; margin: 0 auto; padding: var(--margin) var(--gutter) 64px; }
@@ -316,7 +385,7 @@ ul { margin: 0; padding: 0; list-style: none; }
 
 .btn {
   display: inline-flex; align-items: center; justify-content: center; gap: 8px;
-  padding: 10px 18px; border-radius: var(--r); border: 1px solid transparent;
+  padding: 12px 20px; border-radius: var(--r); border: 1px solid transparent;
   font-size: 12px; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase;
   transition: background var(--dur) var(--ease), border-color var(--dur) var(--ease), color var(--dur) var(--ease);
 }
@@ -335,7 +404,7 @@ ul { margin: 0; padding: 0; list-style: none; }
   border-radius: var(--r); box-shadow: var(--shadow-sm);
 }
 .seg button {
-  padding: 6px 16px; border: 0; background: none; border-radius: 6px;
+  padding: 8px 16px; border: 0; background: none; border-radius: 6px;
   color: var(--secondary); font-size: 12px; font-weight: 600; letter-spacing: 0.05em;
   text-transform: uppercase;
   transition: background var(--dur) var(--ease), color var(--dur) var(--ease);
@@ -343,15 +412,18 @@ ul { margin: 0; padding: 0; list-style: none; }
 .seg button:hover { color: var(--on-surface); }
 .seg button[aria-pressed='true'] { background: var(--card); color: var(--primary); box-shadow: var(--shadow-sm); }
 
+/* Quiet by default — a filled pill on the low surface with no visible border,
+   so a row of filters does not read as a row of outlined boxes. The transparent
+   border keeps the metrics identical to the pressed state, which does show. */
 .chip {
-  display: inline-flex; align-items: center; gap: 6px;
-  padding: 6px 14px; border-radius: var(--r-pill);
-  background: var(--card); border: 1px solid var(--outline-var);
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 8px 16px; border-radius: var(--r-pill);
+  background: var(--low); border: 1px solid transparent;
   color: var(--secondary); font-size: 12px; font-weight: 600; letter-spacing: 0.05em;
   white-space: nowrap;
   transition: background var(--dur) var(--ease), color var(--dur) var(--ease), border-color var(--dur) var(--ease);
 }
-.chip:hover { background: var(--low); color: var(--on-surface); }
+.chip:hover { background: var(--container); color: var(--on-surface); }
 .chip[aria-pressed='true'] { background: var(--primary); border-color: var(--primary); color: var(--on-primary); }
 .chip[aria-pressed='true'] .dot { background: currentColor; }
 .chip .dot { width: 8px; height: 8px; border-radius: var(--r-pill); flex: none; }
@@ -359,17 +431,33 @@ ul { margin: 0; padding: 0; list-style: none; }
 .dot-primary { background: var(--primary); }
 .dot-secondary { background: var(--secondary); }
 .chips { display: flex; gap: 8px; flex-wrap: wrap; }
+/* The to-do area filter as a dropdown, shown only on a phone (see the narrow
+   media query). Styled like the add-a-to-do fields so the page reads as one. */
+.chips-menu { display: none; margin-bottom: var(--gutter); }
+.chips-menu select {
+  width: 100%; padding: 12px 12px;
+  border: 1px solid var(--outline); border-radius: var(--r); background: var(--card); outline: 0;
+  font-size: 14px; color: var(--on-surface);
+}
+.chips-menu select:focus { border-color: var(--primary); outline: var(--ring); outline-offset: var(--ring-offset); }
 
 /* A tag is a label, not a control: no hover, no pointer. */
 .tag {
-  display: inline-flex; align-items: center; gap: 5px;
-  padding: 3px 8px; border-radius: 6px;
-  font-size: 11px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase;
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 4px 8px; border-radius: 6px;
+  font-size: 12px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase;
   background: var(--highest); color: var(--on-surface-var); white-space: nowrap;
 }
 .tag-error { background: var(--error-c); color: var(--on-error-c); }
 .tag-primary { background: var(--primary-c); color: var(--on-primary-c); }
 .tag-outline { background: var(--card); color: var(--on-surface-var); border: 1px solid var(--outline-var); }
+/* The overview's open-role rows used to paint every role tag red, so a row with
+   four open roles was five solid pink blocks including the fraction. PRODUCT.md
+   says red is a demand — but every tag in that list is already, by construction,
+   an open role, sitting under a heading that counts them and beside a fraction
+   that grades them. Red on the tag as well ranked nothing and cost the fraction
+   its salience. The tags name which jobs; the fraction stays red and says how
+   bad. Outlining them instead was tried first and read as a row of form fields. */
 
 .stack { display: flex; flex-direction: column; gap: var(--gutter); }
 .spacer { flex: 1; }
@@ -379,73 +467,80 @@ ul { margin: 0; padding: 0; list-style: none; }
 }
 
 /* ==========================================================================
-   Overview
+   Kit locker
    ========================================================================== */
-/* PRODUCT.md: the uncovered role "must be impossible to miss and impossible to
-   confuse with anything else." Four equal metric tiles did the opposite — they
-   gave a count of events and a count of unconfirmed dates the same weight as
-   the one number the product exists to drive to zero. One readout carries it;
-   everything else is a line of context underneath. */
-.lede { display: flex; align-items: baseline; gap: 18px; padding: 22px 24px 20px; }
-.lede-n {
-  flex: none; font-size: 56px; font-weight: 700; letter-spacing: -0.03em;
-  line-height: 0.9; color: var(--error); font-variant-numeric: tabular-nums;
+/* A status is a word, never a colour on its own — attention states (in repair,
+   missing) turn the word red and prefix a warning glyph. */
+.kit-state {
+  display: inline-flex; align-items: center; gap: var(--s1);
+  font-size: 12px; font-weight: 600; letter-spacing: 0.04em;
+  color: var(--on-surface-var); text-transform: uppercase;
 }
-.lede.is-clear .lede-n { color: var(--primary); }
-.lede h3 { font-size: 20px; font-weight: 600; text-wrap: balance; }
-.lede p { margin-top: 5px; color: var(--on-surface-var); max-width: 54ch; text-wrap: pretty; }
+.kit-state.is-alert { color: var(--error); }
+.kit-item { display: flex; align-items: center; gap: var(--s3); }
+.kit-thumb { width: 40px; height: 40px; flex: none; border-radius: 6px; object-fit: cover; background: var(--low); border: 1px solid var(--outline-var); }
+.kit-thumb.is-empty { display: grid; place-items: center; color: var(--on-surface-var); }
+.tr-click { cursor: pointer; }
+.tr-click:focus-visible { outline: 2px solid var(--primary); outline-offset: -2px; }
+.kit-photo { width: 100%; max-height: 220px; object-fit: contain; background: var(--low); border: 1px solid var(--outline-var); border-radius: var(--r); }
+.kit-photo-empty { display: grid; place-items: center; height: 120px; color: var(--on-surface-var); background: var(--low); border: 1px dashed var(--outline); border-radius: var(--r); }
 
+/* ==========================================================================
+   Settings
+   ========================================================================== */
+.set-card { margin-bottom: var(--gutter); }
+.set-row {
+  display: flex; align-items: flex-start; gap: var(--s6);
+  padding: var(--s5) var(--s6);
+}
+.set-txt { flex: 1; min-width: 0; }
+.set-h { font-size: 16px; font-weight: 600; }
+.set-d { margin-top: var(--s1); color: var(--on-surface-var); max-width: 60ch; }
+/* Inherit Inter rather than the UA monospace stack — the audit holds the whole
+   page to one family, and the tinted chip is enough to read as a filename. */
+.set-d code { font-family: inherit; font-size: 12px; background: var(--container); padding: 1px 4px; border-radius: 4px; }
+.set-act { flex: none; display: flex; gap: var(--s2); flex-wrap: wrap; }
+
+/* A real switch: the track and knob move, and the accessible state is the
+   aria-checked the button already carries — the colour is redundant. */
+.switch {
+  flex: none; position: relative; width: 44px; height: 24px; padding: 0;
+  border: 1px solid var(--outline); border-radius: var(--r-pill);
+  background: var(--container);
+  transition: background var(--dur) var(--ease), border-color var(--dur) var(--ease);
+}
+.switch-k {
+  position: absolute; top: 2px; left: 2px; width: 18px; height: 18px;
+  border-radius: var(--r-pill); background: var(--card);
+  box-shadow: var(--shadow-sm);
+  transition: transform var(--dur) var(--ease);
+}
+.switch[aria-checked='true'] { background: var(--primary); border-color: var(--primary); }
+.switch[aria-checked='true'] .switch-k { transform: translateX(20px); }
+
+/* ==========================================================================
+   Shared bits that outlived the overview
+   --------------------------------------------------------------------------
+   The overview page was removed. Its metric strip earned a second life as the
+   Kit locker's summary line, and the stacked avatars are still how the schedule
+   and the event sheet show who is on a crew, so those two survive here; the
+   rest of the overview CSS went with the page.
+   ========================================================================== */
 .meta-strip {
-  display: flex; align-items: center; gap: 4px 14px; flex-wrap: wrap;
+  display: flex; align-items: center; gap: 4px 16px; flex-wrap: wrap;
   margin-bottom: var(--gutter); color: var(--secondary);
 }
 .meta-strip > * + *::before {
   content: ''; display: inline-block; width: 3px; height: 3px; border-radius: 50%;
-  background: var(--outline); vertical-align: 0.24em; margin-right: 14px;
+  background: var(--outline); vertical-align: 0.24em; margin-right: 16px;
 }
 .meta-item { border: 0; background: none; padding: 0; color: inherit; font: inherit; }
 .meta-item b { font-weight: 600; color: var(--on-surface); font-variant-numeric: tabular-nums; }
-button.meta-item { text-decoration: underline; text-decoration-color: var(--outline-var); text-underline-offset: 3px; }
-button.meta-item:hover { color: var(--on-surface); text-decoration-color: currentColor; }
-button.meta-item.is-alert b { color: var(--error); }
+.meta-item.is-alert b { color: var(--error); }
 
-.dash { display: grid; grid-template-columns: 2fr 1fr; gap: var(--gutter); align-items: start; }
-
-/* The uncovered role is the primary object, so on the overview it gets the
-   slot Stitch gave the live video player — the largest thing on the screen. */
-.gap-row {
-  display: flex; align-items: flex-start; gap: 16px; width: 100%;
-  padding: 14px 20px; border: 0; border-top: 1px solid var(--outline-var);
-  background: none; text-align: left;
-  transition: background var(--dur) var(--ease);
-}
-.gap-row:hover { background: var(--low); }
-.gap-when {
-  flex: none; width: 76px; padding-top: 2px;
-  color: var(--secondary); font-size: 12px; font-weight: 600; letter-spacing: 0.04em;
-  text-transform: uppercase;
-}
-.gap-main { flex: 1; min-width: 0; }
-.gap-title { font-weight: 600; }
-.gap-roles { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
-.gap-n { flex: none; align-self: center; }
-
-.next-count { padding: 16px; border-radius: var(--r); background: var(--container); }
-.next-count .t-label { color: var(--primary); }
-.next-days { margin-top: 4px; font-size: 44px; font-weight: 700; letter-spacing: -0.02em; line-height: 1; }
-.next-days small { font-size: 16px; font-weight: 500; letter-spacing: 0; color: var(--on-surface-var); margin-left: 6px; }
 .faces { display: flex; }
 .faces > * { margin-left: -8px; border: 2px solid var(--card); }
 .faces > *:first-child { margin-left: 0; }
-.quick { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-.quick button {
-  display: flex; flex-direction: column; align-items: center; gap: 8px;
-  padding: 16px 8px; border-radius: var(--r);
-  background: var(--bg); border: 1px solid var(--outline-var); color: var(--on-surface-var);
-  font-size: 12px; font-weight: 600;
-  transition: border-color var(--dur) var(--ease), background var(--dur) var(--ease), color var(--dur) var(--ease);
-}
-.quick button:hover { border-color: var(--primary); background: var(--low); color: var(--primary); }
 
 /* ==========================================================================
    Calendar — the month grid
@@ -456,6 +551,9 @@ button.meta-item.is-alert b { color: var(--error); }
    event still has a job nobody is doing.
    ========================================================================== */
 .month-bar { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 16px; }
+/* The calendar home screen's single header row: month nav on the left, filters
+   on the right, kept on one line so the grid starts high on the page. */
+.cal-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 16px; }
 .month-nav {
   display: flex; align-items: center; gap: 4px; padding: 4px;
   background: var(--card); border: 1px solid var(--outline-var);
@@ -464,32 +562,31 @@ button.meta-item.is-alert b { color: var(--error); }
 .month-nav h2 { min-width: 168px; text-align: center; font-size: 20px; font-weight: 600; }
 .month-nav .sep { width: 1px; height: 24px; background: var(--outline-var); margin: 0 4px; }
 .month-nav .link {
-  padding: 6px 14px; border: 0; background: none; border-radius: 6px;
-  color: var(--primary); font-size: 13px; font-weight: 600;
+  padding: 8px 16px; border: 0; background: none; border-radius: 6px;
+  color: var(--primary); font-size: 14px; font-weight: 600;
 }
 .month-nav .link:hover { background: var(--container); }
 .month-nav .icon-btn { width: 32px; height: 32px; border-radius: 6px; }
 
-/* The year ribbon: eleven months of the academic year, each carrying its own
-   count of open roles. Asked for alongside the month grid, and redrawn here as
-   date cards rather than the tally ticks of the rejected direction. */
-.ribbon { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 8px; margin-bottom: 16px; scrollbar-width: thin; }
+/* The year ribbon: eleven months of the academic year in one compact row, each
+   a month label and its event count. Slimmed from the old date-card stack so the
+   grid below fits on one screen — the ribbon is orientation, not the subject. */
+.ribbon { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; margin-bottom: 12px; scrollbar-width: thin; }
 .rib {
-  flex: none; display: flex; flex-direction: column; align-items: center; gap: 3px;
-  width: 66px; padding: 8px 4px; border-radius: var(--r);
+  flex: none; display: flex; align-items: center; gap: 8px;
+  padding: 8px 12px; border-radius: var(--r);
   background: var(--card); border: 1px solid var(--outline-var); color: var(--on-surface);
   transition: border-color var(--dur) var(--ease), background var(--dur) var(--ease);
 }
 .rib:hover { border-color: var(--primary); }
-.rib-m { font-size: 11px; font-weight: 600; letter-spacing: 0.06em; color: var(--secondary); }
-.rib-n { font-size: 18px; font-weight: 700; }
-.rib-bar { width: 26px; height: 3px; border-radius: var(--r-pill); background: var(--highest); }
-.rib-bar.is-open { background: var(--error); }
-.rib-bar.is-clear { background: var(--primary); }
+.rib-m { font-size: 12px; font-weight: 600; letter-spacing: 0.06em; color: var(--secondary); }
+.rib-n { font-size: 14px; font-weight: 700; font-variant-numeric: tabular-nums; }
+/* A small red dot only when the crew-gap flag is on and the month has open
+   roles; off by default, so the ribbon is just months and counts. */
+.rib-dot { width: 6px; height: 6px; border-radius: var(--r-pill); background: var(--error); flex: none; }
 .rib.is-current { background: var(--primary); border-color: var(--primary); color: var(--on-primary); }
 .rib.is-current .rib-m { color: rgba(255, 255, 255, 0.85); }
-.rib.is-current .rib-bar { background: rgba(255, 255, 255, 0.5); }
-.rib.is-now .rib-m::after { content: '•'; margin-left: 3px; color: var(--primary); }
+.rib.is-now .rib-m::after { content: '•'; margin-left: 4px; color: var(--primary); }
 .rib.is-current.is-now .rib-m::after { color: var(--on-primary); }
 
 .cal { overflow: hidden; }
@@ -498,7 +595,7 @@ button.meta-item.is-alert b { color: var(--error); }
   background: var(--low); border-bottom: 1px solid var(--outline-var);
 }
 .weekdays span {
-  padding: 12px 0; text-align: center;
+  padding: 8px 0; text-align: center;
   font-size: 12px; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase;
   color: var(--secondary);
 }
@@ -510,24 +607,24 @@ button.meta-item.is-alert b { color: var(--error); }
   background: var(--grid); gap: 1px; border-top: 1px solid var(--grid);
 }
 .day {
-  position: relative; min-height: 124px; padding: 8px;
+  position: relative; min-height: 92px; padding: 8px;
   background: var(--card); transition: background var(--dur) var(--ease);
 }
-.day:hover { background: #f1f5f9; }
+.day:hover { background: var(--container); }
 .day.is-outside { background: var(--grid-bg); }
-.day.is-outside .daynum { color: #94a3b8; }
+.day.is-outside .daynum { color: var(--secondary); opacity: 0.65; }
 .day.is-today { background: var(--low); }
 .day.is-today .daynum { color: var(--primary); font-weight: 700; }
 .day.is-drop { background: var(--container); box-shadow: inset 0 0 0 2px var(--primary); }
 .day-head { display: flex; align-items: center; justify-content: space-between; min-height: 20px; }
-.daynum { font-size: 13px; font-weight: 500; font-variant-numeric: tabular-nums; }
+.daynum { font-size: 14px; font-weight: 500; font-variant-numeric: tabular-nums; }
 .today-dot { width: 6px; height: 6px; border-radius: var(--r-pill); background: var(--primary); }
 
 /* The badge is the miniature of the event card: same colour logic, one line. */
 .ev {
-  display: block; width: 100%; margin-top: 4px; padding: 3px 7px;
+  display: block; width: 100%; margin-top: 4px; padding: 4px 8px;
   border: 0; border-radius: 4px; text-align: left;
-  font-size: 11px; font-weight: 500; line-height: 1.35;
+  font-size: 12px; font-weight: 500; line-height: 1.35;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   background: var(--container); color: var(--primary);
   transition: filter var(--dur) var(--ease);
@@ -544,8 +641,8 @@ button.meta-item.is-alert b { color: var(--error); }
 .ev-time { font-variant-numeric: tabular-nums; opacity: 0.75; }
 
 .day-add {
-  position: absolute; right: 5px; bottom: 5px;
-  width: 22px; height: 22px; display: grid; place-items: center;
+  position: absolute; right: var(--s1); bottom: var(--s1);
+  width: 24px; height: 24px; display: grid; place-items: center;
   border: 1px solid var(--outline-var); border-radius: 6px;
   background: var(--card); color: var(--secondary);
   opacity: 0; transition: opacity var(--dur) var(--ease), border-color var(--dur) var(--ease);
@@ -554,49 +651,28 @@ button.meta-item.is-alert b { color: var(--error); }
 .day-add:hover, .day-add:focus-visible { opacity: 1; border-color: var(--primary); color: var(--primary); }
 
 /* ==========================================================================
-   Schedule — week strip and timeline
+   Schedule — timeline
    ========================================================================== */
-.weekstrip { display: flex; align-items: center; gap: 12px; margin-bottom: var(--gutter); flex-wrap: wrap; }
-.weekstrip .days { display: flex; gap: 8px; }
-.dcard {
-  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px;
-  width: 62px; height: 78px; border-radius: var(--r-card);
-  background: var(--card); border: 1px solid var(--outline-var); color: var(--on-surface);
-  transition: border-color var(--dur) var(--ease), background var(--dur) var(--ease);
-}
-.dcard:hover { border-color: var(--primary); }
-.dcard-d { font-size: 12px; font-weight: 600; letter-spacing: 0.04em; color: var(--secondary); }
-.dcard-n { font-size: 20px; font-weight: 700; font-variant-numeric: tabular-nums; }
-.dcard-dot { width: 6px; height: 6px; border-radius: var(--r-pill); background: var(--error); margin-top: 2px; }
-/* A day with nothing on it recedes by colour, not by opacity: opacity fades
-   the text along with the card, and at 0.55 the date dropped to 3.86:1. */
-.dcard.is-empty { background: var(--bg); }
-.dcard.is-empty .dcard-n { color: var(--secondary); font-weight: 600; }
-.dcard.is-sel { background: var(--primary); border-color: var(--primary); color: var(--on-primary); box-shadow: var(--shadow-sm); }
-.dcard.is-sel .dcard-d { color: rgba(255, 255, 255, 0.9); }
-.dcard.is-sel .dcard-dot { background: var(--on-primary); }
-.round-btn {
-  display: grid; place-items: center; width: 40px; height: 40px; flex: none;
-  border-radius: var(--r-pill); background: var(--card);
-  border: 1px solid var(--outline-var); color: var(--on-surface-var);
-  transition: background var(--dur) var(--ease), border-color var(--dur) var(--ease);
-}
-.round-btn:hover { background: var(--low); border-color: var(--primary); }
-
 .timeline { position: relative; display: flex; flex-direction: column; gap: var(--gutter); }
 /* The rail sits under the nodes, behind the cards, aligned to the node centre. */
 .timeline::before {
   content: ''; position: absolute; top: 12px; bottom: 12px; left: 146px;
   width: 2px; background: var(--outline-var); opacity: 0.5;
 }
+/* The rail is one absolutely-positioned line down the whole timeline, so it
+   painted straight through these headers — the September rule cut the "21 OPEN"
+   tag in half. Masking the header band with the page colour interrupts the rail
+   at each month, which is what a month break should do to a spine anyway. */
 .tl-month {
   display: flex; align-items: center; gap: 12px;
   margin-top: 8px; color: var(--secondary);
+  position: relative; z-index: 1;
+  background: var(--bg); padding: var(--s1) 0;
 }
 .tl-month::after { content: ''; flex: 1; height: 1px; background: var(--outline-var); }
 .tl-row { display: flex; align-items: flex-start; gap: 20px; position: relative; }
-.tl-when { flex: none; width: 118px; padding-top: 14px; text-align: right; }
-.tl-day { font-size: 18px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.tl-when { flex: none; width: 118px; padding-top: 16px; text-align: right; }
+.tl-day { font-size: 20px; font-weight: 700; font-variant-numeric: tabular-nums; }
 .tl-time { display: block; font-size: 12px; font-weight: 600; letter-spacing: 0.04em; color: var(--secondary); font-variant-numeric: tabular-nums; }
 /* The node on the rail is the state marker, and it is the only one.
    The card used to carry a 4px coloured left edge as well — a side-stripe
@@ -604,7 +680,7 @@ button.meta-item.is-alert b { color: var(--error); }
    node, the strand tag, the crewed fraction and the Missing Requirements panel
    were not already saying, and it sat where nobody scans. The node is on the
    rail the eye is already following. */
-.tl-node { flex: none; width: 18px; margin-top: 19px; display: grid; place-items: center; }
+.tl-node { flex: none; width: 18px; margin-top: 20px; display: grid; place-items: center; }
 .tl-node i {
   width: 13px; height: 13px; border-radius: var(--r-pill);
   background: var(--primary); border: 3px solid var(--bg);
@@ -615,26 +691,26 @@ button.meta-item.is-alert b { color: var(--error); }
 .tl-row.is-bare .tl-node i,
 .tl-row.is-cancelled .tl-node i { background: var(--card); box-shadow: 0 0 0 1.5px var(--outline); }
 .tl-row:hover .tl-node i { transform: scale(1.18); }
-.tl-card { flex: 1; min-width: 0; padding: 18px 20px; text-align: left; width: 100%; }
+.tl-card { flex: 1; min-width: 0; padding: 20px 20px; text-align: left; width: 100%; }
 .tl-card:hover { box-shadow: var(--shadow-lg); }
 .tl-top { display: flex; gap: 20px; align-items: flex-start; flex-wrap: wrap; }
-.tl-meta { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 8px; }
+.tl-meta { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 8px; }
 .tl-place { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; font-weight: 600; letter-spacing: 0.04em; color: var(--secondary); }
-.tl-brief { margin-top: 6px; color: var(--on-surface-var); max-width: 62ch; }
-.tl-foot { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--outline-var); }
+.tl-brief { margin-top: 8px; color: var(--on-surface-var); max-width: 62ch; }
+.tl-foot { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--outline-var); }
 
 /* Missing Requirements, straight from Stitch — and the single most important
    component in the product, because an uncovered role is the thing CTV OS
    exists to surface. Assign is inside it, so closing the gap never means
    navigating somewhere else first. */
 .missing {
-  flex: none; width: 272px; padding: 12px 14px; border-radius: var(--r);
+  flex: none; width: 272px; padding: 12px 16px; border-radius: var(--r);
   background: var(--error-c); border: 1px solid var(--error-c);
 }
 .missing-h { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; color: var(--on-error-c); }
 .missing-h span { font-size: 12px; font-weight: 700; letter-spacing: 0.04em; }
-.missing li { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 3px 0; }
-.missing li span { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--on-error-c); }
+.missing li { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 4px 0; }
+.missing li span { display: inline-flex; align-items: center; gap: 8px; font-size: 14px; color: var(--on-error-c); }
 .assign {
   border: 0; background: none; padding: 2px 4px; border-radius: 4px;
   color: var(--primary); font-size: 12px; font-weight: 700; letter-spacing: 0.04em;
@@ -647,39 +723,39 @@ button.meta-item.is-alert b { color: var(--error); }
 /* Columns are not boxes. A tinted, bordered column holding bordered white
    cards is a card inside a card; the column only needs to say where it starts
    and how much is in it, which a heading rule does. */
-.board { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(208px, 1fr); gap: 18px; overflow-x: auto; padding-bottom: 12px; align-items: start; }
+.board { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(208px, 1fr); gap: 20px; overflow-x: auto; padding-bottom: 12px; align-items: start; }
 .col { display: flex; flex-direction: column; min-width: 0; }
 .col-h {
   display: flex; align-items: center; gap: 8px;
-  padding-bottom: 10px; margin-bottom: 12px;
+  padding-bottom: 12px; margin-bottom: 12px;
   border-bottom: 2px solid var(--outline-var);
   color: var(--on-surface-var);
 }
-.col-n { margin-left: auto; min-width: 22px; padding: 1px 7px; border-radius: var(--r-pill); background: var(--container); color: var(--on-surface-var); font-size: 11px; font-weight: 700; text-align: center; }
+.col-n { margin-left: auto; min-width: 22px; padding: 1px 8px; border-radius: var(--r-pill); background: var(--container); color: var(--on-surface-var); font-size: 12px; font-weight: 700; text-align: center; }
 .col.is-over .col-h { color: var(--on-error-c); border-bottom-color: var(--error); }
 .col.is-over .col-n { background: var(--error-c); color: var(--on-error-c); }
-.col-body { display: flex; flex-direction: column; gap: 10px; }
+.col-body { display: flex; flex-direction: column; gap: 12px; }
 /* Empty states teach what the column is for rather than reporting a void. */
-.col-empty { font-size: 13px; color: var(--secondary); padding: 2px 2px 8px; text-wrap: pretty; }
+.col-empty { font-size: 14px; color: var(--secondary); padding: 2px 2px 8px; text-wrap: pretty; }
 
 /* Adding a to-do happens in place, above the board, in the same shape as the
    event sheet: fields apply on change, nothing is behind a wizard. */
 .addbar {
   display: grid; grid-template-columns: minmax(220px, 3fr) minmax(130px, 1fr) minmax(150px, 1fr) auto auto;
   gap: 12px; align-items: end;
-  padding: 16px 18px; margin-bottom: var(--gutter);
+  padding: 16px 20px; margin-bottom: var(--gutter);
   background: var(--card); border: 1px solid var(--primary);
   border-radius: var(--r-card); box-shadow: var(--shadow);
 }
-.addbar label { display: block; font-size: 11px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: var(--secondary); }
+.addbar label { display: block; font-size: 12px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: var(--secondary); }
 .addbar input, .addbar select {
-  width: 100%; margin-top: 5px; padding: 9px 11px;
+  width: 100%; margin-top: 4px; padding: 8px 12px;
   border: 1px solid var(--outline); border-radius: var(--r); background: var(--card); outline: 0;
   font-size: 14px; text-transform: none; letter-spacing: 0; font-weight: 400; color: var(--on-surface);
 }
-.addbar input:focus, .addbar select:focus { border-color: var(--primary); box-shadow: 0 0 0 2px rgba(0, 68, 33, 0.2); }
+.addbar input:focus, .addbar select:focus { border-color: var(--primary); outline: var(--ring); outline-offset: var(--ring-offset); }
 
-.tcard { padding: 12px 14px; border-radius: var(--r); position: relative; }
+.tcard { padding: 12px 16px; border-radius: var(--r); position: relative; }
 .tcard-x {
   position: absolute; top: 8px; right: 8px;
   display: grid; place-items: center; width: 24px; height: 24px;
@@ -688,11 +764,11 @@ button.meta-item.is-alert b { color: var(--error); }
 }
 .tcard:hover .tcard-x, .tcard-x:focus-visible { opacity: 1; }
 .tcard-x:hover { background: var(--error-c); color: var(--on-error-c); }
-.tcard-h { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; padding-right: 26px; }
+.tcard-h { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; padding-right: 24px; }
 .tcard-t { font-weight: 600; line-height: 1.35; }
-.tcard-d { margin-top: 4px; color: var(--secondary); font-size: 13px; }
-.tcard-f { display: flex; align-items: center; gap: 8px; margin-top: 10px; color: var(--secondary); font-size: 12px; flex-wrap: wrap; }
-.tcard-due { display: inline-flex; align-items: center; gap: 5px; font-variant-numeric: tabular-nums; }
+.tcard-d { margin-top: 4px; color: var(--secondary); font-size: 14px; }
+.tcard-f { display: flex; align-items: center; gap: 8px; margin-top: 12px; color: var(--secondary); font-size: 12px; flex-wrap: wrap; }
+.tcard-due { display: inline-flex; align-items: center; gap: 4px; font-variant-numeric: tabular-nums; }
 .tcard.is-over .tcard-due { color: var(--error); font-weight: 600; }
 .tcard.is-done { opacity: 0.55; }
 .tcard.is-done .tcard-t { text-decoration: line-through; }
@@ -706,18 +782,18 @@ button.meta-item.is-alert b { color: var(--error); }
 .tbl-wrap { border-radius: var(--r-card); border: 1px solid var(--outline-var); overflow: hidden; background: var(--card); box-shadow: var(--shadow); }
 .tbl { width: 100%; border-collapse: collapse; }
 .tbl th {
-  padding: 14px 20px; text-align: left; background: var(--high);
+  padding: 16px 20px; text-align: left; background: var(--high);
   font-size: 12px; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase;
   color: var(--secondary); white-space: nowrap;
 }
-.tbl td { padding: 13px 20px; border-top: 1px solid var(--high); vertical-align: middle; }
+.tbl td { padding: 12px 20px; border-top: 1px solid var(--high); vertical-align: middle; }
 .tbl tbody tr { transition: background var(--dur) var(--ease); }
 .tbl tbody tr:hover { background: var(--low); }
 .tbl .td-t { font-weight: 500; }
 .tbl tr.is-done .td-t { text-decoration: line-through; color: var(--secondary); }
 .tbl .td-due { font-variant-numeric: tabular-nums; white-space: nowrap; }
 .tbl tr.is-over .td-due { color: var(--error); font-weight: 600; }
-.rel { display: block; font-size: 11px; color: var(--secondary); font-weight: 400; }
+.rel { display: block; font-size: 12px; color: var(--secondary); font-weight: 400; }
 
 /* ==========================================================================
    Crew
@@ -725,23 +801,57 @@ button.meta-item.is-alert b { color: var(--error); }
 .people { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: var(--gutter); }
 /* No accent bar across the top. It was decoration duplicating the Clash tag,
    and on the seven cards that do not clash it said nothing at all. */
-.person { padding: 20px; display: flex; flex-direction: column; }
+.person { padding: var(--s5); display: flex; flex-direction: column; }
 .person.is-clash { border-color: var(--error); box-shadow: 0 0 0 1px var(--error), var(--shadow); }
-.person-h { display: flex; align-items: flex-start; gap: 14px; margin-bottom: 16px; }
-.person-h h3 { font-size: 18px; font-weight: 600; }
-.person-role { color: var(--primary); font-size: 12px; font-weight: 600; letter-spacing: 0.04em; margin-top: 1px; }
-.person-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; padding-top: 16px; border-top: 1px solid var(--outline-var); }
-.kv-k { display: block; font-size: 10px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--secondary); margin-bottom: 5px; }
-.kv-v { font-size: 13px; }
-.next-list { margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--outline-var); display: grid; gap: 2px; }
+.person-h { display: flex; align-items: flex-start; gap: var(--s3); margin-bottom: var(--s4); }
+.person-hd { flex: 1; min-width: 0; }
+.person-h h3 { font-size: 20px; font-weight: 600; }
+.person-role { color: var(--primary); font-size: 12px; font-weight: 600; letter-spacing: 0.04em; margin-top: 2px; }
+/* One row, not two columns. The second column held "Roles this year" as a 20px
+   bold number — a hero metric inside a card, sitting beside a header tag whose
+   number was usually within one of it and often identical. Two adjacent counts
+   that are nearly the same and mean different things are worse than one: the
+   header tag now names its unit ("5 events ahead") and the capability tags get
+   the full width to wrap into. */
+.person-cap { padding-top: var(--s4); border-top: 1px solid var(--outline-var); }
+.kv-k { display: block; font-size: 12px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--secondary); margin-bottom: var(--s2); }
+.kv-v { font-size: 14px; display: flex; flex-wrap: wrap; gap: var(--s1); }
+/* The commitment count used to be a tag in the card header, where it pushed the
+   committee role onto a second line and left the six cards at ragged heights.
+   It belongs on the list it counts. */
+.kv-n { color: var(--on-surface-var); margin-left: var(--s1); }
+.next-list { margin-top: var(--s4); padding-top: var(--s4); border-top: 1px solid var(--outline-var); display: grid; gap: 2px; }
 .next-item {
-  display: flex; align-items: center; gap: 10px; width: 100%; padding: 6px 8px; margin: 0 -8px;
-  border: 0; background: none; border-radius: 6px; text-align: left; font-size: 13px;
+  display: flex; align-items: center; gap: var(--s3); width: 100%; padding: var(--s2); margin: 0 calc(var(--s2) * -1);
+  border: 0; background: none; border-radius: 6px; text-align: left; font-size: 14px;
   transition: background var(--dur) var(--ease);
 }
 .next-item:hover { background: var(--low); }
 .next-item .d { flex: none; width: 52px; color: var(--secondary); font-size: 12px; font-weight: 600; font-variant-numeric: tabular-nums; }
 .next-item .t { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.next-item .r { flex: none; color: var(--secondary); font-size: 12px; }
+.person-edit { border: 0; background: none; color: var(--on-surface-var); padding: var(--s2); margin: calc(var(--s2) * -1); border-radius: 6px; display: grid; place-items: center; }
+.person-edit:hover { background: var(--low); color: var(--on-surface); }
+
+/* Crew edit form — inline, replacing the card's body while editing. */
+.member-form { display: grid; gap: var(--s4); }
+.member-form label { display: grid; gap: var(--s1); font-size: 12px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: var(--secondary); }
+.member-form input[type=text] { padding: 8px 12px; border: 1px solid var(--outline); border-radius: var(--r); background: var(--card); color: var(--on-surface); font-size: 14px; font-weight: 400; text-transform: none; letter-spacing: 0; }
+.member-form input[type=text]:focus { border-color: var(--primary); outline: var(--ring); outline-offset: var(--ring-offset); }
+.member-form fieldset { border: 0; padding: 0; }
+.trained-opts { display: flex; flex-wrap: wrap; gap: var(--s2); margin-top: var(--s2); }
+.trained-opt { display: inline-flex; align-items: center; gap: var(--s2); padding: 8px 12px; border: 1px solid var(--outline-var); border-radius: var(--r-pill); font-size: 14px; font-weight: 400; text-transform: none; letter-spacing: 0; cursor: pointer; }
+.trained-opt input { width: 16px; height: 16px; accent-color: var(--primary); }
+.member-act { display: flex; gap: var(--s2); }
+
+/* Roles & responsibilities reference — the job descriptions from the handover. */
+.roles-ref { margin-top: var(--gutter); }
+.roles-ref > summary { cursor: pointer; font-size: 16px; font-weight: 600; padding: var(--s4) 0; list-style-position: inside; }
+.roles-ref-body { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: var(--gutter); margin-top: var(--s3); }
+.role-def h3 { font-size: 14px; font-weight: 700; }
+.role-def h3 .tag { margin-left: var(--s2); }
+.role-def p { color: var(--on-surface-var); font-size: 14px; margin-top: var(--s2); }
+.roles-ref h4 { grid-column: 1 / -1; font-size: 12px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--secondary); margin-top: var(--s2); }
 
 /* ==========================================================================
    Sheet, scrim, toast
@@ -770,23 +880,23 @@ button.meta-item.is-alert b { color: var(--error); }
   display: flex; align-items: flex-start; gap: 12px;
 }
 .sheet-head h2 { font-size: 20px; font-weight: 600; }
-.sheet-when { margin-top: 3px; color: var(--secondary); font-size: 12px; font-weight: 600; letter-spacing: 0.04em; }
+.sheet-when { margin-top: 4px; color: var(--secondary); font-size: 12px; font-weight: 600; letter-spacing: 0.04em; }
 .rule {
-  display: flex; align-items: center; gap: 10px;
-  margin: 22px 0 12px; color: var(--secondary);
+  display: flex; align-items: center; gap: 12px;
+  margin: 24px 0 12px; color: var(--secondary);
   font-size: 12px; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase;
 }
 .rule::after { content: ''; flex: 1; height: 1px; background: var(--outline-var); }
 
 .field { display: block; margin-bottom: 12px; }
-.field-k { display: block; margin-bottom: 5px; font-size: 11px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: var(--secondary); }
+.field-k { display: block; margin-bottom: 4px; font-size: 12px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: var(--secondary); }
 .field input, .field select, .sheet textarea {
-  width: 100%; padding: 9px 11px; border-radius: var(--r);
+  width: 100%; padding: 8px 12px; border-radius: var(--r);
   background: var(--card); border: 1px solid var(--outline); outline: 0;
   transition: border-color var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
 }
 .field input:focus, .field select:focus, .sheet textarea:focus {
-  border-color: var(--primary); box-shadow: 0 0 0 2px rgba(0, 68, 33, 0.2);
+  border-color: var(--primary); outline: var(--ring); outline-offset: var(--ring-offset);
 }
 .sheet textarea { min-height: 116px; resize: vertical; font-family: inherit; }
 /* 100px, not 132: the four time fields are one thought, and at 132 the sheet
@@ -795,18 +905,18 @@ button.meta-item.is-alert b { color: var(--error); }
 
 /* One bay per role. The select IS the bay — closing a crew gap is the product's
    whole job, so it must never require opening a second thing to do it. */
-.bank { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 10px; align-items: start; }
-.bay { padding: 10px 12px 8px; border-radius: var(--r); background: var(--low); border: 1px solid var(--outline-var); }
+.bank { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 12px; align-items: start; }
+.bay { padding: 12px 12px 8px; border-radius: var(--r); background: var(--low); border: 1px solid var(--outline-var); }
 .bay.is-open { background: var(--error-c); border-color: var(--error-c); }
 .bay.is-editing { background: var(--card); border-color: var(--primary); box-shadow: 0 0 0 1px var(--primary); }
-.bay-h { display: flex; align-items: center; gap: 4px; margin-bottom: 6px; }
+.bay-h { display: flex; align-items: center; gap: 4px; margin-bottom: 8px; }
 /* The role name edits in place. It looks like the label it is until you focus
    it, so a bank of six roles does not read as a bank of six text fields. */
 .bay-k {
   flex: 1; min-width: 0; width: 100%;
   padding: 2px 4px; margin: -2px -4px;
   border: 1px solid transparent; border-radius: 4px; background: none; outline: 0;
-  font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;
+  font-size: 12px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;
   color: var(--secondary);
   transition: border-color var(--dur) var(--ease), background var(--dur) var(--ease);
 }
@@ -820,9 +930,9 @@ button.meta-item.is-alert b { color: var(--error); }
 }
 .bay:hover .bay-x, .bay-x:focus-visible { opacity: 1; }
 .bay-x:hover { background: var(--error-c); color: var(--on-error-c); }
-.bay select { width: 100%; padding: 6px 8px; border-radius: 6px; border: 1px solid var(--outline); background: var(--card); outline: 0; }
-.bay select:focus { border-color: var(--primary); box-shadow: 0 0 0 2px rgba(0, 68, 33, 0.2); }
-.bay-t { margin-top: 6px; font-size: 11px; color: var(--secondary); font-variant-numeric: tabular-nums; }
+.bay select { width: 100%; padding: 8px 8px; border-radius: 6px; border: 1px solid var(--outline); background: var(--card); outline: 0; }
+.bay select:focus { border-color: var(--primary); outline: var(--ring); outline-offset: var(--ring-offset); }
+.bay-t { margin-top: 8px; font-size: 12px; color: var(--secondary); font-variant-numeric: tabular-nums; }
 .bay-clash { color: var(--error); font-weight: 600; }
 /* Times and on-site are set once and read often, so they collapse to a line
    you can click. Assigning somebody is the frequent act; it stays one control. */
@@ -830,7 +940,7 @@ button.meta-item.is-alert b { color: var(--error); }
   display: flex; align-items: center; gap: 4px; width: 100%;
   padding: 4px 4px; margin: 2px -4px -2px;
   border: 0; background: none; border-radius: 4px; text-align: left;
-  font-size: 11px; color: var(--secondary); font-variant-numeric: tabular-nums;
+  font-size: 12px; color: var(--secondary); font-variant-numeric: tabular-nums;
   transition: background var(--dur) var(--ease), color var(--dur) var(--ease);
 }
 .bay-toggle:hover { background: var(--container); color: var(--on-surface); }
@@ -838,37 +948,47 @@ button.meta-item.is-alert b { color: var(--error); }
 .bay-toggle .icon { margin-left: auto; transition: transform var(--dur) var(--ease); }
 .bay-toggle[aria-expanded='true'] .icon { transform: rotate(180deg); }
 .bay-edit { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px; }
-.bay-edit label { display: block; font-size: 10px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: var(--secondary); }
-.bay-edit input[type='time'] { width: 100%; margin-top: 3px; padding: 5px 6px; border: 1px solid var(--outline); border-radius: 6px; background: var(--card); outline: 0; font-size: 12px; }
-.bay-edit input[type='time']:focus { border-color: var(--primary); box-shadow: 0 0 0 2px rgba(0, 68, 33, 0.2); }
+.bay-edit label { display: block; font-size: 12px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: var(--secondary); }
+.bay-edit input[type='time'] { width: 100%; margin-top: 4px; padding: 4px 8px; border: 1px solid var(--outline); border-radius: 6px; background: var(--card); outline: 0; font-size: 12px; }
+.bay-edit input[type='time']:focus { border-color: var(--primary); outline: var(--ring); outline-offset: var(--ring-offset); }
 .bay-edit label.bay-check {
-  grid-column: 1 / -1; display: flex; align-items: center; gap: 7px;
+  grid-column: 1 / -1; display: flex; align-items: center; gap: 8px;
   text-transform: none; letter-spacing: 0;
   font-size: 12px; font-weight: 500; color: var(--on-surface-var);
 }
 .bay-check input { accent-color: var(--primary); width: 16px; height: 16px; flex: none; }
-.bank-add { margin-top: 10px; }
+.bank-add { margin-top: 12px; }
+
+/* Kit needed on an event — a short editable list plus a picker from the locker. */
+.kitneed { display: grid; gap: 8px; }
+.kitneed-item { display: flex; align-items: center; gap: 8px; }
+.kitneed-nm { flex: 1; min-width: 0; }
+.kitneed-cat { color: var(--on-surface-var); font-size: 12px; }
+.kitneed-qty { width: 64px; padding: 8px; border: 1px solid var(--outline); border-radius: 6px; background: var(--card); color: var(--on-surface); }
+.kit-add { width: 100%; margin-top: 8px; padding: 8px 12px; border: 1px solid var(--outline); border-radius: var(--r); background: var(--card); color: var(--on-surface); }
+.kit-add:focus { border-color: var(--primary); outline: var(--ring); outline-offset: var(--ring-offset); }
 
 .rows { display: grid; gap: 1px; background: var(--outline-var); border: 1px solid var(--outline-var); border-radius: var(--r); overflow: hidden; }
-.row { display: flex; align-items: flex-start; gap: 12px; padding: 10px 12px; background: var(--card); }
+.row { display: flex; align-items: flex-start; gap: 12px; padding: 12px 12px; background: var(--card); }
 .row-l { flex: 1; min-width: 0; }
-.row-sub { display: block; margin-top: 2px; font-size: 11px; font-weight: 600; letter-spacing: 0.04em; color: var(--primary); }
-.row-d { display: block; margin-top: 3px; font-size: 12px; color: var(--secondary); }
+.row-sub { display: block; margin-top: 2px; font-size: 12px; font-weight: 600; letter-spacing: 0.04em; color: var(--primary); }
+.row-d { display: block; margin-top: 4px; font-size: 12px; color: var(--secondary); }
 .row-due { flex: none; text-align: right; font-variant-numeric: tabular-nums; }
 .row-date { display: block; font-size: 12px; font-weight: 600; }
-.row-rel { display: block; font-size: 11px; color: var(--secondary); }
+.row-rel { display: block; font-size: 12px; color: var(--secondary); }
 .row-due.is-over .row-date, .row-due.is-over .row-rel { color: var(--error); }
 
-.note { padding: 11px 13px; border-radius: var(--r); background: var(--low); border: 1px solid var(--outline-var); margin-bottom: 8px; font-size: 13px; }
+.note { padding: var(--s3); border-radius: var(--r); background: var(--low); border: 1px solid var(--outline-var); margin-bottom: var(--s2); font-size: 14px; }
 .note.is-caution { background: var(--error-c); border-color: var(--error-c); color: var(--on-error-c); }
-.note-k { display: block; font-size: 10px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--secondary); margin-bottom: 3px; }
+.note-inline { margin-top: var(--s4); margin-bottom: 0; }
+.note-k { display: block; font-size: 12px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--secondary); margin-bottom: var(--s1); }
 .note.is-caution .note-k { color: var(--on-error-c); }
 
 .sheet-foot {
   position: sticky; bottom: 0; margin: 24px calc(var(--gutter) * -1) -96px;
   padding: 14px var(--gutter); background: var(--card);
   border-top: 1px solid var(--outline-var);
-  display: flex; align-items: center; gap: 10px;
+  display: flex; align-items: center; gap: 12px;
 }
 
 /* Every mutation is undoable, which is the only reason offering Delete on a
@@ -876,11 +996,11 @@ button.meta-item.is-alert b { color: var(--error); }
 .toast {
   position: fixed; z-index: var(--z-toast); left: 50%; bottom: 24px;
   transform: translateX(-50%);
-  display: flex; align-items: center; gap: 14px;
+  display: flex; align-items: center; gap: 16px;
   max-width: calc(100vw - 32px);
-  padding: 10px 12px 10px 18px; border-radius: var(--r);
+  padding: 12px 12px 12px 20px; border-radius: var(--r);
   background: var(--on-surface); color: #fff; box-shadow: var(--shadow-lg);
-  font-size: 13px;
+  font-size: 14px;
   animation: toast-in 220ms var(--ease);
 }
 @keyframes toast-in {
@@ -889,9 +1009,9 @@ button.meta-item.is-alert b { color: var(--error); }
 }
 .toast[hidden] { display: none; }
 .toast button {
-  padding: 5px 12px; border-radius: 6px;
+  padding: 4px 12px; border-radius: 6px;
   background: none; border: 1px solid rgba(255, 255, 255, 0.5); color: #fff;
-  font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;
+  font-size: 12px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;
 }
 .toast button:hover { background: #fff; color: var(--on-surface); }
 
@@ -931,25 +1051,94 @@ button.meta-item.is-alert b { color: var(--error); }
   /* 44px targets. This is the mode PRODUCT.md is tuned for: one hand, dark
      venue, kit in the other. */
   .icon-btn { width: 44px; height: 44px; }
-  .round-btn { width: 44px; height: 44px; }
   .side-link { padding: 12px 8px; }
-  .assign { padding: 10px 8px; margin: -6px -8px -6px 0; }
-  .chip { padding: 10px 16px; }
-  .seg button { padding: 10px 16px; }
+  .assign { padding: 12px 8px; margin: -6px -8px -6px 0; }
+  .chip { padding: 12px 16px; }
+  .seg button { padding: 12px 16px; }
+  /* Swap the wrapping to-do chip row for the dropdown menu. */
+  .tasks-filter { display: none; }
+  .chips-menu { display: block; }
   .box { width: 22px; height: 22px; }
   .timeline::before { display: none; }
   .tl-row { flex-direction: column; gap: 8px; }
   .tl-when { width: auto; padding-top: 0; text-align: left; display: flex; align-items: baseline; gap: 8px; }
   .tl-node { display: none; }
   .missing { width: 100%; }
-  .day { min-height: 74px; padding: 5px 4px; }
-  .ev { font-size: 0; padding: 0; height: 5px; margin-top: 3px; border-radius: 3px; }
+  .day { min-height: 74px; padding: 4px 4px; }
+  .ev { font-size: 0; padding: 0; height: 6px; margin-top: 4px; border-radius: 3px; }
   .ev-time { display: none; }
   .day-add { display: none; }
-  .weekdays span { font-size: 10px; }
+  .weekdays span { font-size: 12px; }
   .sheet { width: 100%; }
   .stats { grid-template-columns: 1fr; }
+
+  /* Mobile is the primary context, so nothing that carries information is
+     allowed to run off the side of the screen. */
+
+  /* The kanban columns stack instead of scrolling sideways — a phone reads top
+     to bottom, and a column cut off at the right edge hides the cards in it. */
+  .board { display: flex; flex-direction: column; gap: var(--s5); overflow-x: visible; padding-bottom: 0; }
+
+  /* Data tables (Kit, the to-do list) collapse to one stacked card per row:
+     the header row is dropped and every cell labels itself from data-label, so
+     Status and Location can never scroll off the right edge. */
+  .tbl thead { display: none; }
+  .tbl, .tbl tbody { display: block; }
+  .tbl tr { display: block; padding: var(--s3) var(--s4); }
+  .tbl tbody tr + tr { border-top: 1px solid var(--outline-var); }
+  .tbl td {
+    display: flex; align-items: baseline; justify-content: space-between; gap: var(--s4);
+    padding: var(--s1) 0; border: 0; text-align: right;
+  }
+  .tbl td::before {
+    content: attr(data-label); flex: none; text-align: left;
+    font-size: 12px; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase;
+    color: var(--secondary);
+  }
+  /* The name leads its card, at full size, with no redundant "Item"/"Task"
+     label above it. */
+  .tbl td.td-t { display: block; text-align: left; font-size: 16px; margin-bottom: var(--s1); }
+  .tbl td.td-t::before { display: none; }
+  .tbl td .rel { text-align: left; }
+  .tbl td.td-due, .tbl td.dimmed { flex-wrap: wrap; }
 }
+
+/* ==========================================================================
+   Print — the structured PDF export (Settings → Export PDF)
+   --------------------------------------------------------------------------
+   The browser's own Save-as-PDF is the engine: no library to inline, nothing
+   that could fetch. On screen #print-report is empty and hidden; Export PDF
+   fills it, unhides it, and calls window.print(), then clears it on afterprint.
+   So the report is never on screen and never measured by the design audit —
+   it is a paper document with paper's type sizes.
+   ========================================================================== */
+#print-report { display: none; }
+@media print {
+  .app, .side-scrim, .scrim, .sheet, .toast, .modal { display: none !important; }
+  #print-report { display: block !important; }
+  @page { margin: 16mm; }
+  body { background: #fff; color: #111; }
+}
+#print-report {
+  color: #111; background: #fff; font-size: 11pt; line-height: 1.4;
+}
+.pr-cover { margin-bottom: 24pt; border-bottom: 2pt solid #111; padding-bottom: 12pt; }
+.pr-cover h1 { font-size: 24pt; font-weight: 800; }
+.pr-cover p { color: #555; margin-top: 4pt; }
+#print-report h2 {
+  font-size: 15pt; font-weight: 700; margin: 20pt 0 8pt;
+  border-bottom: 1pt solid #bbb; padding-bottom: 3pt; break-after: avoid;
+}
+.pr-ev { break-inside: avoid; margin: 0 0 12pt; padding-left: 8pt; border-left: 2pt solid #ccc; }
+.pr-ev h3 { font-size: 12pt; font-weight: 700; }
+.pr-ev .pr-when { color: #444; font-size: 10pt; margin: 2pt 0 4pt; }
+.pr-ev ul { margin: 3pt 0 0 14pt; }
+.pr-ev li { font-size: 10pt; }
+.pr-open { color: #b00; font-weight: 700; }
+#print-report table { width: 100%; border-collapse: collapse; font-size: 10pt; }
+#print-report th, #print-report td { text-align: left; padding: 3pt 6pt; border-bottom: 1pt solid #ddd; vertical-align: top; }
+#print-report th { border-bottom: 1pt solid #999; font-size: 9pt; text-transform: uppercase; letter-spacing: 0.04em; color: #555; }
+.pr-sub { color: #666; font-size: 9pt; }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { transition-duration: 1ms !important; }
@@ -977,6 +1166,8 @@ button.meta-item.is-alert b { color: var(--error); }
   <symbol id="i-warning" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.8L21 19.5H3z"/><path d="M12 9.5v4.2"/><circle cx="12" cy="16.6" r="0.5" fill="currentColor"/></symbol>
   <symbol id="i-close" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></symbol>
   <symbol id="i-download" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v11m0 0l-4-4m4 4l4-4M4 19h16"/></symbol>
+  <symbol id="i-copy" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h8"/></symbol>
+  <symbol id="i-pencil" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L18.5 9.5a2 2 0 0 0-3-3L5 17v3z"/><path d="M13.5 6.5l3 3"/></symbol>
   <symbol id="i-undo" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9h9a5.5 5.5 0 1 1 0 11H8"/><path d="M4 9l4-4M4 9l4 4"/></symbol>
   <symbol id="i-help" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><path d="M9.6 9.4a2.5 2.5 0 1 1 3.3 2.4c-.6.2-.9.8-.9 1.4v.4"/><circle cx="12" cy="16.6" r="0.5" fill="currentColor"/></symbol>
   <symbol id="i-video" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="6" width="13" height="12" rx="2"/><path d="M15.5 11l6-3.2v8.4l-6-3.2z"/></symbol>
@@ -984,6 +1175,8 @@ button.meta-item.is-alert b { color: var(--error); }
   <symbol id="i-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 12.5l5 5 10-11"/></symbol>
   <symbol id="i-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9.5l6 6 6-6"/></symbol>
   <symbol id="i-trash" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M9 7V5h6v2M6 7l1 13h10l1-13"/></symbol>
+  <symbol id="i-kit" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8l-9-5-9 5 9 5 9-5z"/><path d="M3 8v8l9 5 9-5V8"/><path d="M12 13v8"/></symbol>
+  <symbol id="i-settings" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2.5v2.5M12 19v2.5M4.6 4.6l1.8 1.8M17.6 17.6l1.8 1.8M2.5 12h2.5M19 12h2.5M4.6 19.4l1.8-1.8M17.6 6.4l1.8-1.8"/></symbol>
 </defs></svg>
 
 <div class="app">
@@ -993,7 +1186,7 @@ button.meta-item.is-alert b { color: var(--error); }
       <p class="t-label">CTV OS · 2026/27</p>
     </div>
     <div class="side-cta">
-      <button class="btn btn-primary btn-block" id="add-event" type="button">
+      <button class="btn btn-primary btn-block needs-edit" id="add-event" type="button">
         <svg class="icon icon-sm"><use href="#i-plus"/></svg> New event
       </button>
     </div>
@@ -1030,16 +1223,21 @@ button.meta-item.is-alert b { color: var(--error); }
         <button class="icon-btn" id="help" type="button" aria-label="About this prototype">
           <svg class="icon"><use href="#i-help"/></svg>
         </button>
-        <span class="avatar" title="Will E — Station Manager">WE</span>
+        <div class="acct-wrap">
+          <button class="avatar" id="account" type="button" aria-haspopup="menu"
+                  aria-expanded="false" aria-label="Account" hidden></button>
+          <div class="acct-menu" id="acct-menu" role="menu" hidden></div>
+        </div>
       </div>
     </header>
 
     <div class="canvas">
-      <section class="view" id="v-overview"></section>
-      <section class="view" id="v-calendar" hidden></section>
+      <section class="view" id="v-calendar"></section>
       <section class="view" id="v-schedule" hidden></section>
       <section class="view" id="v-tasks" hidden></section>
       <section class="view" id="v-crew" hidden></section>
+      <section class="view" id="v-kit" hidden></section>
+      <section class="view" id="v-settings" hidden></section>
     </div>
   </div>
 </div>
@@ -1051,24 +1249,56 @@ button.meta-item.is-alert b { color: var(--error); }
   <span id="toast-t"></span><button id="toast-undo" type="button">Undo</button>
 </div>
 
+<!-- The structured PDF export. Empty and hidden until Settings → Export PDF
+     fills it and calls window.print(); see the print media query. -->
+<div id="print-report" hidden aria-hidden="true"></div>
+
 <!-- Sign in. Reading the year needs no account; changing it does. The whole
      dialog stays out of the way until someone tries to edit, because most
      visits are someone checking whether they are called on Saturday. -->
 <div class="modal" id="auth" hidden role="dialog" aria-modal="true" aria-labelledby="auth-h">
   <form class="modal-card" id="auth-form">
     <h2 id="auth-h">Sign in to edit</h2>
-    <p class="modal-sub">Anyone can read the year. Changing it needs an account,
+    <p class="modal-sub" id="auth-sub">Anyone can read the year. Changing it needs an account,
       because the key that reaches this database ships inside this page.</p>
     <label class="fld"><span>Email</span>
       <input type="email" name="email" autocomplete="username" required></label>
     <label class="fld"><span>Password</span>
       <input type="password" name="password" autocomplete="current-password" required></label>
+    <button class="link-btn" type="button" id="auth-forgot">Forgot password?</button>
+    <p class="modal-sub" id="auth-info" hidden></p>
     <p class="modal-err" id="auth-err" hidden role="alert"></p>
     <div class="modal-act">
       <button class="btn" type="button" id="auth-x">Cancel</button>
       <button class="btn btn-primary" type="submit" id="auth-go">Sign in</button>
     </div>
   </form>
+</div>
+
+<!-- A reset link lands back here with a verified recovery session (see
+     Sync.adoptUrlSession). This is where they choose the new password. -->
+<div class="modal" id="recover" hidden role="dialog" aria-modal="true" aria-labelledby="recover-h">
+  <form class="modal-card" id="recover-form">
+    <h2 id="recover-h">Set a new password</h2>
+    <p class="modal-sub">Your reset link is verified. Choose a new password to finish signing in.</p>
+    <label class="fld"><span>New password</span>
+      <input type="password" name="password" autocomplete="new-password" minlength="6" required></label>
+    <p class="modal-err" id="recover-err" hidden role="alert"></p>
+    <div class="modal-act">
+      <button class="btn btn-primary" type="submit" id="recover-go">Set password</button>
+    </div>
+  </form>
+</div>
+
+<!-- Admin only: invite people and set what each account can see and change. -->
+<div class="modal" id="access" hidden role="dialog" aria-modal="true" aria-labelledby="access-h">
+  <div class="modal-card modal-wide">
+    <div class="access-head">
+      <h2 id="access-h">Manage access</h2>
+      <button class="icon-btn" id="access-x" type="button" aria-label="Close"><svg class="icon"><use href="#i-close"/></svg></button>
+    </div>
+    <div id="access-body"></div>
+  </div>
 </div>
 
 <script>__SYNC_JS__</script>
@@ -1087,8 +1317,17 @@ const MON3   = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV
 const DAYS   = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
 
 const byId = (list) => Object.fromEntries(list.map((x) => [x.id, x]));
-const MEMBERS = byId(SEED.members);
+// MEMBERS and KIT are looked up by slug. They seed from SEED here (DATA is
+// declared below, so it cannot be read yet) and are rebuilt from the working
+// copy by refreshLookups, which render() calls before every paint — both crew
+// and kit are editable now, and a stale lookup would show an old name.
+let MEMBERS = byId(SEED.members);
 const SOCS = byId(SEED.societies);
+let KIT = byId(SEED.kit || []);
+function refreshLookups() {
+  MEMBERS = byId(DATA.members || SEED.members);
+  KIT = byId(DATA.kit || SEED.kit || []);
+}
 
 // --- Store ----------------------------------------------------------------
 // Not one date in this year is confirmed. The handover states National
@@ -1129,7 +1368,38 @@ function stampRoleIds(d) {
 // taken for undo is the same clone the sync layer diffs against, so all
 // thirteen call sites got multi-client sync without being touched — and an
 // undo is just another diff, applied by the same path in the other direction.
+// --- Access gates ---------------------------------------------------------
+// Driven by the sync status (see renderSync, which caches it here). The rule:
+// a disconnected client — the local file:// prototype, or a phone with no
+// signal — is fully usable, because that is the field case the product is built
+// for and edits queue until they can be sent. Once connected to the live
+// database, an anonymous visitor is read-only and the private modules (crew,
+// to-do) are hidden unless the account has been granted them. The server's RLS
+// is the real enforcement; these gates are the honest interface over it.
+let SYNC = {};
+const PRIVATE_MODULES = new Set(['crew', 'tasks']);
+const VIEW_MODULE = {
+  calendar: 'events', schedule: 'events', tasks: 'tasks',
+  crew: 'crew', kit: 'kit', settings: 'settings',
+};
+const connectedOnline = () => Sync.enabled() && SYNC.mode === 'synced';
+
+function canView(mod) {
+  if (!connectedOnline()) return true;
+  if (!PRIVATE_MODULES.has(mod)) return true;
+  if (!SYNC.signedIn) return false;
+  return Boolean(SYNC.isAdmin) || Boolean(SYNC.grants?.[mod]?.view);
+}
+// Whether this client may change anything at all. Per-module edit rights are
+// enforced by RLS and by hiding modules a user cannot see, so the interface
+// gate is the coarse one: offline is editable (queued), online needs a session.
+function canEdit() {
+  if (!connectedOnline()) return true;
+  return Boolean(SYNC.signedIn);
+}
+
 function mutate(label, fn) {
+  if (!canEdit()) { toast("You're viewing read-only — sign in to edit", () => {}); return; }
   const before = clone(DATA);
   fn(DATA);
   stampRoleIds(DATA);
@@ -1154,6 +1424,9 @@ function mutate(label, fn) {
 // working on. If they deleted the event you have open, the sheet closes,
 // because the alternative is editing something that no longer exists.
 function applyRemote(doc) {
+  // Kit is absent from a pull when the database has none (toDocument omits an
+  // empty kit); keep the inlined seed kit rather than blanking the locker.
+  if (doc.kit === undefined) doc.kit = clone(DATA.kit || SEED.kit || []);
   DATA = stampRoleIds(doc);
   persist();
   if (sheetId && !DATA.events.some((e) => e.id === sheetId)) closeSheet();
@@ -1305,117 +1578,280 @@ const hit = (...parts) => !q || parts.filter(Boolean).join(' ').toLowerCase().in
 const evHit = (e) => hit(e.title, e.venue, e.strand, e.brief,
   (e.roles || []).map((r) => `${r.label} ${MEMBERS[r.member]?.known_as ?? ''}`).join(' '));
 
-// --- Overview -------------------------------------------------------------
-function renderOverview() {
-  const evs = [...DATA.events].sort((a, b) => a.date.localeCompare(b.date));
-  const open = totalOpen();
-  const gaps = evs.filter((e) => coverage(e).open > 0 && e.status !== 'cancelled');
-  const tasks = withDue(DATA.tasks || []);
-  const overdue = tasks.filter((t) => !t.done && t.left !== null && t.left < 0).length;
-  const soft = evs.filter((e) => e.confidence !== 'fixed').length;
-  const upcoming = evs.filter((e) => e.date >= TODAY);
-  const next = upcoming[0];
+// --- Preferences ----------------------------------------------------------
+// The overview page is gone; the month calendar is the home screen. Its one
+// load-bearing readout — the roles nobody is on — did not disappear, it moved
+// behind a setting. flagCrew is off by default, because the station manager
+// asked not to be shown uncovered crew unless they go looking, and when on it
+// turns the emphasis back on everywhere it used to be automatic: the nav
+// counts, the red calendar badges, the schedule's Missing Requirements panels.
+//
+// This is a view preference, not year data — it is personal and lives in its
+// own localStorage key, so it is never synced to the shared database and never
+// rides along in the export.
+const PREFS_STORE = 'ctvos.prefs.v1';
+let flagCrew = (() => {
+  try { return JSON.parse(localStorage.getItem(PREFS_STORE) || '{}').flagCrew === true; }
+  catch { return false; }
+})();
+function setFlagCrew(on) {
+  flagCrew = on;
+  try { localStorage.setItem(PREFS_STORE, JSON.stringify({ flagCrew: on })); } catch { /* private mode */ }
+  render();
+}
 
-  const clashPeople = new Set();
-  for (const ev of DATA.events) {
-    for (const r of ev.roles || []) if (CLASHES.has(r) && r.member) clashPeople.add(r.member);
-  }
+// --- Kit ------------------------------------------------------------------
+// The station's inventory — what it owns, where each piece lives, what state it
+// is in, and how to use it. Editable now: click a piece to open it, change its
+// details, add usage notes and tips, or attach a photo. "Needs attention" is
+// anything in repair or missing.
+const KIT_STATE = {
+  in_hub: 'In hub', booked: 'Booked', out: 'Out',
+  returned: 'Returned', repair: 'In repair', missing: 'Missing',
+};
+const KIT_ATTENTION = new Set(['repair', 'missing']);
+let kitFilter = 'all';
 
-  // One sentence of context under the number, built from the data rather than
-  // padded out — "across 21 events, nearest in 35 days" is the shape of the
-  // problem; a second metric tile is not.
-  const nearest = gaps[0];
-  const lede = open
-    ? `<p>Across ${gaps.length} event${gaps.length === 1 ? '' : 's'}.
-        ${nearest ? `The nearest is <b>${esc(nearest.title)}</b>, ${relDay(daysBetween(TODAY, nearest.date))}.` : ''}</p>`
-    : '<p>Every role on every event has a name against it. That is the whole job.</p>';
+function renderKit() {
+  const kit = (DATA.kit || SEED.kit || []).slice()
+    .sort((a, b) => (a.category || '').localeCompare(b.category || '')
+                 || (a.name || '').localeCompare(b.name || ''));
+  const inHub = kit.filter((k) => k.state === 'in_hub').length;
+  const outN = kit.filter((k) => k.state === 'out' || k.state === 'booked').length;
+  const attention = kit.filter((k) => KIT_ATTENTION.has(k.state));
 
-  const meta = (label, n, opts = {}) => {
-    const body = `<b>${n}</b> ${label}`;
-    return opts.view
-      ? `<button class="meta-item${opts.alert ? ' is-alert' : ''}" data-view="${opts.view}" type="button">${body}</button>`
-      : `<span class="meta-item">${body}</span>`;
+  const pass = (k) => kitFilter === 'all'
+    || (kitFilter === 'in_hub' && k.state === 'in_hub')
+    || (kitFilter === 'out' && (k.state === 'out' || k.state === 'booked'))
+    || (kitFilter === 'attention' && KIT_ATTENTION.has(k.state));
+
+  const shown = kit.filter((k) =>
+    pass(k) && hit(k.name, k.category, k.asset_tag, k.home, k.notes, KIT_STATE[k.state]));
+
+  const fchip = (id, label, n) =>
+    `<button class="chip" data-kit-filter="${id}" aria-pressed="${kitFilter === id}" type="button">${
+      label} <span class="num">${n}</span></button>`;
+
+  // Status is a word first: an attention state colours the text red and says
+  // "In repair" / "Missing" — never colour on its own.
+  const status = (k) => {
+    const attn = KIT_ATTENTION.has(k.state);
+    return `<span class="kit-state${attn ? ' is-alert' : ''}">${
+      attn ? svg('warning', 'icon-sm') : ''}${KIT_STATE[k.state] || k.state}</span>`;
   };
 
-  const gapRows = gaps.slice(0, 7).map((e) => {
-    const cov = coverage(e);
-    const left = daysBetween(TODAY, e.date);
-    return `<button class="gap-row" data-ev="${e.id}" type="button">
-      <span class="gap-when num">${shortDate(e.date)}<br><span class="dimmed">${relDay(left)}</span></span>
-      <span class="gap-main">
-        <span class="gap-title">${esc(e.title)}</span>
-        <span class="gap-roles">${(e.roles || []).filter((r) => !r.member)
-          .map((r) => `<span class="tag tag-error">${esc(r.label)}</span>`).join('')}</span>
-      </span>
-      <span class="gap-n tag ${cov.open ? 'tag-error' : ''} num">${cov.filled}/${cov.total}</span>
-    </button>`;
-  }).join('');
+  // data-label carries the column name so each cell can label itself when the
+  // table collapses to stacked cards on a phone (see the narrow media query).
+  // The whole row opens the piece — details, usage notes, tips and a photo.
+  const rows = shown.map((k) => `
+    <tr class="tr-click" data-kit="${k.id}" tabindex="0" role="button"
+        aria-label="Open ${esc(k.name)}">
+      <td class="td-t" data-label="Item">
+        <span class="kit-item">${k.photo_url
+          ? `<img class="kit-thumb" src="${esc(k.photo_url)}" alt="">`
+          : `<span class="kit-thumb is-empty">${svg('kit', 'icon-sm')}</span>`}
+          <span>${esc(k.name)}
+            ${k.notes ? `<span class="rel">${esc(k.notes)}</span>` : ''}</span></span></td>
+      <td class="dimmed" data-label="Category">${esc(k.category || '')}</td>
+      <td class="num dimmed" data-label="Asset">${esc(k.asset_tag || '')}</td>
+      <td class="dimmed" data-label="Location">${esc(k.home || '')}</td>
+      <td data-label="Status">${status(k)}${k.usage
+        ? ` <span class="tag" title="Has usage notes">${svg('help', 'icon-sm')}</span>` : ''}</td>
+    </tr>`).join('');
 
-  document.getElementById('v-overview').innerHTML = `
+  document.getElementById('v-kit').innerHTML = `
     <div class="page-head">
       <div>
-        <h2 class="t-headline">Studio Overview</h2>
-        <p>The state of the year, and what still has nobody on it.</p>
+        <h2 class="t-headline">Kit locker</h2>
+      </div>
+      <div class="page-tools">
+        <button class="btn btn-primary needs-edit" id="kit-add" type="button">${svg('plus')} Add kit</button>
       </div>
     </div>
 
     <div class="meta-strip">
-      ${meta(`event${evs.length === 1 ? '' : 's'}, ${upcoming.length} still ahead`, evs.length, { view: 'schedule' })}
-      ${meta('dates still to confirm', soft, { view: 'calendar' })}
-      ${clashPeople.size ? meta(`${clashPeople.size === 1 ? 'person' : 'people'} double-booked`, clashPeople.size, { view: 'crew', alert: true }) : ''}
-      ${overdue
-        ? meta('to-dos overdue', overdue, { view: 'tasks', alert: true })
-        : meta('to-dos open', tasks.filter((t) => !t.done).length, { view: 'tasks' })}
+      <span class="meta-item"><b>${kit.length}</b> items</span>
+      <span class="meta-item"><b>${inHub}</b> in the hub</span>
+      <span class="meta-item"><b>${outN}</b> out</span>
+      ${attention.length ? `<span class="meta-item is-alert"><b>${attention.length}</b> need attention</span>` : ''}
     </div>
 
-    <div class="dash">
-      <div class="card">
-        <div class="lede${open ? '' : ' is-clear'}">
-          <span class="lede-n">${open}</span>
-          <div>
-            <h3>${open === 1 ? 'role still has' : 'roles still have'} nobody on ${open === 1 ? 'it' : 'them'}</h3>
-            ${lede}
-          </div>
-        </div>
-        ${gapRows || '<div class="card-body" style="border-top:1px solid var(--outline-var)"><p class="empty">Nothing to close. Add an event and its roles will show up here.</p></div>'}
-        ${gaps.length > 7 ? `<div class="card-body" style="border-top:1px solid var(--outline-var)">
-          <button class="btn btn-ghost btn-block" data-view="schedule" type="button">See all ${gaps.length} in the schedule</button>
-        </div>` : ''}
+    <div class="chips" style="margin-bottom:var(--gutter)">
+      ${fchip('all', 'All', kit.length)}
+      ${fchip('in_hub', 'In hub', inHub)}
+      ${fchip('out', 'Out', outN)}
+      ${fchip('attention', 'Needs attention', attention.length)}
+    </div>
+
+    ${shown.length ? `<div class="tbl-wrap"><table class="tbl">
+      <thead><tr><th>Item</th><th>Category</th><th>Asset</th><th>Location</th><th>Status</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table></div>` : '<p class="empty">No kit matches that.</p>'}`;
+}
+
+// --- Kit detail / edit drawer ---------------------------------------------
+// The same drawer the event sheet uses, driven by kitSheetId instead of
+// sheetId. Click a piece to open it: change its details, write down how to use
+// it, and attach a photo. Edits apply on change, undo covers the mistakes.
+let kitSheetId = null;
+const KIT_CATEGORIES = ['camera', 'lens', 'audio', 'lighting', 'cable', 'media', 'tripod', 'mixer', 'monitor', 'comms', 'other'];
+
+function openKitSheet(id) {
+  if (!renderKitSheet(id)) return;
+  const sheet = document.getElementById('sheet');
+  sheet.classList.add('is-open');
+  sheet.setAttribute('aria-hidden', 'false');
+  document.getElementById('scrim').classList.add('is-open');
+  document.getElementById('sheet-x').focus();
+}
+
+function renderKitSheet(id) {
+  const k = (DATA.kit || []).find((x) => x.id === id);
+  if (!k) return false;
+  kitSheetId = id; sheetId = null;
+  const stateOpts = Object.entries(KIT_STATE)
+    .map(([v, l]) => `<option value="${v}"${k.state === v ? ' selected' : ''}>${l}</option>`).join('');
+
+  document.getElementById('sheet-in').innerHTML = `
+    <div class="sheet-head">
+      <div style="flex:1;min-width:0">
+        <h2>${esc(k.name)}</h2>
+        <p class="sheet-when">${esc(k.category || 'kit')}${k.asset_tag ? ` · ${esc(k.asset_tag)}` : ''}</p>
       </div>
+      <button class="icon-btn" id="sheet-x" type="button" aria-label="Close">${svg('close', 'icon')}</button>
+    </div>
 
-      <div class="stack">
-        <div class="card card-body">
-          <h3 class="t-subtitle" style="display:flex;align-items:center;gap:8px">${svg('calendar', 'icon')} Next up</h3>
-          ${next ? (() => {
-            const cov = coverage(next);
-            const left = daysBetween(TODAY, next.date);
-            return `<div class="next-count" style="margin-top:14px">
-              <span class="t-label">${left === 0 ? 'Happening' : 'Starts in'}</span>
-              <div class="next-days num">${left === 0 ? 'Today' : left}${left === 0 ? '' : '<small>days</small>'}</div>
-            </div>
-            <h4 class="t-body-lg" style="margin-top:14px;font-weight:600">${esc(next.title)}</h4>
-            <p class="dimmed" style="display:flex;align-items:center;gap:5px;margin-top:4px">
-              ${svg('pin')} ${esc(next.venue ?? 'venue to confirm')}</p>
-            <div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--outline-var)">
-              <p class="t-label dimmed" style="margin-bottom:8px">Crew ${cov.filled}/${cov.total}</p>
-              <div class="faces">
-                ${(next.roles || []).filter((r) => r.member).map((r) =>
-                  `<span class="avatar sm" title="${esc(MEMBERS[r.member]?.known_as ?? '')} — ${esc(r.label)}">${initials(MEMBERS[r.member])}</span>`).join('')}
-                ${cov.open ? `<span class="avatar sm" style="background:var(--error-c);color:var(--on-error-c)" title="${cov.open} open">+${cov.open}</span>` : ''}
-              </div>
-            </div>
-            <button class="btn btn-ghost btn-block" style="margin-top:16px" data-ev="${next.id}" type="button">Open event</button>`;
-          })() : '<p class="empty" style="margin-top:14px">Nothing left in the year.</p>'}
+    ${k.photo_url ? `<img class="kit-photo" src="${esc(k.photo_url)}" alt="${esc(k.name)}">`
+      : `<div class="kit-photo-empty">${svg('kit')} No photo yet</div>`}
+    <div class="member-act" style="margin-top:8px">
+      <label class="btn btn-ghost" for="kit-photo-input">${svg('plus')} ${k.photo_url ? 'Replace photo' : 'Add photo'}</label>
+      <input id="kit-photo-input" type="file" accept="image/*" hidden>
+      ${k.photo_url ? '<button class="btn btn-ghost" data-kit-photo-clear type="button">Remove photo</button>' : ''}
+    </div>
+
+    <label class="field"><span class="field-k">Name</span>
+      <input type="text" data-kf="name" value="${esc(k.name)}"></label>
+    <div class="field-row">
+      <label class="field"><span class="field-k">Category</span>
+        <input type="text" data-kf="category" value="${esc(k.category || '')}" list="kit-cats"></label>
+      <label class="field"><span class="field-k">Asset tag</span>
+        <input type="text" data-kf="asset_tag" value="${esc(k.asset_tag || '')}"></label>
+    </div>
+    <div class="field-row">
+      <label class="field"><span class="field-k">State</span>
+        <select data-kf="state">${stateOpts}</select></label>
+      <label class="field"><span class="field-k">Home</span>
+        <input type="text" data-kf="home" value="${esc(k.home || '')}" placeholder="Where it lives"></label>
+    </div>
+    <datalist id="kit-cats">${KIT_CATEGORIES.map((c) => `<option value="${c}">`).join('')}</datalist>
+
+    <div class="rule">Notes</div>
+    <textarea data-kf="notes" placeholder="Anything worth knowing about this piece">${esc(k.notes || '')}</textarea>
+    <div class="rule">How to use it</div>
+    <textarea data-kf="usage" placeholder="Setup and operating instructions">${esc(k.usage || '')}</textarea>
+    <div class="rule">Tips</div>
+    <textarea data-kf="tips" placeholder="Gotchas, quirks, things to check before a shoot">${esc(k.tips || '')}</textarea>
+
+    <div class="sheet-foot">
+      <button class="btn btn-primary" id="sheet-done" type="button">Done</button>
+    </div>`;
+
+  const sheetIn = document.getElementById('sheet-in');
+  sheetIn.querySelectorAll('[data-kf]').forEach((input) => {
+    input.onchange = () => {
+      const field = input.dataset.kf;
+      let value = input.value;
+      value = value.trim() === '' ? null : value.trim();
+      if (field === 'name' && !value) return;   // a kit item must keep a name
+      mutate(`${k.name} updated`, (s) => { s.kit.find((x) => x.id === id)[field] = value; });
+      openKitSheet(id);
+      document.querySelector(`[data-kf="${field}"]`)?.focus();
+    };
+  });
+  document.getElementById('kit-photo-input').onchange = (evt) => {
+    const file = evt.target.files?.[0];
+    if (file) setKitPhoto(id, file);
+  };
+  sheetIn.querySelector('[data-kit-photo-clear]')?.addEventListener('click', () => {
+    mutate(`Removed ${k.name} photo`, (s) => { s.kit.find((x) => x.id === id).photo_url = null; });
+    openKitSheet(id);
+  });
+  document.getElementById('sheet-x').onclick = closeSheet;
+  document.getElementById('sheet-done').onclick = closeSheet;
+  return true;
+}
+
+function addKit() {
+  const id = `kit-${Date.now().toString(36)}`;
+  mutate('Kit added', (s) => {
+    (s.kit ??= []).push({
+      id, name: 'New kit', category: null, asset_tag: null, owner: 'ctv',
+      state: 'in_hub', home: null, notes: null,
+      usage: null, tips: null, photo_url: null,
+    });
+  });
+  openKitSheet(id);
+  const nm = document.querySelector('[data-kf="name"]');
+  nm?.focus();
+  nm?.select();
+}
+
+const fileToDataUrl = (file) => new Promise((res, rej) => {
+  const r = new FileReader();
+  r.onload = () => res(r.result);
+  r.onerror = rej;
+  r.readAsDataURL(file);
+});
+
+// Online and signed in, a photo goes to the shared Storage bucket so the whole
+// station sees it. Otherwise it is kept inline as a data URI — the feature works
+// from a file:// prototype and the export round-trips it.
+async function setKitPhoto(id, file) {
+  const k = (DATA.kit || []).find((x) => x.id === id);
+  let url;
+  if (Sync.enabled() && Sync.status().signedIn && Sync.uploadKitPhoto) {
+    try { url = await Sync.uploadKitPhoto(file, id); }
+    catch (err) { toast(`Photo upload failed — ${err.message}`, () => {}); return; }
+  } else {
+    try { url = await fileToDataUrl(file); }
+    catch { toast('Could not read that image', () => {}); return; }
+  }
+  mutate(`${k?.name ?? 'Kit'} photo updated`, (s) => { s.kit.find((x) => x.id === id).photo_url = url; });
+  openKitSheet(id);
+}
+
+// --- Settings -------------------------------------------------------------
+function renderSettings() {
+  document.getElementById('v-settings').innerHTML = `
+    <div class="page-head">
+      <div>
+        <h2 class="t-headline">Settings</h2>
+        <p>Personal preferences, saved in this browser only. They are not shared with the rest of the station and do not travel in the export.</p>
+      </div>
+    </div>
+
+    <div class="card set-card">
+      <div class="set-row">
+        <div class="set-txt">
+          <h3 class="set-h">Flag events that still need crew</h3>
+          <p class="set-d">Nobody is assigned to events by default. Turn this on to surface which events still have roles nobody is on — a count on Calendar and Schedule, those events picked out in red, and each event's Missing Requirements. Leave it off to keep the interface calm.</p>
         </div>
+        <button class="switch" role="switch" aria-checked="${flagCrew}" data-pref="flagCrew" type="button" aria-label="Flag events that still need crew">
+          <span class="switch-k"></span>
+        </button>
+      </div>
+    </div>
 
-        <div class="card card-body">
-          <h3 class="t-subtitle" style="margin-bottom:14px">Quick actions</h3>
-          <div class="quick">
-            <button data-add="${TODAY}" type="button">${svg('plus', 'icon')} Add event</button>
-            <button data-view="calendar" type="button">${svg('calendar', 'icon')} Month grid</button>
-            <button data-view="tasks" type="button">${svg('checklist', 'icon')} To do</button>
-            <button data-view="crew" type="button">${svg('group', 'icon')} Crew</button>
-          </div>
+    <div class="card set-card">
+      <div class="set-row">
+        <div class="set-txt">
+          <h3 class="set-h">Your year</h3>
+          <p class="set-d">Export PDF opens a structured, printable brief of the whole year — every event with its crew and kit, the to-do list, the kit locker and the crew — for the browser's Save as PDF. Export year.json writes a corrected data file with every edit in it. Reset discards your edits in this browser and reloads the seed year.</p>
+        </div>
+        <div class="set-act">
+          <button class="btn btn-ghost" data-action="pdf" type="button">${svg('download')} Export PDF</button>
+          <button class="btn btn-ghost" data-action="export" type="button">${svg('download')} Export year.json</button>
+          <button class="btn btn-ghost" data-action="reset" type="button">${svg('undo')} Reset</button>
         </div>
       </div>
     </div>`;
@@ -1438,10 +1874,10 @@ function renderRibbon() {
     const isCur = y === cur.y && m === cur.m;
     return `<button class="rib${isCur ? ' is-current' : ''}${isNow ? ' is-now' : ''}"
               data-y="${y}" data-m="${m}" type="button"
-              title="${MONTHS[m]} ${y} — ${evs.length} event${evs.length === 1 ? '' : 's'}${openN ? `, ${openN} open` : ''}">
+              title="${MONTHS[m]} ${y} — ${evs.length} event${evs.length === 1 ? '' : 's'}${flagCrew && openN ? `, ${openN} open` : ''}">
       <span class="rib-m">${MON3[m]}</span>
       <span class="rib-n num">${evs.length || '·'}</span>
-      <span class="rib-bar ${openN ? 'is-open' : evs.length ? 'is-clear' : ''}"></span>
+      ${flagCrew && openN ? '<span class="rib-dot" aria-hidden="true"></span>' : ''}
     </button>`;
   }).join('')}</div>`;
 }
@@ -1465,6 +1901,11 @@ let cur = (() => {
 let calFilter = 'all';
 
 function renderCalendar() {
+  // The "Needs crew" filter only exists while the flag is on; if it turned off
+  // while that filter was active, fall back to All rather than filtering by a
+  // control that is no longer on screen.
+  if (!flagCrew && calFilter === 'open') calFilter = 'all';
+
   const first = new Date(cur.y, cur.m, 1);
   const lead = (first.getDay() + 6) % 7;               // Monday-first
   const start = new Date(cur.y, cur.m, 1 - lead);
@@ -1493,8 +1934,11 @@ function renderCalendar() {
       </div>
       ${evs.map((e) => {
         const cov = coverage(e);
+        // Red for an open role only when the crew-gap flag is on. Off, an event
+        // with roles is a neutral badge; a roleless event still reads as bare.
         const cls = e.status === 'cancelled' ? 'is-cancelled'
-          : cov.open ? 'is-open' : cov.total ? '' : 'is-bare';
+          : cov.total === 0 ? 'is-bare'
+          : (flagCrew && cov.open) ? 'is-open' : '';
         const t = e.start_time || e.call_time;
         return `<button class="ev ${cls}${evHit(e) ? '' : ' is-faded'}" data-ev="${e.id}"
                   draggable="true" type="button"
@@ -1502,7 +1946,7 @@ function renderCalendar() {
           ${t ? `<span class="ev-time num">${t}</span> ` : ''}${esc(e.title)}
         </button>`;
       }).join('')}
-      <button class="day-add" data-add="${key}" type="button" aria-label="Add an event on ${key}">
+      <button class="day-add needs-edit" data-add="${key}" type="button" aria-label="Add an event on ${key}">
         ${svg('plus')}
       </button>
     </div>`;
@@ -1513,26 +1957,22 @@ function renderCalendar() {
     `<button class="chip" data-cal-filter="${id}" aria-pressed="${calFilter === id}" type="button">
       ${dot ? `<i class="dot ${dot}"></i>` : ''}${label}</button>`;
 
+  // The month calendar is the home screen. One tight header — title, month nav
+  // and filters on a line — then the ribbon, then the grid, so the whole month
+  // sits on one screen without scrolling.
   document.getElementById('v-calendar').innerHTML = `
-    <div class="page-head">
-      <div>
-        <h2 class="t-headline">Broadcast Calendar</h2>
-        <p>Drag an event to move it. Nothing in this year is confirmed until you say so.</p>
-      </div>
-      <div class="page-tools">
-        ${fchip('all', 'All')}
-        ${fchip('open', 'Needs crew', 'dot-error')}
-        ${fchip('soft', 'Date to confirm', 'dot-secondary')}
-      </div>
-    </div>
-
-    <div class="month-bar">
+    <div class="cal-head">
       <div class="month-nav">
         <button class="icon-btn" id="prev" type="button" aria-label="Previous month">${svg('left')}</button>
         <h2 class="num" id="month-title">${MONTHS[cur.m]} ${cur.y}</h2>
         <button class="icon-btn" id="next" type="button" aria-label="Next month">${svg('right')}</button>
         <span class="sep"></span>
         <button class="link" id="today" type="button">Today</button>
+      </div>
+      <div class="page-tools">
+        ${fchip('all', 'All')}
+        ${flagCrew ? fchip('open', 'Needs crew', 'dot-error') : ''}
+        ${fchip('soft', 'Date to confirm', 'dot-secondary')}
       </div>
     </div>
 
@@ -1545,32 +1985,14 @@ function renderCalendar() {
 }
 
 // --- Schedule -------------------------------------------------------------
-// Stitch's Event Schedule, with the production list kept as its second mode.
-// A station runs about thirty events a year, so most weeks are empty and a
-// week-only view would be a wall of empty states.
-let schedMode = 'all';
-let selDay = TODAY;
-
+// The whole year as one chronological timeline, grouped by month. Stitch's
+// Event Schedule opened on a week strip, but a station runs about thirty events
+// a year, so most weeks are empty and a week picker was a control that mostly
+// pointed at nothing — the station manager asked for it gone. The list is the
+// thing: every broadcast, in order, and what each still needs.
 function renderSchedule() {
-  const sel = parse(selDay);
-  const weekStart = new Date(sel.getFullYear(), sel.getMonth(), sel.getDate() - ((sel.getDay() + 6) % 7));
-  const week = Array.from({ length: 7 }, (_, i) =>
-    new Date(weekStart.getFullYear(), weekStart.getMonth(), weekStart.getDate() + i));
-
-  const strip = week.map((d) => {
-    const key = iso(d);
-    const n = DATA.events.filter((e) => e.date === key).length;
-    return `<button class="dcard${key === selDay ? ' is-sel' : ''}${n ? '' : ' is-empty'}"
-              data-sel-day="${key}" type="button">
-      <span class="dcard-d">${DAYS[(d.getDay() + 6) % 7]}</span>
-      <span class="dcard-n">${d.getDate()}</span>
-      ${n ? '<i class="dcard-dot"></i>' : ''}
-    </button>`;
-  }).join('');
-
-  const inWeek = (e) => e.date >= iso(week[0]) && e.date <= iso(week[6]);
   const evs = [...DATA.events]
-    .filter((e) => (schedMode === 'week' ? inWeek(e) : true) && evHit(e))
+    .filter((e) => evHit(e))
     .sort((a, b) => a.date.localeCompare(b.date) || (a.start_time ?? '').localeCompare(b.start_time ?? ''));
 
   let body = '', lastMonth = '';
@@ -1579,18 +2001,26 @@ function renderSchedule() {
     const cov = coverage(e);
     const openRoles = (e.roles || []).map((r, i) => ({ r, i })).filter((x) => !x.r.member);
     const mk = `${d.getFullYear()}-${d.getMonth()}`;
-    if (schedMode === 'all' && mk !== lastMonth) {
+    if (mk !== lastMonth) {
       lastMonth = mk;
       const mOpen = evs.filter((x) => { const xd = parse(x.date);
         return `${xd.getFullYear()}-${xd.getMonth()}` === mk; })
         .reduce((n, x) => n + coverage(x).open, 0);
+      // The open-role count on the month divider only when the flag is on.
       body += `<div class="tl-month">
         <span class="t-label">${MONTHS[d.getMonth()]} ${d.getFullYear()}</span>
-        <span class="tag ${mOpen ? 'tag-error' : ''} num">${mOpen ? `${mOpen} open` : 'crewed'}</span>
+        ${flagCrew && mOpen ? `<span class="tag tag-error num">${mOpen} open</span>` : ''}
       </div>`;
     }
+    // The node on the rail is red only when the flag is on; otherwise every
+    // event (nothing assigned by default) would read as a problem.
     const state = e.status === 'cancelled' ? 'is-cancelled'
-      : cov.open ? 'is-open' : cov.total ? '' : 'is-bare';
+      : cov.total === 0 ? 'is-bare'
+      : (flagCrew && cov.open) ? 'is-open' : '';
+    const anyClash = (e.roles || []).some((r) => CLASHES.has(r));
+    const faces = (e.roles || []).filter((r) => r.member).map((r) =>
+      `<span class="avatar sm" title="${esc(MEMBERS[r.member]?.known_as ?? '')} — ${esc(r.label)}${
+        CLASHES.has(r) ? ` (clash: ${esc(CLASHES.get(r))})` : ''}">${initials(MEMBERS[r.member])}</span>`).join('');
     body += `<div class="tl-row ${state}">
       <div class="tl-when">
         <span class="tl-day num">${d2(d.getDate())} ${MON3[d.getMonth()]}</span>
@@ -1602,7 +2032,7 @@ function renderSchedule() {
         <div class="tl-top">
           <div style="flex:1;min-width:220px">
             <div class="tl-meta">
-              <span class="tag ${e.status === 'cancelled' ? '' : cov.open ? 'tag-error' : 'tag-primary'}">${esc(e.strand)}</span>
+              <span class="tag">${esc(e.strand)}</span>
               ${e.venue ? `<span class="tl-place">${svg('pin')} ${esc(e.venue)}</span>` : ''}
               ${e.confidence !== 'fixed' ? '<span class="tag tag-outline">Date to confirm</span>' : ''}
               ${e.status === 'idea' ? '<span class="tag tag-outline">Idea</span>' : ''}
@@ -1610,7 +2040,7 @@ function renderSchedule() {
             <h3 class="t-title" style="font-size:20px">${esc(e.title)}</h3>
             ${e.brief ? `<p class="tl-brief">${esc(e.brief)}</p>` : ''}
           </div>
-          ${openRoles.length ? `<div class="missing">
+          ${flagCrew && openRoles.length ? `<div class="missing">
             <div class="missing-h">${svg('warning')}<span>Missing Requirements</span></div>
             <ul>${openRoles.map(({ r, i }) => `<li>
               <span>${svg('person')} ${esc(r.label)}</span>
@@ -1619,13 +2049,10 @@ function renderSchedule() {
           </div>` : ''}
         </div>
         <div class="tl-foot">
-          <div class="faces">${(e.roles || []).filter((r) => r.member).map((r) =>
-            `<span class="avatar sm${CLASHES.has(r) ? '' : ''}" title="${esc(MEMBERS[r.member]?.known_as ?? '')} — ${esc(r.label)}${
-              CLASHES.has(r) ? ` (clash: ${esc(CLASHES.get(r))})` : ''}">${initials(MEMBERS[r.member])}</span>`).join('')
-            || '<span class="dimmed" style="font-size:12px">no roles yet</span>'}</div>
-          <span class="tag ${cov.open ? 'tag-error' : cov.total ? '' : 'tag-outline'} num">${
-            cov.total ? `${cov.filled}/${cov.total} crewed` : 'no roles yet'}</span>
-          ${(e.roles || []).some((r) => CLASHES.has(r))
+          ${faces ? `<div class="faces">${faces}</div>` : ''}
+          ${flagCrew ? `<span class="tag ${cov.open ? 'tag-error' : cov.total ? '' : 'tag-outline'} num">${
+            cov.total ? `${cov.filled}/${cov.total} crewed` : 'no roles yet'}</span>` : ''}
+          ${flagCrew && anyClash
             ? `<span class="tag tag-error">${svg('warning')} Clash</span>` : ''}
           <span class="spacer"></span>
           <button class="btn btn-ghost" data-ev="${e.id}" type="button">Open</button>
@@ -1640,24 +2067,10 @@ function renderSchedule() {
         <h2 class="t-headline">Event Schedule</h2>
         <p>Every broadcast and what it still needs before it can happen.</p>
       </div>
-      <div class="page-tools">
-        <div class="seg" role="group" aria-label="Range">
-          <button data-sched="week" aria-pressed="${schedMode === 'week'}" type="button">This week</button>
-          <button data-sched="all" aria-pressed="${schedMode === 'all'}" type="button">All</button>
-        </div>
-      </div>
     </div>
 
-    <div class="weekstrip">
-      <button class="round-btn" data-week="-7" type="button" aria-label="Previous week">${svg('left')}</button>
-      <div class="days">${strip}</div>
-      <button class="round-btn" data-week="7" type="button" aria-label="Next week">${svg('right')}</button>
-      <button class="btn btn-ghost" data-sel-day="${TODAY}" type="button">${svg('calendar')} Today</button>
-    </div>
-
-    <div class="timeline">${body || `<p class="empty">${
-      schedMode === 'week' ? 'Nothing on in this week. The strip above moves you around; “All” shows the whole year.'
-                           : 'No events match that search.'}</p>`}</div>`;
+    <div class="timeline">${body
+      || '<p class="empty">No events match that search.</p>'}</div>`;
 }
 
 // --- To do ----------------------------------------------------------------
@@ -1669,7 +2082,10 @@ const AREAS = {
 };
 let areaFilter = 'all';
 let hideDone = false;
-let taskMode = 'board';
+// List is the default layout, not the kanban board: the station manager works
+// from the list — every to-do in one column, sortable by when it bites — and
+// reaches for the board only when they want the buckets laid out side by side.
+let taskMode = 'list';
 let addingTask = false;
 
 // A task anchored to an event is due `lead_days` before it, so it moves when
@@ -1715,12 +2131,21 @@ function renderTasks() {
     && !(hideDone && t.done)
     && hit(t.title, t.detail, t.owner_role, AREAS[t.area]));
 
-  const chips = ['all', ...Object.keys(AREAS)].map((a) => {
-    const n = tasks.filter((t) => a === 'all' || t.area === a).length;
-    const openN = tasks.filter((t) => (a === 'all' || t.area === a) && !t.done).length;
-    return `<button class="chip" data-area="${a}" aria-pressed="${areaFilter === a}" type="button">${
-      a === 'all' ? 'All' : AREAS[a]} <span class="num">${openN}/${n}</span></button>`;
-  }).join('');
+  const areaList = ['all', ...Object.keys(AREAS)];
+  const areaCount = (a) => tasks.filter((t) => a === 'all' || t.area === a).length;
+  const areaOpen = (a) => tasks.filter((t) => (a === 'all' || t.area === a) && !t.done).length;
+  const chips = areaList.map((a) =>
+    `<button class="chip" data-area="${a}" aria-pressed="${areaFilter === a}" type="button">${
+      a === 'all' ? 'All' : AREAS[a]} <span class="num">${areaOpen(a)}/${areaCount(a)}</span></button>`).join('');
+
+  // On a phone the eight area chips wrap into three rows and push the list off
+  // the screen, so there they collapse into a single dropdown. CSS swaps the two
+  // at the 900px breakpoint; both are always in the DOM.
+  const areaMenu = `<label class="chips-menu">
+    <select data-area-select aria-label="Filter to-dos by area">
+      ${areaList.map((a) => `<option value="${a}"${areaFilter === a ? ' selected' : ''}>${
+        a === 'all' ? 'All areas' : AREAS[a]} · ${areaOpen(a)}/${areaCount(a)}</option>`).join('')}
+    </select></label>`;
 
   const anchorNote = (t) => t.anchor
     ? `${t.lead_days}d before ${DATA.events.find((e) => e.id === t.anchor)?.title ?? '—'}`
@@ -1755,22 +2180,22 @@ function renderTasks() {
             <span class="spacer"></span>
             <span title="${t.source === 'you' ? 'Added by you' : `Handover ${esc(t.source)}`}">${esc(t.owner_role)}</span>
           </div>
-          ${t.anchor ? `<div class="tcard-d" style="margin-top:6px">${esc(anchorNote(t))}</div>` : ''}
+          ${t.anchor ? `<div class="tcard-d" style="margin-top:8px">${esc(anchorNote(t))}</div>` : ''}
         </div>`).join('') : `<p class="col-empty">${EMPTY_COL[label]}</p>`}
       </div>
     </div>`).join('')}</div>`;
 
   const rows = groups.flatMap(([, , group]) => group).map((t) => `
     <tr class="${t.done ? 'is-done' : ''}${!t.done && t.left !== null && t.left < 0 ? ' is-over' : ''}">
-      <td><input class="box" type="checkbox" data-task="${t.id}" ${t.done ? 'checked' : ''}
+      <td data-label="Done"><input class="box" type="checkbox" data-task="${t.id}" ${t.done ? 'checked' : ''}
                  aria-label="${esc(t.title)}"></td>
-      <td class="td-t">${esc(t.title)}
+      <td class="td-t" data-label="Task">${esc(t.title)}
         ${t.detail ? `<span class="rel">${esc(t.detail)}</span>` : ''}</td>
-      <td><span class="tag">${AREAS[t.area]}</span></td>
-      <td class="td-due">${t.due_on ? `${shortDate(t.due_on)}<span class="rel">${relDay(t.left)}</span>` : '<span class="dimmed">—</span>'}</td>
-      <td class="dimmed">${esc(t.owner_role)}<span class="rel">${
+      <td data-label="Area"><span class="tag">${AREAS[t.area]}</span></td>
+      <td class="td-due" data-label="Due">${t.due_on ? `${shortDate(t.due_on)}<span class="rel">${relDay(t.left)}</span>` : '<span class="dimmed">—</span>'}</td>
+      <td class="dimmed" data-label="Owner">${esc(t.owner_role)}<span class="rel">${
         t.source === 'you' ? 'Added by you' : `Handover ${esc(t.source)}`}</span></td>
-      <td><span class="tag ${t.done ? 'tag-primary' : t.left !== null && t.left < 0 ? 'tag-error' : ''}">${
+      <td data-label="Status"><span class="tag ${t.done ? 'tag-primary' : t.left !== null && t.left < 0 ? 'tag-error' : ''}">${
         t.done ? 'Done' : t.left !== null && t.left < 0 ? 'Overdue' : 'To do'}</span></td>
     </tr>`).join('');
 
@@ -1804,10 +2229,11 @@ function renderTasks() {
           <button data-task-mode="board" aria-pressed="${taskMode === 'board'}" type="button">Board</button>
           <button data-task-mode="list" aria-pressed="${taskMode === 'list'}" type="button">List</button>
         </div>
-        <button class="btn btn-primary" id="task-new" type="button">${svg('plus')} New to-do</button>
+        <button class="btn btn-primary needs-edit" id="task-new" type="button">${svg('plus')} New to-do</button>
       </div>
     </div>
-    <div class="chips" style="margin-bottom:var(--gutter)">${chips}</div>
+    <div class="chips tasks-filter" style="margin-bottom:var(--gutter)">${chips}</div>
+    ${areaMenu}
     ${addForm}
     ${shown.length ? (taskMode === 'board' ? board : list)
       : `<p class="empty">Nothing here. Everything in ${
@@ -1816,10 +2242,43 @@ function renderTasks() {
 
 // --- Crew -----------------------------------------------------------------
 let skillFilter = 'all';
+// Which member card is in edit mode (a slug), or '__new__' for the add form,
+// or null. View state, so it survives a re-render but is never stored or synced.
+let editingMember = null;
+// What a member can be signed off to operate — the handover's training gates.
+const TRAINABLE = ['camera', 'edit', 'vision_mix', 'ptz', 'audio'];
+
+function crewList() { return DATA.members || SEED.members; }
+
+// The inline edit/create form that replaces a card's body while editing.
+function memberFormCard(m) {
+  const trained = new Set(m.trained || []);
+  return `<div class="card person is-editing">
+    <form class="member-form" data-member-form="${m.id ?? '__new__'}">
+      <label>Known as
+        <input type="text" name="known_as" value="${esc(m.known_as ?? '')}" required autocomplete="off"></label>
+      <label>Full name
+        <input type="text" name="full_name" value="${esc(m.full_name ?? '')}" autocomplete="off"></label>
+      <label>Committee role
+        <input type="text" name="committee_role" value="${esc(m.committee_role ?? '')}" placeholder="e.g. Head of Tech" autocomplete="off"></label>
+      <fieldset>
+        <span class="kv-k">Trained on</span>
+        <div class="trained-opts">${TRAINABLE.map((s) => `<label class="trained-opt">
+          <input type="checkbox" name="trained" value="${s}"${trained.has(s) ? ' checked' : ''}>
+          ${esc(s.replace(/_/g, ' '))}</label>`).join('')}</div>
+      </fieldset>
+      <div class="member-act">
+        <button class="btn btn-primary" type="submit">Save</button>
+        <button class="btn btn-ghost" type="button" data-member-cancel>Cancel</button>
+      </div>
+    </form>
+  </div>`;
+}
 
 function renderCrew() {
-  const skills = [...new Set(SEED.members.flatMap((m) => m.trained || []))].sort();
-  const people = SEED.members.filter((m) =>
+  const members = crewList();
+  const skills = [...new Set(members.flatMap((m) => m.trained || []))].sort();
+  const people = members.filter((m) =>
     (skillFilter === 'all' || (m.trained || []).includes(skillFilter))
     && hit(m.known_as, m.full_name, m.committee_role, (m.trained || []).join(' ')));
 
@@ -1827,7 +2286,8 @@ function renderCrew() {
     `<button class="chip" data-skill="${s}" aria-pressed="${skillFilter === s}" type="button">${
       s === 'all' ? 'All crew' : esc(s.replace(/_/g, ' '))}</button>`).join('');
 
-  const cards = people.map((m) => {
+  const card = (m) => {
+    if (editingMember === m.id) return memberFormCard(m);
     // Assignments are derived from the events, not stored on the person — the
     // same rule as everywhere else, so moving an event updates the directory.
     const mine = DATA.events
@@ -1837,61 +2297,75 @@ function renderCrew() {
     const clashes = mine.flatMap((e) => (e.roles || [])
       .filter((r) => r.member === m.id && CLASHES.has(r))
       .map((r) => ({ e, r, with: CLASHES.get(r) })));
-    const next = ahead[0];
 
     return `<div class="card person${clashes.length ? ' is-clash' : ''}">
       <div class="person-h">
         <span class="avatar lg">${initials(m)}</span>
-        <div style="flex:1;min-width:0">
+        <div class="person-hd">
           <h3>${esc(m.known_as)}</h3>
           <p class="person-role">${esc(m.committee_role ?? 'Crew')}</p>
         </div>
-        ${clashes.length
-          ? `<span class="tag tag-error">${svg('warning')} Clash</span>`
-          : `<span class="tag">${ahead.length} ahead</span>`}
+        ${clashes.length ? `<span class="tag tag-error">${svg('warning')} Clash</span>` : ''}
+        <button class="person-edit" data-member-edit="${m.id}" type="button"
+                aria-label="Edit ${esc(m.known_as)}">${svg('pencil')}</button>
       </div>
 
-      <div class="person-grid">
-        <div>
-          <span class="kv-k">Trained on</span>
-          <span class="kv-v">${(m.trained || []).length
-            ? (m.trained || []).map((t) => `<span class="tag" style="margin:0 4px 4px 0">${esc(t.replace(/_/g, ' '))}</span>`).join('')
-            : '<span class="dimmed">nothing signed off</span>'}</span>
-        </div>
-        <div>
-          <span class="kv-k">Roles this year</span>
-          <span class="kv-v num" style="font-size:20px;font-weight:700">${
-            DATA.events.reduce((n, e) => n + (e.roles || []).filter((r) => r.member === m.id).length, 0)}</span>
-        </div>
+      <div class="person-cap">
+        <span class="kv-k">Trained on</span>
+        <span class="kv-v">${(m.trained || []).length
+          ? (m.trained || []).map((t) => `<span class="tag">${esc(t.replace(/_/g, ' '))}</span>`).join('')
+          : '<span class="dimmed">nothing signed off</span>'}</span>
       </div>
 
-      ${clashes.length ? `<div class="note is-caution" style="margin-top:14px;margin-bottom:0">
+      ${clashes.length ? `<div class="note is-caution note-inline">
         <span class="note-k">Double-booked</span>
         ${clashes.map((c) => `${esc(c.e.title)} — also ${esc(c.with)}`).join('<br>')}
       </div>` : ''}
 
       ${ahead.length ? `<div class="next-list">
-        <span class="kv-k">Next up</span>
+        <span class="kv-k">Next up <span class="kv-n num">${ahead.length} ahead</span></span>
         ${ahead.slice(0, 3).map((e) => `<button class="next-item" data-ev="${e.id}" type="button">
           <span class="d num">${shortDate(e.date)}</span>
           <span class="t">${esc(e.title)}</span>
-          <span class="dimmed" style="font-size:11px">${esc((e.roles || [])
+          <span class="r">${esc((e.roles || [])
             .filter((r) => r.member === m.id).map((r) => r.label).join(', '))}</span>
         </button>`).join('')}
-      </div>` : `<div class="next-list"><span class="dimmed" style="font-size:12px">
-        ${next ? '' : 'Nothing booked ahead.'}</span></div>`}
+      </div>` : '<div class="next-list"><span class="r">Nothing booked ahead.</span></div>'}
     </div>`;
-  }).join('');
+  };
+
+  const newCard = editingMember === '__new__' ? memberFormCard({}) : '';
+  const cards = newCard + people.map(card).join('');
+
+  // Job descriptions, copied from the handover (committee roles from Section Va,
+  // the on-the-day crew roles from Section I). Reference, folded away by default.
+  const defs = SEED.role_descriptions || {};
+  const committee = (defs.committee || []).map((r) =>
+    `<div class="role-def"><h3>${esc(r.role)}</h3><p>${esc(r.desc)}</p></div>`).join('');
+  const crewDefs = (defs.crew || []).map((r) =>
+    `<div class="role-def"><h3>${esc(r.title)} <span class="tag">${esc(r.role.replace(/_/g, ' '))}</span></h3>
+      <p>${esc(r.desc)}</p></div>`).join('');
+  const rolesRef = (committee || crewDefs) ? `<details class="roles-ref">
+    <summary>Roles &amp; responsibilities</summary>
+    <div class="roles-ref-body">
+      ${committee ? `<h4>Committee</h4>${committee}` : ''}
+      ${crewDefs ? `<h4>On the day</h4>${crewDefs}` : ''}
+    </div>
+  </details>` : '';
 
   document.getElementById('v-crew').innerHTML = `
     <div class="page-head">
       <div>
         <h2 class="t-headline">Crew Directory</h2>
-        <p>Who can do what, and who is already committed. Names come from the handover — replace them before this ships.</p>
+        <p>Who can do what, and who is already committed. Edit a card to update names, committee roles and what someone is trained on.</p>
+      </div>
+      <div class="page-tools">
+        <button class="btn btn-primary needs-edit" id="crew-add" type="button">${svg('plus')} Add crew</button>
       </div>
     </div>
     <div class="chips" style="margin-bottom:var(--gutter)">${chips}</div>
-    ${cards ? `<div class="people">${cards}</div>` : '<p class="empty">Nobody matches that.</p>'}`;
+    ${cards ? `<div class="people">${cards}</div>` : '<p class="empty">Nobody matches that.</p>'}
+    ${rolesRef}`;
 }
 
 // --- Event sheet ----------------------------------------------------------
@@ -1923,6 +2397,7 @@ function renderSheet(id) {
   const e = DATA.events.find((x) => x.id === id);
   if (!e) return false;
   sheetId = id;
+  kitSheetId = null;
   const d = parse(e.date);
   const cov = coverage(e);
   const soc = e.society ? SOCS[e.society] : null;
@@ -2042,6 +2517,26 @@ function renderSheet(id) {
       ${svg('plus')} Add a role
     </button>
 
+    <div class="rule">Kit needed${(e.kit_needed || []).length
+      ? ` <span class="tag num">${e.kit_needed.length}</span>` : ''}</div>
+    ${(e.kit_needed || []).length ? `<div class="kitneed">${e.kit_needed.map((k, i) => `
+      <div class="kitneed-item">
+        <span class="kitneed-nm">${esc(KIT[k.id]?.name ?? k.id)}
+          ${KIT[k.id]?.category ? `<span class="kitneed-cat">${esc(KIT[k.id].category)}</span>` : ''}</span>
+        <input class="kitneed-qty num" type="number" min="1" step="1" value="${k.qty || 1}"
+               data-kitneed-qty="${i}" aria-label="Quantity of ${esc(KIT[k.id]?.name ?? k.id)}">
+        <button class="icon-btn" data-kitneed-del="${i}" type="button"
+                aria-label="Remove ${esc(KIT[k.id]?.name ?? k.id)}">${svg('close')}</button>
+      </div>`).join('')}</div>`
+      : '<p class="empty" style="padding:12px 0">No kit listed yet. Pick from the locker below.</p>'}
+    <select class="kit-add" data-kitneed-add aria-label="Add kit this event needs">
+      <option value="">Add kit from the locker…</option>
+      ${(DATA.kit || SEED.kit || [])
+        .filter((k) => !(e.kit_needed || []).some((x) => x.id === k.id))
+        .sort((a, b) => (a.category || '').localeCompare(b.category || '') || a.name.localeCompare(b.name))
+        .map((k) => `<option value="${k.id}">${esc(k.name)}${k.category ? ` — ${esc(k.category)}` : ''}</option>`).join('')}
+    </select>
+
     ${prep.length ? `<div class="rule">Prep</div>
       <div class="rows">${prep.map((p) => {
         const over = p.left < 0;
@@ -2073,6 +2568,7 @@ function renderSheet(id) {
 
     <div class="sheet-foot">
       <button class="btn btn-primary" id="sheet-done" type="button">Done</button>
+      <button class="btn btn-ghost" id="sheet-copy" type="button">${svg('copy')} Copy details</button>
       <span class="spacer"></span>
       <button class="btn btn-danger" id="sheet-del" type="button">Delete event</button>
     </div>
@@ -2183,8 +2679,41 @@ function renderSheet(id) {
     input?.select();
   };
 
+  // Kit needed: a list drawn from the locker, so an event says what to pack.
+  sheetIn.querySelector('[data-kitneed-add]').onchange = (evt) => {
+    const kid = evt.target.value;
+    if (!kid) return;
+    mutate(`Added ${KIT[kid]?.name ?? kid} to ${e.title}`, (s) => {
+      const ev = s.events.find((x) => x.id === id);
+      (ev.kit_needed ??= []).push({ id: kid, qty: 1 });
+    });
+    openSheet(id, null);
+  };
+  sheetIn.querySelectorAll('[data-kitneed-del]').forEach((btn) => {
+    btn.onclick = () => {
+      const i = Number(btn.dataset.kitneedDel);
+      const gone = KIT[e.kit_needed[i]?.id]?.name ?? 'kit';
+      mutate(`Removed ${gone} from ${e.title}`, (s) => {
+        s.events.find((x) => x.id === id).kit_needed.splice(i, 1);
+      });
+      openSheet(id, null);
+    };
+  });
+  sheetIn.querySelectorAll('[data-kitneed-qty]').forEach((inp) => {
+    inp.onchange = () => {
+      const i = Number(inp.dataset.kitneedQty);
+      const qty = Math.max(1, Math.round(Number(inp.value) || 1));
+      mutate(`${e.title} kit updated`, (s) => {
+        s.events.find((x) => x.id === id).kit_needed[i].qty = qty;
+      });
+      openSheet(id, null);
+      sheetIn.querySelector(`[data-kitneed-qty="${i}"]`)?.focus();
+    };
+  });
+
   document.getElementById('sheet-x').onclick = closeSheet;
   document.getElementById('sheet-done').onclick = closeSheet;
+  document.getElementById('sheet-copy').onclick = () => copyEventDetails(e);
   document.getElementById('sheet-del').onclick = () => {
     closeSheet();
     mutate(`Deleted ${e.title}`, (s) => {
@@ -2195,9 +2724,101 @@ function renderSheet(id) {
   return true;
 }
 
+// --- Copy an event to formatted text --------------------------------------
+// A shoot day starts with a message in a group chat: "Rugby at the Rec, Sat,
+// call 20:30, here's who's on what." This builds exactly that from the event so
+// it can be pasted anywhere, and it is the same information the sheet shows —
+// derived, so it is never out of date with the plan.
+function eventDetailsText(e) {
+  const d = parse(e.date);
+  const cov = coverage(e);
+  const soc = e.society ? SOCS[e.society] : null;
+  const L = [];
+  L.push(e.title);
+  L.push('='.repeat(Math.max(3, e.title.length)));
+  L.push(`Date: ${DAYS[(d.getDay() + 6) % 7]} ${d2(d.getDate())} ${MONTHS[d.getMonth()]} ${d.getFullYear()}${
+    e.confidence === 'fixed' ? '' : ' (to confirm)'}`);
+  if (e.venue) L.push(`Venue: ${e.venue}`);
+  L.push(`Strand: ${e.strand}  ·  Status: ${e.status}`);
+
+  const times = [];
+  if (e.call_time) times.push(`call ${e.call_time}`);
+  if (e.doors_time) times.push(`doors ${e.doors_time}`);
+  if (e.start_time) times.push(`start ${e.start_time}`);
+  if (e.end_time) times.push(`out ${e.end_time}`);
+  if (times.length) L.push(`Times: ${times.join(', ')}`);
+  if (e.brief) { L.push(''); L.push('Brief:'); L.push(e.brief); }
+
+  L.push('');
+  L.push(`Crew — ${cov.filled}/${cov.total} filled${cov.open ? `, ${cov.open} still open` : ''}`);
+  if ((e.roles || []).length) {
+    for (const r of e.roles) {
+      const who = r.member ? (MEMBERS[r.member]?.known_as ?? r.member) : 'OPEN — nobody yet';
+      const when = r.on_site === false ? '  [off site]'
+        : r.from ? `  [${r.from}–${r.to ?? '?'}]` : '';
+      L.push(`  • ${r.label}: ${who}${when}`);
+    }
+  } else {
+    L.push('  (no roles yet)');
+  }
+
+  if ((e.kit_needed || []).length) {
+    L.push('');
+    L.push('Kit needed');
+    for (const k of e.kit_needed) {
+      L.push(`  • ${KIT[k.id]?.name ?? k.id}${k.qty > 1 ? ` ×${k.qty}` : ''}`);
+    }
+  }
+
+  const tmpl = (DATA.prep_templates || []).filter((t) => t.strand === '*' || t.strand === e.strand);
+  const prep = [...tmpl, ...(e.prep || [])].map((p) => ({
+    label: p.label, owner: p.owner_role,
+    due: new Date(d.getFullYear(), d.getMonth(), d.getDate() - p.lead_days),
+  })).sort((a, b) => a.due - b.due);
+  if (prep.length) {
+    L.push('');
+    L.push('Prep');
+    for (const p of prep) {
+      L.push(`  • ${d2(p.due.getDate())} ${MON3[p.due.getMonth()]} — ${p.label}${p.owner ? ` (${p.owner})` : ''}`);
+    }
+  }
+
+  if (soc) {
+    L.push('');
+    L.push(soc.name);
+    if (soc.standing_terms) L.push(`  Always: ${soc.standing_terms}`);
+    if (soc.cautions) L.push(`  Caution: ${soc.cautions}`);
+    if (soc.charge_policy) L.push(`  Money: ${soc.charge_policy}`);
+  }
+  if (e.notes) { L.push(''); L.push(`Notes: ${e.notes}`); }
+  return L.join('\n');
+}
+
+async function copyEventDetails(e) {
+  const text = eventDetailsText(e);
+  let ok = false;
+  try {
+    if (navigator.clipboard?.writeText) { await navigator.clipboard.writeText(text); ok = true; }
+  } catch { ok = false; }
+  if (!ok) {
+    // file:// and older browsers block the async clipboard API. A hidden
+    // textarea and execCommand still works there, so copy never silently fails.
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    try { ok = document.execCommand('copy'); } catch { ok = false; }
+    document.body.removeChild(ta);
+  }
+  toast(ok ? 'Event details copied — paste them anywhere' : 'Could not copy automatically', () => {});
+}
+
 function closeSheet() {
   bayEdit = null;
   sheetId = null;
+  kitSheetId = null;
   document.getElementById('sheet').classList.remove('is-open');
   document.getElementById('sheet').setAttribute('aria-hidden', 'true');
   document.getElementById('scrim').classList.remove('is-open');
@@ -2205,13 +2826,16 @@ function closeSheet() {
 
 // --- Navigation -----------------------------------------------------------
 const VIEWS = [
-  ['overview', 'Overview', 'dashboard'],
   ['calendar', 'Calendar', 'calendar'],
   ['schedule', 'Schedule', 'timeline'],
   ['tasks',    'To do',    'checklist'],
   ['crew',     'Crew',     'group'],
+  ['kit',      'Kit',      'kit'],
+  ['settings', 'Settings', 'settings'],
 ];
-let view = 'overview';
+// The month calendar is the home screen now — the overview page was removed and
+// its one load-bearing readout (roles nobody is on) moved behind a setting.
+let view = 'calendar';
 
 // Previous pill values, so a count that moved can say so. Closing a crew gap
 // happens in the sheet, three hundred pixels from the number it changes.
@@ -2221,8 +2845,14 @@ function renderNav() {
   const open = totalOpen();
   const overdue = withDue(DATA.tasks || []).filter((t) => !t.done && t.left !== null && t.left < 0).length;
   const next = {};
-  document.getElementById('nav').innerHTML = VIEWS.map(([id, label, icon]) => {
-    const pill = id === 'calendar' || id === 'schedule' ? open : id === 'tasks' ? overdue : null;
+  // The private modules drop out of the nav for anyone not granted them once the
+  // page is connected to the live database. Offline/local, everything shows.
+  document.getElementById('nav').innerHTML = VIEWS.filter(([id]) => canView(VIEW_MODULE[id])).map(([id, label, icon]) => {
+    // The open-role count only rides the nav when the crew-gap flag is on — off
+    // by default, so the sidebar is quiet until you ask to be shown the gaps.
+    // The overdue-tasks count is a deadline signal, not a crew one, so it stays.
+    const pill = flagCrew && (id === 'calendar' || id === 'schedule') ? open
+               : id === 'tasks' ? overdue : null;
     if (pill !== null) next[id] = pill;
     const moved = pill !== null && lastPills[id] !== undefined && lastPills[id] !== pill;
     return `<button class="nav-item" data-view="${id}" aria-current="${view === id}" type="button">
@@ -2234,6 +2864,9 @@ function renderNav() {
 }
 
 function setView(v) {
+  // A view you are no longer allowed to see (signed out of a private module)
+  // sends you home rather than to a blank, forbidden screen.
+  if (!canView(VIEW_MODULE[v])) v = 'calendar';
   view = v;
   for (const [id] of VIEWS) document.getElementById(`v-${id}`).hidden = id !== v;
   renderNav();
@@ -2274,19 +2907,6 @@ document.addEventListener('click', (ev) => {
   const cf = t.closest('[data-cal-filter]');
   if (cf) { calFilter = cf.dataset.calFilter; renderCalendar(); return; }
 
-  const sd = t.closest('[data-sel-day]');
-  if (sd) { selDay = sd.dataset.selDay; renderSchedule(); return; }
-
-  const wk = t.closest('[data-week]');
-  if (wk) {
-    const d = parse(selDay);
-    selDay = iso(new Date(d.getFullYear(), d.getMonth(), d.getDate() + Number(wk.dataset.week)));
-    renderSchedule(); return;
-  }
-
-  const sm = t.closest('[data-sched]');
-  if (sm) { schedMode = sm.dataset.sched; renderSchedule(); return; }
-
   const tm = t.closest('[data-task-mode]');
   if (tm) { taskMode = tm.dataset.taskMode; renderTasks(); return; }
 
@@ -2295,6 +2915,37 @@ document.addEventListener('click', (ev) => {
 
   const skill = t.closest('[data-skill]');
   if (skill) { skillFilter = skill.dataset.skill; renderCrew(); return; }
+
+  if (t.closest('#crew-add')) {
+    editingMember = '__new__'; renderCrew();
+    document.querySelector('[data-member-form] [name=known_as]')?.focus();
+    return;
+  }
+  const medit = t.closest('[data-member-edit]');
+  if (medit) {
+    editingMember = medit.dataset.memberEdit; renderCrew();
+    document.querySelector('[data-member-form] [name=known_as]')?.focus();
+    return;
+  }
+  if (t.closest('[data-member-cancel]')) { editingMember = null; renderCrew(); return; }
+
+  const kf = t.closest('[data-kit-filter]');
+  if (kf) { kitFilter = kf.dataset.kitFilter; renderKit(); return; }
+
+  if (t.closest('#kit-add')) { addKit(); return; }
+  const kitRow = t.closest('[data-kit]');
+  if (kitRow) { openKitSheet(kitRow.dataset.kit); return; }
+
+  const pref = t.closest('[data-pref]');
+  if (pref) { if (pref.dataset.pref === 'flagCrew') setFlagCrew(!flagCrew); return; }
+
+  const action = t.closest('[data-action]');
+  if (action) {
+    if (action.dataset.action === 'export') exportYear();
+    else if (action.dataset.action === 'reset') resetYear();
+    else if (action.dataset.action === 'pdf') exportPdf();
+    return;
+  }
 
   if (t.closest('#hide-done')) { hideDone = !hideDone; renderTasks(); return; }
   if (t.closest('#task-new')) {
@@ -2349,6 +3000,40 @@ document.getElementById('q').addEventListener('input', (e) => {
 // A to-do you add is a to-do like any other: same store, same undo, and it
 // leaves in the export. `source: 'you'` distinguishes it from the handover's
 // own items, which carry a section reference instead.
+// Editing or adding a crew member. Same store, same undo, same sync path as
+// everything else — a member is a row in the year like an event or a task.
+document.addEventListener('submit', (ev) => {
+  const mf = ev.target.closest('[data-member-form]');
+  if (!mf) return;
+  ev.preventDefault();
+  const f = new FormData(mf);
+  const known = String(f.get('known_as') || '').trim();
+  if (!known) return;
+  const patch = {
+    known_as: known,
+    full_name: String(f.get('full_name') || '').trim() || known,
+    committee_role: String(f.get('committee_role') || '').trim() || null,
+    trained: f.getAll('trained'),
+  };
+  const target = mf.dataset.memberForm;
+  editingMember = null;
+  if (target === '__new__') {
+    // A slug from the name, kept unique against the members already loaded.
+    const base = (known.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'crew');
+    const taken = new Set((DATA.members || []).map((m) => m.id));
+    let slug = base, n = 2;
+    while (taken.has(slug)) slug = `${base}-${n++}`;
+    mutate(`Added ${known} to the crew`, (s) => {
+      (s.members ??= []).push({ id: slug, active: true, ...patch });
+    });
+  } else {
+    mutate(`Updated ${known}`, (s) => {
+      const m = s.members.find((x) => x.id === target);
+      if (m) Object.assign(m, patch);
+    });
+  }
+});
+
 document.addEventListener('submit', (ev) => {
   if (ev.target.id !== 'task-form') return;
   ev.preventDefault();
@@ -2369,6 +3054,10 @@ document.addEventListener('submit', (ev) => {
 // Ticking a box is a mutation like any other, so it is persisted and undoable
 // on the same path as moving an event.
 document.addEventListener('change', (ev) => {
+  // The mobile area menu is the phone-sized twin of the chip row.
+  const areaSel = ev.target.closest('[data-area-select]');
+  if (areaSel) { areaFilter = areaSel.value; renderTasks(); return; }
+
   const box = ev.target.closest('[data-task]');
   if (!box) return;
   const id = box.dataset.task;
@@ -2439,7 +3128,13 @@ function addEvent(date) {
 // --- Export ---------------------------------------------------------------
 // The point of letting you correct the year is getting the corrections back.
 function exportYear() {
-  const out = { ...SEED, events: DATA.events, tasks: DATA.tasks,
+  // The working copy is the truth. Everything editable rides back out —
+  // events (with their kit lists), tasks, the crew and the kit locker — over
+  // the seed's reference data.
+  const out = { ...SEED,
+                members: DATA.members ?? SEED.members,
+                kit: DATA.kit ?? SEED.kit,
+                events: DATA.events, tasks: DATA.tasks,
                 exported_at: new Date().toISOString() };
   const url = URL.createObjectURL(
     new Blob([JSON.stringify(out, null, 2)], { type: 'application/json' })
@@ -2451,7 +3146,90 @@ function exportYear() {
 
 document.getElementById('export').onclick = exportYear;
 
-document.getElementById('reset').onclick = () => {
+// --- Export to a structured PDF -------------------------------------------
+// The browser's own print-to-PDF is the engine — no library to inline, nothing
+// that could fetch — and the report is built into a hidden container only for
+// the duration of the print, so it is never on screen and never audited.
+function buildReport() {
+  const now = new Date();
+  const evs = [...DATA.events].sort((a, b) => a.date.localeCompare(b.date));
+  const kitById = byId(SEED.kit || []);
+
+  const evBlock = (e) => {
+    const d = parse(e.date);
+    const cov = coverage(e);
+    const when = `${DAYS[(d.getDay() + 6) % 7]} ${d2(d.getDate())} ${MONTHS[d.getMonth()]} ${d.getFullYear()}`
+      + (e.confidence === 'fixed' ? '' : ' (to confirm)')
+      + (e.start_time ? ` · ${e.start_time}` : '') + (e.venue ? ` · ${esc(e.venue)}` : '');
+    const roles = (e.roles || []).map((r) => {
+      const who = r.member ? esc(MEMBERS[r.member]?.known_as ?? r.member)
+        : '<span class="pr-open">OPEN</span>';
+      return `<li>${esc(r.label)}: ${who}</li>`;
+    }).join('');
+    const kit = (e.kit_needed || []).map((k) =>
+      `<li>${esc(kitById[k.id]?.name ?? k.id)}${k.qty > 1 ? ` ×${k.qty}` : ''}</li>`).join('');
+    return `<div class="pr-ev">
+      <h3>${esc(e.title)}</h3>
+      <p class="pr-when">${when} — ${e.strand}, ${e.status} · ${cov.filled}/${cov.total} crewed${
+        cov.open ? `, ${cov.open} open` : ''}</p>
+      ${e.brief ? `<p class="pr-sub">${esc(e.brief)}</p>` : ''}
+      ${roles ? `<ul>${roles}</ul>` : ''}
+      ${kit ? `<p class="pr-sub" style="margin-top:4pt">Kit needed:</p><ul>${kit}</ul>` : ''}
+    </div>`;
+  };
+
+  const tasks = withDue(DATA.tasks || []).filter((t) => !t.done)
+    .sort((a, b) => (a.due_on ?? '9999').localeCompare(b.due_on ?? '9999'));
+  const taskRows = tasks.map((t) => `<tr>
+    <td>${esc(t.title)}</td><td>${AREAS[t.area] ?? t.area}</td>
+    <td>${t.due_on ? `${shortDate(t.due_on)} (${relDay(t.left)})` : '—'}</td>
+    <td>${esc(t.owner_role ?? '')}</td></tr>`).join('');
+
+  const kitRows = (SEED.kit || []).slice()
+    .sort((a, b) => (a.category || '').localeCompare(b.category || ''))
+    .map((k) => `<tr><td>${esc(k.name)}</td><td>${esc(k.category || '')}</td>
+      <td>${esc(k.asset_tag || '')}</td><td>${esc(KIT_STATE[k.state] || k.state)}</td>
+      <td>${esc(k.home || '')}</td></tr>`).join('');
+
+  const crewRows = (DATA.members || SEED.members).map((m) => `<tr>
+    <td>${esc(m.known_as)}</td><td>${esc(m.committee_role ?? 'Crew')}</td>
+    <td>${(m.trained || []).map((x) => esc(x.replace(/_/g, ' '))).join(', ') || '—'}</td></tr>`).join('');
+
+  return `
+    <div class="pr-cover">
+      <h1>CampusTV — Season ${esc(SEED.academic_year || '2026/27')}</h1>
+      <p>Full station brief · generated ${now.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}
+        · ${evs.length} events, ${totalOpen()} open roles</p>
+    </div>
+    <h2>Events</h2>
+    ${evs.map(evBlock).join('')}
+    <h2>To do (${tasks.length} open)</h2>
+    <table><thead><tr><th>Task</th><th>Area</th><th>Due</th><th>Owner</th></tr></thead>
+      <tbody>${taskRows || '<tr><td colspan="4">Nothing outstanding.</td></tr>'}</tbody></table>
+    <h2>Kit locker</h2>
+    <table><thead><tr><th>Item</th><th>Category</th><th>Asset</th><th>Status</th><th>Location</th></tr></thead>
+      <tbody>${kitRows}</tbody></table>
+    <h2>Crew</h2>
+    <table><thead><tr><th>Name</th><th>Committee role</th><th>Trained on</th></tr></thead>
+      <tbody>${crewRows}</tbody></table>`;
+}
+
+function exportPdf() {
+  const el = document.getElementById('print-report');
+  el.innerHTML = buildReport();
+  el.hidden = false;
+  const done = () => {
+    el.hidden = true;
+    el.innerHTML = '';
+    window.removeEventListener('afterprint', done);
+  };
+  window.addEventListener('afterprint', done);
+  window.print();
+}
+
+// Reset is offered in two places — the sidebar and Settings — so it is a named
+// function rather than an inline handler.
+function resetYear() {
   const before = clone(DATA);
   DATA = stampRoleIds(clone(SEED));
   persist();
@@ -2467,23 +3245,28 @@ document.getElementById('reset').onclick = () => {
     render();
     Sync.push(undone, DATA);
   });
-};
+}
+document.getElementById('reset').onclick = resetYear;
 
 // --- Render ---------------------------------------------------------------
 function render() {
+  refreshLookups();
   CLASHES = findClashes();
   renderNav();
-  renderOverview();
   renderCalendar();
   renderSchedule();
   renderTasks();
   renderCrew();
+  renderKit();
+  renderSettings();
   // The sheet is part of the render, not a thing that happens to be on top of
   // it. Without this, Undo restored the data and left the sheet showing the
   // state you had just undone — and if the undone change was a deletion, the
   // sheet stayed open over an event that no longer existed.
   if (sheetId) {
     if (!renderSheet(sheetId)) closeSheet();
+  } else if (kitSheetId) {
+    if (!renderKitSheet(kitSheetId)) closeSheet();
   }
 }
 
@@ -2497,7 +3280,10 @@ const syncEl = document.getElementById('sync');
 const signBtn = document.getElementById('sign');
 
 function renderSync(s) {
+  SYNC = s;
+  applyGates();
   if (!Sync.enabled()) return;
+  if (s.recovery) openRecover();
   syncEl.hidden = false;
 
   // state: the short name. note: what it means for you, when that is not
@@ -2549,12 +3335,83 @@ function renderSync(s) {
   signBtn.textContent = s.signedIn ? 'Sign out' : 'Sign in to edit';
 }
 
-// --- Sign in ---------------------------------------------------------------
+// --- Access gates applied to the chrome -----------------------------------
+// Called on every status tick: read-only body class, the account button, the
+// nav (private modules drop out), and a redirect home if the current screen is
+// no longer allowed.
+function applyGates() {
+  document.body.classList.toggle('is-readonly', connectedOnline() && !SYNC.signedIn);
+  renderAccount();
+  renderNav();
+  if (!canView(VIEW_MODULE[view])) setView('calendar');
+}
+
+// --- Account control -------------------------------------------------------
+const accountBtn = document.getElementById('account');
+const acctMenu = document.getElementById('acct-menu');
+
+function renderAccount() {
+  if (!Sync.enabled()) { accountBtn.hidden = true; acctMenu.hidden = true; return; }
+  accountBtn.hidden = false;
+  if (SYNC.signedIn) {
+    const email = SYNC.account || SYNC.user || '';
+    accountBtn.textContent = (email.slice(0, 2) || 'CT').toUpperCase();
+    accountBtn.title = email + (SYNC.isAdmin ? ' — admin' : '');
+  } else {
+    accountBtn.innerHTML = `<svg class="icon icon-sm"><use href="#i-person"/></svg>`;
+    accountBtn.title = 'Sign in';
+  }
+}
+
+function renderAccountMenu() {
+  if (SYNC.signedIn) {
+    acctMenu.innerHTML = `
+      <div class="acct-email">${esc(SYNC.account || SYNC.user || '')}
+        ${SYNC.isAdmin ? '<span class="acct-badge">Admin</span>' : ''}</div>
+      ${SYNC.isAdmin ? `<button class="acct-item" id="acct-access" type="button">${svg('group')} Manage access</button>` : ''}
+      <button class="acct-item" id="acct-signout" type="button">${svg('undo')} Sign out</button>`;
+  } else {
+    acctMenu.innerHTML = `<button class="acct-item" id="acct-signin" type="button">${svg('person')} Sign in</button>`;
+  }
+}
+function toggleAcctMenu(open) {
+  const show = open ?? acctMenu.hidden;
+  if (show) renderAccountMenu();
+  acctMenu.hidden = !show;
+  accountBtn.setAttribute('aria-expanded', String(show));
+}
+accountBtn.onclick = (ev) => { ev.stopPropagation(); toggleAcctMenu(); };
+document.addEventListener('click', (ev) => {
+  if (acctMenu.hidden) return;
+  if (ev.target.closest('#acct-menu') || ev.target.closest('#account')) {
+    if (ev.target.closest('#acct-signin')) { toggleAcctMenu(false); openAuth('signin'); }
+    if (ev.target.closest('#acct-signout')) { toggleAcctMenu(false); Sync.signOut(); toast('Signed out', () => {}); }
+    if (ev.target.closest('#acct-access')) { toggleAcctMenu(false); openAccess(); }
+    return;
+  }
+  toggleAcctMenu(false);
+});
+
+// --- Sign in / sign up -----------------------------------------------------
 const authEl = document.getElementById('auth');
 const authErr = document.getElementById('auth-err');
+let authMode = 'signin';
+let inviteToken = null;
 
-function openAuth() {
+function openAuth(mode = 'signin', token = null) {
+  authMode = mode;
+  inviteToken = token;
   authErr.hidden = true;
+  document.getElementById('auth-info').hidden = true;
+  // A reset link only makes sense when signing in to an existing account.
+  document.getElementById('auth-forgot').hidden = mode !== 'signin';
+  document.getElementById('auth-h').textContent = mode === 'signup' ? 'Create your account' : 'Sign in to edit';
+  document.getElementById('auth-sub').textContent = mode === 'signup'
+    ? 'You have been invited to CampusTV. Set your email and a password to finish creating your account.'
+    : 'Anyone can read the calendar. Changing it, and seeing the private pages, needs an account.';
+  document.getElementById('auth-go').textContent = mode === 'signup' ? 'Create account' : 'Sign in';
+  authEl.querySelector('input[name=password]').setAttribute('autocomplete',
+    mode === 'signup' ? 'new-password' : 'current-password');
   authEl.hidden = false;
   authEl.querySelector('input[name=email]').focus();
 }
@@ -2571,34 +3428,190 @@ document.addEventListener('keydown', (ev) => {
 
 signBtn.onclick = () => {
   if (Sync.status().signedIn) { Sync.signOut(); toast('Signed out', () => {}); }
-  else openAuth();
+  else openAuth('signin');
 };
 
 document.getElementById('auth-form').onsubmit = async (ev) => {
   ev.preventDefault();
   const f = new FormData(ev.target);
+  const email = String(f.get('email')).trim();
+  const password = String(f.get('password'));
   const go = document.getElementById('auth-go');
+  const signup = authMode === 'signup';
   go.disabled = true;
-  go.textContent = 'Signing in…';
+  go.textContent = signup ? 'Creating…' : 'Signing in…';
   try {
-    await Sync.signIn(String(f.get('email')).trim(), String(f.get('password')));
-    closeAuth();
-    toast('Signed in — your changes are shared now', () => {});
+    if (signup) {
+      const res = await Sync.signUp(email, password, inviteToken);
+      closeAuth();
+      toast(res.access_token ? 'Account created — you are signed in'
+        : 'Account created — check your email to confirm, then sign in', () => {});
+    } else {
+      await Sync.signIn(email, password);
+      closeAuth();
+      toast('Signed in — your changes are shared now', () => {});
+    }
   } catch (err) {
     authErr.textContent = String(err.message || err);
     authErr.hidden = false;
   } finally {
     go.disabled = false;
-    go.textContent = 'Sign in';
+    go.textContent = signup ? 'Create account' : 'Sign in';
   }
 };
+
+// --- Forgot password / set a new one ---------------------------------------
+// The email link comes back to this page with a recovery session in the hash;
+// Sync.adoptUrlSession turns it into the live session and flags SYNC.recovery,
+// which openRecover (below, from renderSync) catches to show the set-password
+// form.
+document.getElementById('auth-forgot').onclick = async (ev) => {
+  ev.preventDefault();
+  const info = document.getElementById('auth-info');
+  const email = String(new FormData(document.getElementById('auth-form')).get('email')).trim();
+  if (!email) {
+    authErr.textContent = 'Enter your email above first, then tap Forgot password.';
+    authErr.hidden = false;
+    return;
+  }
+  const link = ev.currentTarget;
+  link.disabled = true;
+  authErr.hidden = true;
+  try {
+    await Sync.recover(email);
+    info.textContent = `If ${email} has an account, a reset link is on its way. Open it on this device.`;
+    info.hidden = false;
+  } catch (err) {
+    authErr.textContent = String(err.message || err);
+    authErr.hidden = false;
+  } finally {
+    link.disabled = false;
+  }
+};
+
+const recoverEl = document.getElementById('recover');
+const recoverErr = document.getElementById('recover-err');
+function openRecover() { if (recoverEl.hidden) recoverEl.hidden = false; }
+function closeRecover() { recoverEl.hidden = true; document.getElementById('recover-form').reset(); }
+
+document.getElementById('recover-form').onsubmit = async (ev) => {
+  ev.preventDefault();
+  const pw = String(new FormData(ev.target).get('password'));
+  const go = document.getElementById('recover-go');
+  go.disabled = true;
+  go.textContent = 'Setting…';
+  recoverErr.hidden = true;
+  try {
+    await Sync.updatePassword(pw);
+    closeRecover();
+    toast('Password updated — you are signed in', () => {});
+  } catch (err) {
+    recoverErr.textContent = String(err.message || err);
+    recoverErr.hidden = false;
+  } finally {
+    go.disabled = false;
+    go.textContent = 'Set password';
+  }
+};
+
+// --- Manage access (admin) -------------------------------------------------
+const GRANTABLE = [['crew', 'Crew'], ['tasks', 'To-do'], ['kit', 'Kit'], ['money', 'Money']];
+const accessEl = document.getElementById('access');
+
+function closeAccess() { accessEl.hidden = true; }
+document.getElementById('access-x').onclick = closeAccess;
+accessEl.onclick = (ev) => { if (ev.target === accessEl) closeAccess(); };
+
+async function openAccess() {
+  accessEl.hidden = false;
+  const body = document.getElementById('access-body');
+  body.innerHTML = '<p class="modal-sub">Loading accounts…</p>';
+  try {
+    const { profiles, grants } = await Sync.listAccounts();
+    renderAccess(profiles, grants);
+  } catch (err) {
+    body.innerHTML = `<p class="modal-err">${esc(err.message || err)}</p>`;
+  }
+}
+
+function renderAccess(profiles, grants) {
+  const gmap = {};
+  for (const g of grants) (gmap[g.user_id] ??= {})[g.module] = g;
+  const grantChecks = (uid, mod) => {
+    const g = gmap[uid]?.[mod] || {};
+    return `<label class="grant-opt"><input type="checkbox" data-grant="${uid}:${mod}:view" ${g.can_view ? 'checked' : ''}> view</label>
+      <label class="grant-opt"><input type="checkbox" data-grant="${uid}:${mod}:edit" ${g.can_edit ? 'checked' : ''}> edit</label>`;
+  };
+
+  const people = profiles.map((p) => `
+    <div class="grant-row">
+      <span class="who">${esc(p.email || p.user_id)}${p.is_admin ? ' <span class="acct-badge">Admin</span>' : ''}</span>
+      ${p.is_admin ? '<span class="pr-sub">full access</span>'
+        : GRANTABLE.map(([m, label]) => `<span class="grant-opt"><b>${label}:</b></span>${grantChecks(p.user_id, m)}`).join(' ')}
+    </div>`).join('');
+
+  document.getElementById('access-body').innerHTML = `
+    <div class="access-invite">
+      <h3>Invite someone</h3>
+      <p class="modal-sub">Creates a one-time link. They open it, set a password, and land with exactly the access you tick here.</p>
+      <label class="fld"><span>Their email (optional)</span>
+        <input type="email" id="inv-email" placeholder="name@bath.ac.uk"></label>
+      <label class="grant-opt"><input type="checkbox" id="inv-admin"> Make them an admin (full access)</label>
+      <div class="grant-grid" id="inv-grants">
+        ${GRANTABLE.map(([m, label]) => `<div class="grant-row">
+          <span class="who">${label}</span>
+          <label class="grant-opt"><input type="checkbox" data-inv="${m}:view"> view</label>
+          <label class="grant-opt"><input type="checkbox" data-inv="${m}:edit"> edit</label>
+        </div>`).join('')}
+      </div>
+      <div class="modal-act"><button class="btn btn-primary" id="inv-create" type="button">Create invite link</button></div>
+      <div id="inv-out"></div>
+    </div>
+    <div class="access-people">
+      <h3>Accounts</h3>
+      ${people || '<p class="modal-sub">No accounts yet — invite the first person above.</p>'}
+    </div>`;
+
+  // Toggling a grant writes it immediately.
+  document.querySelectorAll('#access-body [data-grant]').forEach((box) => {
+    box.onchange = async () => {
+      const [uid, mod] = box.dataset.grant.split(':');
+      const view = document.querySelector(`[data-grant="${uid}:${mod}:view"]`).checked;
+      const edit = document.querySelector(`[data-grant="${uid}:${mod}:edit"]`).checked;
+      // Edit implies view.
+      if (edit && !view) document.querySelector(`[data-grant="${uid}:${mod}:view"]`).checked = true;
+      try { await Sync.setGrant(uid, mod, view || edit, edit); }
+      catch (err) { toast(`Could not save grant — ${err.message}`, () => {}); }
+    };
+  });
+
+  document.getElementById('inv-create').onclick = async () => {
+    const email = document.getElementById('inv-email').value.trim() || null;
+    const is_admin = document.getElementById('inv-admin').checked;
+    const grantsSel = [];
+    for (const [m] of GRANTABLE) {
+      const view = document.querySelector(`[data-inv="${m}:view"]`).checked;
+      const edit = document.querySelector(`[data-inv="${m}:edit"]`).checked;
+      if (view || edit) grantsSel.push({ module: m, can_view: view || edit, can_edit: edit });
+    }
+    const out = document.getElementById('inv-out');
+    out.innerHTML = 'Creating…';
+    try {
+      const inv = await Sync.createInvite({ email, is_admin, grants: grantsSel });
+      const link = `${location.origin}${location.pathname}?invite=${inv.token}`;
+      out.innerHTML = `<p class="modal-sub">Send them this link:</p><div class="invite-link">${esc(link)}</div>`;
+    } catch (err) {
+      out.innerHTML = `<p class="modal-err">${esc(err.message || err)}</p>`;
+    }
+  };
+}
 
 // Materialise the working copy on first load. The working copy is the truth
 // (the seed is only a fallback), so it should exist from the first visit
 // rather than springing into being on the first edit.
 stampRoleIds(DATA);
 persist();
-setView('overview');
+setView('calendar');
 render();
 
 Sync.init({
@@ -2606,4 +3619,11 @@ Sync.init({
   setDoc: applyRemote,
   onStatus: renderSync,
 });
+
+// An invite link — ?invite=<token> — opens the sign-up form with the token in
+// hand, so redeeming an invite is: open the link, set a password, done.
+const inviteParam = new URLSearchParams(location.search).get('invite');
+if (inviteParam && Sync.enabled() && !Sync.status().signedIn) {
+  openAuth('signup', inviteParam);
+}
 </script>

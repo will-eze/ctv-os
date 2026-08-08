@@ -36,10 +36,25 @@ const out = join(root, 'prototype/shots');
 mkdirSync(out, { recursive: true });
 
 const url = pathToFileURL(join(root, 'prototype/ctv-os.html')).href;
+
+// Photograph the design, not whatever is in the live database today. The
+// project is reachable and seeded, so without this the page would pull the
+// remote year and the shots would drift with the data — and the deployed seed
+// still carries crew assignments this redesign cleared locally. Block the host
+// at DNS, exactly as e2e does, so the shots show the local seed: the calm,
+// nobody-assigned default the interface actually ships.
+const dbHost = (() => {
+  const m = readFileSync(join(root, 'prototype/ctv-os.html'), 'utf8')
+    .match(/const CFG = (\{.*?\}|null);/);
+  if (!m || m[1] === 'null') return null;
+  try { return new URL(JSON.parse(m[1]).url).host; } catch { return null; }
+})();
+const dbBlock = dbHost ? [`--host-resolver-rules=MAP ${dbHost} ~NOTFOUND`] : [];
+
 const browser = await puppeteer.launch({
   executablePath: '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
   headless: 'new',
-  args: ['--allow-file-access-from-files', '--force-color-profile=srgb'],
+  args: ['--allow-file-access-from-files', '--force-color-profile=srgb', ...dbBlock],
 });
 
 const failures = [];
@@ -78,26 +93,40 @@ async function shot(name, { width, height, prep }) {
 }
 
 // --- Screens --------------------------------------------------------------
-await (await shot('01-overview',  { width: 1440, height: 1000 })).close();
-await (await shot('02-calendar',  { width: 1440, height: 1050, prep: new Function(go('calendar')) })).close();
-await (await shot('03-schedule',  { width: 1440, height: 1100, prep: new Function(go('schedule')) })).close();
-await (await shot('04-tasks',     { width: 1440, height: 1000, prep: new Function(go('tasks')) })).close();
-await (await shot('05-crew',      { width: 1440, height: 1000, prep: new Function(go('crew')) })).close();
-await (await shot('06-sheet', {
-  width: 1440, height: 1050,
-  prep: () => { document.querySelector('[data-ev="rugby-rec"]')?.click(); },
+// The calendar is the home screen now (the overview page was removed), and the
+// crew-gap flag is off by default, so these are the calm interface as it ships.
+await (await shot('01-calendar',  { width: 1440, height: 1000 })).close();
+await (await shot('02-schedule',  { width: 1440, height: 1100, prep: new Function(go('schedule')) })).close();
+await (await shot('03-tasks', {
+  width: 1440, height: 1000,
+  prep: () => {
+    // List is the default now; the board is the second layout, shot here.
+    document.querySelector('[data-view=tasks]').click();
+    document.querySelector('[data-task-mode=board]').click();
+  },
 })).close();
-await (await shot('07-tasks-list', {
+await (await shot('04-crew',      { width: 1440, height: 1000, prep: new Function(go('crew')) })).close();
+await (await shot('05-kit',       { width: 1440, height: 1100, prep: new Function(go('kit')) })).close();
+await (await shot('06-settings',  { width: 1440, height: 760, prep: new Function(go('settings')) })).close();
+await (await shot('07-sheet', {
+  width: 1440, height: 1050,
+  prep: () => {
+    document.querySelector('[data-view=calendar]').click();
+    document.querySelector('.rib[data-m="9"]')?.click();   // October has rugby-rec
+    document.querySelector('[data-ev="rugby-rec"]')?.click();
+  },
+})).close();
+await (await shot('08-tasks-list', {
   width: 1440, height: 1000,
   prep: () => {
     document.querySelector('[data-view=tasks]').click();
     document.querySelector('[data-task-mode=list]').click();
   },
 })).close();
-await (await shot('08-phone-calendar', {
+await (await shot('09-phone-calendar', {
   width: 390, height: 844, prep: new Function(go('calendar')),
 })).close();
-await (await shot('09-phone-schedule', {
+await (await shot('10-phone-schedule', {
   width: 390, height: 844, prep: new Function(go('schedule')),
 })).close();
 
@@ -105,6 +134,13 @@ await (await shot('09-phone-schedule', {
 const page = await browser.newPage();
 await page.setViewport({ width: 1440, height: 1000 });
 await page.goto(url, { waitUntil: 'networkidle0' });
+
+// Rule 4 is about the crew-gap signal — the Missing Requirements panels, the
+// coverage fractions, the red badges. That signal is off by default now (the
+// station manager asked for it behind a setting), so the audit turns it on:
+// the invariant being checked is that WHEN the signal is shown, it is shown in
+// words and not by colour alone. With it off there is simply nothing to check.
+await page.evaluate(() => document.querySelector('[data-pref=flagCrew]').click());
 
 // Rule 2: every rendered element resolves to Inter. A dropped @font-face falls
 // back to the system stack and still looks plausible in a screenshot.
@@ -140,6 +176,56 @@ for (const [r, where] of Object.entries(radii)) {
   if (!ALLOWED.has(n) && n < 100) failures.push(`border-radius ${n}px on ${where} is not in the 8px scale`);
 }
 
+// Rule 3b: the type scale. DESIGN.md quotes Studio Essential's seven steps, but
+// nothing held the CSS to them and it had drifted to thirteen — 11px and 13px
+// alone accounted for twenty-six declarations, each a reasonable local decision
+// and collectively the reason the page read as unresolved. Measured off
+// computed styles rather than grepped, so an inline style cannot dodge it.
+// Every view is in the DOM at once, hidden rather than unrendered, so one pass
+// covers all five.
+const TYPE = new Set([12, 14, 16, 20, 24, 32, 48]);
+const sizes = await page.evaluate(() => {
+  const seen = {};
+  for (const el of document.querySelectorAll('*')) {
+    // Only elements that actually set type on their own text.
+    if (!el.firstChild || ![...el.childNodes].some((n) => n.nodeType === 3 && n.textContent.trim())) continue;
+    const px = Math.round(parseFloat(getComputedStyle(el).fontSize));
+    const cls = typeof el.className === 'string' ? el.className.split(' ')[0] : '';
+    seen[px] ??= `${el.tagName.toLowerCase()}${cls ? '.' + cls : ''}`;
+  }
+  return seen;
+});
+for (const [px, where] of Object.entries(sizes)) {
+  if (!TYPE.has(Number(px))) failures.push(`font-size ${px}px on ${where} is not in the Studio Essential type scale`);
+}
+
+// Rule 3c: the 4px spacing grid Material — and so Studio Essential — is built
+// on. Padding and gap only: margin reports its used value, so `margin: 0 auto`
+// would report whatever centring resolved to and fail honest code.
+const SPACE = new Set([0, 1, 2, 4, 8, 12, 16, 20, 24, 32, 40, 48, 64, 96]);
+const spacing = await page.evaluate(() => {
+  const seen = {};
+  const props = ['paddingTop', 'paddingRight', 'paddingBottom', 'paddingLeft', 'rowGap', 'columnGap'];
+  for (const el of document.querySelectorAll('*')) {
+    // <option> is a UA-rendered widget internal: the browser lays out its own
+    // box (Chrome reports a 7px row-gap on it) and no author rule reaches inside.
+    // It is not design-system spacing, so it is not held to the grid.
+    if (el.tagName === 'OPTION') continue;
+    const s = getComputedStyle(el);
+    for (const p of props) {
+      const v = parseFloat(s[p]);
+      if (!Number.isFinite(v) || v === 0) continue;
+      const px = Math.round(v);
+      const cls = typeof el.className === 'string' ? el.className.split(' ')[0] : '';
+      seen[px] ??= `${p} on ${el.tagName.toLowerCase()}${cls ? '.' + cls : ''}`;
+    }
+  }
+  return seen;
+});
+for (const [px, where] of Object.entries(spacing)) {
+  if (!SPACE.has(Number(px))) failures.push(`${where} is ${px}px, off the 4px spacing grid`);
+}
+
 // Rule 4, on each screen that carries the signal.
 for (const [view, check, label] of [
   ['schedule', () => {
@@ -160,7 +246,9 @@ for (const [view, check, label] of [
   }, 'coverage is a fraction, not a hue'],
 
   ['tasks', () => {
-    // An overdue task is red AND says how late it is.
+    // An overdue task is red AND says how late it is. The board carries the
+    // .tcard.is-over cards, and list is the default layout, so switch to it.
+    document.querySelector('[data-task-mode="board"]')?.click();
     const over = [...document.querySelectorAll('.tcard.is-over')];
     const mute = over.filter((c) => !/late|today/i.test(c.textContent));
     return mute.length ? `${mute.length} overdue task(s) carry no words` : null;
@@ -222,12 +310,14 @@ for (const s of shots) console.log(s === null ? '' : `  ${s}`);
 console.log('\n  AUDIT\n  ' + '-'.repeat(66));
 console.log(`  fonts in use: ${fonts.join(', ')}`);
 console.log(`  radii in use: ${Object.keys(radii).sort((a, b) => a - b).join(', ')}px`);
+console.log(`  type scale in use: ${Object.keys(sizes).sort((a, b) => a - b).join(', ')}px`);
+console.log(`  spacing in use: ${Object.keys(spacing).sort((a, b) => a - b).join(', ')}px`);
 console.log(`  sheet transition under prefers-reduced-motion: ${reduced}`);
 console.log(`  undo reachable over an open sheet: ${undoOnTop.reachable}`);
 if (failures.length === 0) {
   console.log(
     `\n  no requests beyond ${allowedOrigin ?? 'the page itself'}; one family; `
-    + `radii on scale; every state carries words.\n`
+    + `radii, type and spacing on scale; every state carries words.\n`
   );
 } else {
   console.log('');

@@ -76,10 +76,7 @@ const vars = Object.fromEntries(
 // listed is either a shape/z-index token or one of the two documented
 // exceptions below.
 const MAP = {
-  bg: 'background',            card: 'surface-container-lowest',
-  low: 'surface-container-low', container: 'surface-container',
-  high: 'surface-container-high', highest: 'surface-container-highest',
-  dim: 'surface-dim',
+  card: 'surface-container-lowest',
   primary: 'primary',          'primary-c': 'primary-container',
   'on-primary': 'on-primary',  'on-primary-c': 'on-primary-container',
   tint: 'surface-tint',
@@ -91,12 +88,24 @@ const MAP = {
   tertiary: 'tertiary',
 };
 
-// Stitch's own calendar CSS steps outside its token set for the month grid and
-// uses Tailwind slate. Kept deliberately: outline-variant is a warm grey-green
-// and reads as green when it is the 1px rule of an entire month grid.
+// Two kinds of documented departure from Studio Essential, both pinned here so
+// they are guarded against silent drift even though they no longer match Stitch.
+//
+//   1. The surface ramp. Stitch's surfaces are a cool blue-grey; the station
+//      manager asked for the blue tint gone, so the six surface tokens are
+//      retuned to a warm neutral grey. Everything else — green, error, text,
+//      outline — is still Stitch's, and still checked against it in MAP above.
+//   2. The month grid rules and out-of-month fill, neutralised to match (1)
+//      rather than Stitch's slate.
 const EXCEPTIONS = {
-  grid: ['#e2e8f0', 'slate-200, from stitch/broadcast-calendar.html'],
-  'grid-bg': ['#f8fafc', 'slate-50, from stitch/broadcast-calendar.html'],
+  bg:        ['#f7f7f5', 'neutral canvas — blue tint removed on request'],
+  low:       ['#f3f3f1', 'neutral sidebar — blue tint removed on request'],
+  container: ['#ededea', 'neutral hover surface — blue tint removed on request'],
+  high:      ['#e6e6e2', 'neutral active-nav surface — blue tint removed on request'],
+  highest:   ['#e0e0dc', 'neutral tag fill — blue tint removed on request'],
+  dim:       ['#d6d6d1', 'neutral surface-dim — blue tint removed on request'],
+  grid:      ['#e6e6e2', 'neutral month-grid rule'],
+  'grid-bg': ['#f4f4f2', 'neutral out-of-month cell fill'],
 };
 
 // The export writes namedColors with underscores (surface_container_low) while

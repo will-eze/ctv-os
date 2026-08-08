@@ -55,7 +55,7 @@ const Sync = (() => {
   // must land before events, because roles resolve member slugs against them.
   const PULL = [
     'societies', 'members', 'prep_templates',
-    'events', 'event_roles', 'prep_items', 'deliverables', 'tasks',
+    'events', 'event_roles', 'prep_items', 'deliverables', 'tasks', 'kit',
   ];
 
   let session = null;      // { access_token, refresh_token, expires_at, user }
@@ -121,6 +121,7 @@ const Sync = (() => {
       else localStorage.removeItem(SESSION_KEY);
     } catch { /* private mode: the session lasts as long as the tab */ }
     setStatus({ signedIn: Boolean(s), user: s?.user?.email ?? null });
+    if (!s) setStatus({ isAdmin: false, grants: {}, account: null });
     scheduleRefresh();
     // The socket carries the token for RLS, so a sign-in or sign-out has to
     // re-handshake rather than keep talking with the old identity.
@@ -147,8 +148,146 @@ const Sync = (() => {
     const s = await token({ grant_type: 'password', email, password });
     saveSession(s);
     await pull();
+    await loadAccess();
     await drainOutbox();
     return s;
+  }
+
+  // Sign up against an invite. The token rides in the sign-up metadata; a
+  // trigger on the database redeems it and applies the admin's grants. No secret
+  // key touches the page — the token is the capability.
+  async function signUp(email, password, inviteToken) {
+    const res = await fetch(`${CFG.url}/auth/v1/signup`, {
+      method: 'POST',
+      headers: { apikey: CFG.key, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password, data: inviteToken ? { invite_token: inviteToken } : {} }),
+    });
+    const json = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(json.error_description || json.msg || `sign-up failed (${res.status})`);
+    if (json.access_token) {
+      saveSession({
+        access_token: json.access_token, refresh_token: json.refresh_token,
+        expires_at: Date.now() + (json.expires_in ?? 3600) * 1000, user: json.user,
+      });
+      await pull(); await loadAccess(); await drainOutbox();
+    }
+    return json;   // no access_token => email confirmation is on; caller says so
+  }
+
+  // --- Password recovery ----------------------------------------------------
+  // Ask GoTrue to email a reset link. redirect_to is *this page* so the link
+  // lands back in the app instead of Supabase's default Site URL — which is
+  // http://localhost:3000 out of the box and is why a fresh project's reset
+  // emails 'refuse to connect'. The URL still has to be on the project's
+  // Auth → Redirect URLs allow-list, or GoTrue falls back to the Site URL.
+  async function recover(email) {
+    const redirect_to = location.origin + location.pathname;
+    const res = await fetch(
+      `${CFG.url}/auth/v1/recover?redirect_to=${encodeURIComponent(redirect_to)}`, {
+        method: 'POST',
+        headers: { apikey: CFG.key, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      });
+    if (!res.ok) {
+      const json = await res.json().catch(() => ({}));
+      throw new Error(json.error_description || json.msg || `reset failed (${res.status})`);
+    }
+  }
+
+  // The reset link drops back here with a recovery session in the URL hash (see
+  // adoptUrlSession). This turns that one-time session into a permanent one by
+  // setting the new password, then behaves exactly like a fresh sign-in.
+  async function updatePassword(password) {
+    if (!session) throw new Error('no recovery session');
+    const res = await fetch(`${CFG.url}/auth/v1/user`, {
+      method: 'PUT',
+      headers: {
+        apikey: CFG.key,
+        Authorization: `Bearer ${session.access_token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ password }),
+    });
+    const json = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(json.error_description || json.msg || `could not set password (${res.status})`);
+    saveSession({ ...session, user: json });
+    setStatus({ recovery: false });
+    await pull();
+    await loadAccess();
+    await drainOutbox();
+  }
+
+  // A reset (or confirmation) link returns here with the session in the URL
+  // fragment: #access_token=…&type=recovery&… . Adopt it as the live session so
+  // the password can be changed, and scrub the tokens out of the address bar so
+  // a reload or a shared URL doesn't carry a live credential.
+  function adoptUrlSession() {
+    if (typeof location === 'undefined' || !location.hash) return false;
+    const p = new URLSearchParams(location.hash.slice(1));
+    const access_token = p.get('access_token');
+    if (!access_token || p.get('type') !== 'recovery') return false;
+    saveSession({
+      access_token,
+      refresh_token: p.get('refresh_token'),
+      expires_at: Date.now() + Number(p.get('expires_in') || 3600) * 1000,
+      user: null,
+    });
+    history.replaceState(null, '', location.pathname + location.search);
+    return true;
+  }
+
+  // What the signed-in account is allowed to see and change — the admin flag and
+  // the per-module grants. Read straight after a pull and folded into the status
+  // the interface renders its gates from.
+  async function loadAccess() {
+    if (!session) { setStatus({ isAdmin: false, grants: {}, account: null }); return; }
+    const uid = session.user?.id;
+    try {
+      const [prof, grants] = await Promise.all([
+        rest(`profiles?user_id=eq.${uid}&select=is_admin,email`),
+        rest(`access_grants?user_id=eq.${uid}&select=module,can_view,can_edit`),
+      ]);
+      const gmap = {};
+      for (const g of grants) gmap[g.module] = { view: g.can_view, edit: g.can_edit };
+      setStatus({
+        isAdmin: Boolean(prof[0]?.is_admin), grants: gmap,
+        account: prof[0]?.email ?? session.user?.email ?? null,
+      });
+    } catch {
+      setStatus({ isAdmin: false, grants: {}, account: session.user?.email ?? null });
+    }
+  }
+
+  // --- Admin: accounts, invites and grants ----------------------------------
+  async function listAccounts() {
+    const [profiles, grants] = await Promise.all([
+      rest('profiles?select=user_id,email,is_admin&order=email'),
+      rest('access_grants?select=user_id,module,can_view,can_edit'),
+    ]);
+    return { profiles, grants };
+  }
+
+  async function createInvite({ email = null, is_admin = false, grants = [] }) {
+    const token = (crypto.randomUUID?.() ?? `${Date.now()}${Math.random()}`).replace(/[^a-z0-9]/gi, '');
+    const rows = await rest('invites', {
+      method: 'POST',
+      headers: { Prefer: 'return=representation' },
+      body: JSON.stringify([{ token, email, is_admin, grants, created_by: session?.user?.id ?? null }]),
+    });
+    return rows[0];
+  }
+
+  async function setGrant(userId, module, can_view, can_edit) {
+    if (!can_view && !can_edit) {
+      await rest(`access_grants?user_id=eq.${userId}&module=eq.${encodeURIComponent(module)}`,
+        { method: 'DELETE' });
+      return;
+    }
+    await rest('access_grants?on_conflict=user_id,module', {
+      method: 'POST',
+      headers: { Prefer: 'resolution=merge-duplicates,return=minimal' },
+      body: JSON.stringify([{ user_id: userId, module, can_view, can_edit }]),
+    });
   }
 
   async function signOut() {
@@ -233,6 +372,7 @@ const Sync = (() => {
       members: rows.members.map((m) => ({
         id: m.slug, known_as: m.known_as, full_name: m.full_name,
         committee_role: m.committee_role, trained: m.trained ?? [],
+        active: m.active !== false,
       })),
       societies: rows.societies.map((s) => ({
         id: s.slug, name: s.name, standing_terms: s.standing_terms,
@@ -260,6 +400,7 @@ const Sync = (() => {
           end_time: hhmm(e.end_time),
           brief: e.brief,
           society: e.society_id ? (socById.get(e.society_id)?.slug ?? null) : undefined,
+          kit_needed: e.kit_needed ?? [],
           roles: rolesByEvent.get(e.id) ?? [],
           prep: prepByEvent.get(e.id) ?? undefined,
           deliverables: delByEvent.get(e.id) ?? undefined,
@@ -275,6 +416,15 @@ const Sync = (() => {
           due: t.due_on,
           done: t.done_on !== null,
         })),
+      // Kit is editable now. It is omitted (not []) when the table is empty, so
+      // a client keeps its inlined seed locker instead of blanking it — see
+      // applyRemote. Identity is the slug, mirroring events and members.
+      kit: rows.kit?.length ? rows.kit.map((k) => ({
+        id: k.slug ?? k.asset_tag ?? k.id,
+        name: k.name, category: k.category, asset_tag: k.asset_tag, owner: k.owner,
+        state: k.state, home: k.home, notes: k.notes,
+        usage: k.usage, tips: k.tips, photo_url: k.photo_url,
+      })) : undefined,
     };
   }
 
@@ -291,6 +441,10 @@ const Sync = (() => {
     start_time: nz(e.start_time),
     end_time: nz(e.end_time),
     brief: nz(e.brief),
+    // The kit an event needs rides on the event row as jsonb — a short list of
+    // {id, qty} against kit slugs. Small, event-scoped, and it travels with the
+    // same events upsert/update the rest of the sheet already writes.
+    kit_needed: e.kit_needed ?? [],
   });
 
   const taskRow = (t) => ({
@@ -306,6 +460,29 @@ const Sync = (() => {
     // honest date to invent for a box someone ticked, so it is today — which is
     // also what makes `overdue` in the task_due view mean anything.
     done_on: t.done ? new Date().toISOString().slice(0, 10) : null,
+  });
+
+  const memberRow = (m) => ({
+    slug: m.id,
+    known_as: m.known_as,
+    full_name: m.full_name ?? m.known_as,
+    committee_role: nz(m.committee_role),
+    trained: m.trained ?? [],
+    active: m.active !== false,
+  });
+
+  const kitRow = (k) => ({
+    slug: k.id,
+    name: k.name,
+    category: nz(k.category),
+    asset_tag: nz(k.asset_tag),
+    owner: k.owner || 'ctv',
+    state: k.state || 'in_hub',
+    home: nz(k.home),
+    notes: nz(k.notes),
+    usage: nz(k.usage),
+    tips: nz(k.tips),
+    photo_url: nz(k.photo_url),
   });
 
   const roleRow = (r, eventId, i) => ({
@@ -363,6 +540,30 @@ const Sync = (() => {
   function diff(before, after) {
     const ops = [];
     const index = (list) => new Map((list ?? []).map((x) => [x.id, x]));
+
+    // Members. The crew directory became editable — names, committee roles and
+    // what someone is trained on — so members now diff like events and tasks.
+    // No delete: members are deactivated (active=false), never removed, and the
+    // schema has no DELETE policy for them.
+    const mA = index(before.members), mB = index(after.members);
+    for (const [id, m] of mB) {
+      const was = mA.get(id);
+      if (!was) ops.push({ table: 'members', op: 'upsert', on: 'slug', row: memberRow(m) });
+      else if (!same(memberRow(was), memberRow(m))) {
+        ops.push({ table: 'members', op: 'update', by: `slug=eq.${id}`, row: memberRow(m) });
+      }
+    }
+
+    // Kit. Editable now — details, usage notes, tips, photo. No delete: kit is
+    // marked inactive, not removed, and the schema has no DELETE policy for it.
+    const kA = index(before.kit), kB = index(after.kit);
+    for (const [id, k] of kB) {
+      const was = kA.get(id);
+      if (!was) ops.push({ table: 'kit', op: 'upsert', on: 'slug', row: kitRow(k) });
+      else if (!same(kitRow(was), kitRow(k))) {
+        ops.push({ table: 'kit', op: 'update', by: `slug=eq.${id}`, row: kitRow(k) });
+      }
+    }
 
     // Events
     const evA = index(before.events), evB = index(after.events);
@@ -515,6 +716,30 @@ const Sync = (() => {
     await drainOutbox();
   }
 
+  // --- Storage --------------------------------------------------------------
+  // Kit photos go to a public Storage bucket ('kit-photos'), so the whole
+  // station sees the same picture. Uploading needs a session; the RLS on
+  // storage.objects mirrors the tables. The returned public URL is what gets
+  // stored on the kit row and rides sync like any other field.
+  async function uploadKitPhoto(file, slug) {
+    if (!enabled()) throw new Error('no project configured');
+    if (!session) throw new Error('sign in first');
+    const ext = (file.name?.split('.').pop() || 'jpg').toLowerCase().replace(/[^a-z0-9]/g, '');
+    const path = `${slug}-${Date.now()}.${ext || 'jpg'}`;
+    const res = await fetch(`${CFG.url}/storage/v1/object/kit-photos/${encodeURIComponent(path)}`, {
+      method: 'POST',
+      headers: {
+        apikey: CFG.key,
+        Authorization: `Bearer ${session.access_token}`,
+        'Content-Type': file.type || 'application/octet-stream',
+        'x-upsert': 'true',
+      },
+      body: file,
+    });
+    if (!res.ok) throw new Error(`${res.status} ${(await res.text()).slice(0, 120)}`);
+    return `${CFG.url}/storage/v1/object/public/kit-photos/${encodeURIComponent(path)}`;
+  }
+
   // --- Realtime -------------------------------------------------------------
   // Phoenix channels, spoken directly. Same reasoning as the REST client: the
   // protocol is four message shapes and vendoring a library to speak them
@@ -540,6 +765,7 @@ const Sync = (() => {
               { event: '*', schema: 'public', table: 'events' },
               { event: '*', schema: 'public', table: 'event_roles' },
               { event: '*', schema: 'public', table: 'tasks' },
+              { event: '*', schema: 'public', table: 'members' },
             ],
           },
           // RLS is evaluated against this, not against the apikey.
@@ -596,10 +822,13 @@ const Sync = (() => {
     hooks = h;
     if (!enabled()) { setStatus({ mode: 'local' }); return; }
     loadSession();
-    setStatus({ signedIn: Boolean(session), user: session?.user?.email ?? null, pending: readOutbox().length });
+    const recovery = adoptUrlSession();   // a reset link overrides any saved session
+    setStatus({ signedIn: Boolean(session), user: session?.user?.email ?? null,
+      pending: readOutbox().length, recovery });
     scheduleRefresh();
     if (session && session.expires_at < Date.now()) await refresh();
     await pull();
+    if (session) await loadAccess();
     if (status.mode === 'synced') {
       idmap = { events: new Map(), members: new Map() };
       await drainOutbox();
@@ -615,7 +844,8 @@ const Sync = (() => {
   }
 
   return {
-    init, push, pull, signIn, signOut, drainOutbox,
+    init, push, pull, signIn, signUp, signOut, recover, updatePassword, drainOutbox, uploadKitPhoto,
+    loadAccess, listAccounts, createInvite, setGrant,
     enabled, status: () => status, session: () => session,
     // Exposed for scripts/e2e-sync.mjs, which drives the real database.
     _diff: diff, _toDocument: toDocument,

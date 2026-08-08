@@ -128,6 +128,27 @@ await check('open roles are visible, and are the point', async () => {
   return `${open} open roles across ${r.json.length} events`;
 });
 
+// --- Private pages ----------------------------------------------------------
+console.log('\n  BUT CREW AND THE TO-DO LIST ARE PRIVATE\n  ' + '-'.repeat(70));
+
+await check('crew is not readable without a grant', async () => {
+  // The station manager marked crew private. Anon sees nothing, and so does a
+  // signed-in account that has not been granted the crew module.
+  const anon = (await api('members?select=id')).json;
+  const mine = (await api('members?select=id', { token: TOKEN })).json;
+  eq(Array.isArray(anon) ? anon.length : -1, 0, 'members visible to anon');
+  eq(Array.isArray(mine) ? mine.length : -1, 0, 'members visible to an ungranted account');
+  return 'members hidden from anon and ungranted accounts';
+});
+
+await check('the to-do list is not readable without a grant', async () => {
+  const anon = (await api('tasks?select=slug')).json;
+  const mine = (await api('tasks?select=slug', { token: TOKEN })).json;
+  eq(Array.isArray(anon) ? anon.length : -1, 0, 'tasks visible to anon');
+  eq(Array.isArray(mine) ? mine.length : -1, 0, 'tasks visible to an ungranted account');
+  return 'tasks hidden from anon and ungranted accounts';
+});
+
 // --- Writing ----------------------------------------------------------------
 console.log('\n  BUT NOT WRITE\n  ' + '-'.repeat(70));
 
@@ -193,7 +214,9 @@ await check('an UPDATE with a session actually lands', async () => {
 await check('filling an open role is what the session is for', async () => {
   const open = (await api('event_roles?member_id=is.null&select=id,label&limit=1')).json[0];
   if (!open) throw new Error('no open role to fill');
-  const me = (await api('members?select=id,known_as&limit=1')).json[0];
+  // Crew is private now, so read a member with the secret key (bypasses RLS)
+  // rather than the anon key, which sees no members at all.
+  const me = (await api('members?select=id,known_as&limit=1', { key: SEC })).json[0];
   const r = await api(`event_roles?id=eq.${open.id}`, {
     token: TOKEN, method: 'PATCH', body: { member_id: me.id }, prefer: 'return=representation',
   });

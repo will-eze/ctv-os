@@ -1,6 +1,6 @@
 -- GENERATED FILE — do not edit.
 --
--- Source: supabase/schema.sql   (sha256 e1a2369e04de643a)
+-- Source: supabase/schema.sql   (sha256 66d4b7da4906dad4)
 -- Regenerate: npm run db:migration
 --
 -- schema.sql is what `npm run verify:sql` executes against real Postgres. This
@@ -297,7 +297,6 @@ create table if not exists kit (
   owner        text not null default 'ctv',  -- 'ctv','su','hired','borrowed'
   state        kit_state not null default 'in_hub',
   home         text,                         -- where in the Media Hub it lives
-  value_gbp    numeric(8,2),
   notes        text,
   active       boolean not null default true,
   created_at   timestamptz not null default now()
@@ -456,6 +455,23 @@ alter table event_roles    alter column role   drop not null;
 
 alter table members   add column if not exists slug text;
 alter table societies add column if not exists slug text;
+
+-- Kit became editable from the interface: a stable slug to write against (the
+-- id from data/year.json, like events and members), plus the fields the detail
+-- drawer edits — how to use a piece, tips, and a photo in Storage.
+alter table kit add column if not exists slug text;
+alter table kit add column if not exists usage text;
+alter table kit add column if not exists tips text;
+alter table kit add column if not exists photo_url text;
+alter table kit add column if not exists updated_at timestamptz not null default now();
+create unique index if not exists kit_slug_key on kit (slug);
+
+-- The kit an event needs, as jsonb: a short list of {id, qty} keyed by kit
+-- slug. Event-scoped and small, so it lives on the event rather than in a join
+-- table — it travels with the same events write the rest of the sheet makes,
+-- and the interface reads it straight back. A join table (event_kit) would be
+-- the move if kit needed its own coverage view; it does not yet.
+alter table events add column if not exists kit_needed jsonb not null default '[]'::jsonb;
 
 create unique index if not exists members_slug_key   on members (slug);
 create unique index if not exists societies_slug_key on societies (slug);
@@ -661,7 +677,7 @@ do $$
 declare t text;
 begin
   foreach t in array array[
-    'members','societies','prep_templates','event_roles','tasks'
+    'members','societies','prep_templates','event_roles','tasks','kit'
   ] loop
     execute format('drop trigger if exists %I on %I', t || '_touch', t);
     execute format(
@@ -681,7 +697,7 @@ do $$
 declare t text;
 begin
   foreach t in array array[
-    'members','societies','events','event_roles','tasks','prep_templates'
+    'members','societies','events','event_roles','tasks','prep_templates','kit'
   ] loop
     if not exists (
       select 1 from pg_publication_tables
@@ -695,6 +711,111 @@ exception
   -- publication. The schema is still valid; there is just nothing to publish to.
   when undefined_object then null;
 end $$;
+
+-- ---------------------------------------------------------------------------
+-- Accounts, roles and access — who can see and change what
+-- ---------------------------------------------------------------------------
+-- The calendar is public; everything else needs an account, and the private
+-- modules (crew, to-do) need a grant on top. One account is the admin — the
+-- station manager — who invites people and hands out per-module view/edit
+-- grants, so the Calendar URL can stay public while crew details do not.
+--
+--   admins        emails that are admin on sight, seeded so the first admin
+--                 exists the moment they sign up
+--   profiles      one row per auth user, minted by a trigger on sign-up
+--   access_grants what a non-admin may see or change, per module
+--   invites       an admin-issued token; redeeming it on sign-up applies grants
+
+create table if not exists admins (
+  email text primary key
+);
+-- The station manager. Replace/extend before handing the tool to a new manager.
+insert into admins (email) values ('willz.eze2023@gmail.com') on conflict do nothing;
+
+create table if not exists profiles (
+  user_id    uuid primary key references auth.users(id) on delete cascade,
+  email      text,
+  is_admin   boolean not null default false,
+  created_at timestamptz not null default now()
+);
+
+-- Modules a grant can be issued over. Calendar/events are public and never
+-- listed here; crew and tasks are private by default; kit and money can be
+-- gated too when the admin chooses.
+create table if not exists access_grants (
+  user_id   uuid not null references auth.users(id) on delete cascade,
+  module    text not null,
+  can_view  boolean not null default true,
+  can_edit  boolean not null default false,
+  primary key (user_id, module)
+);
+
+create table if not exists invites (
+  id         uuid primary key default gen_random_uuid(),
+  token      text unique not null,
+  email      text,
+  is_admin   boolean not null default false,
+  grants     jsonb not null default '[]'::jsonb,   -- [{module,can_view,can_edit}]
+  created_by uuid references auth.users(id) on delete set null,
+  used_at    timestamptz,
+  created_at timestamptz not null default now()
+);
+
+-- On sign-up: create the profile, promote to admin if the email is on the
+-- admins list, and redeem an invite token passed in the sign-up metadata
+-- (raw_user_meta_data.invite_token). No server needed — the token is the
+-- capability, so an account created without one simply has no grants.
+create or replace function handle_new_user() returns trigger
+language plpgsql security definer set search_path = public as $$
+declare
+  tok text := new.raw_user_meta_data->>'invite_token';
+  inv invites%rowtype;
+  adm boolean := exists (select 1 from admins a where a.email = new.email);
+  g   jsonb;
+begin
+  select * into inv from invites where token = tok and used_at is null;
+  insert into profiles (user_id, email, is_admin)
+  values (new.id, new.email, adm or coalesce(inv.is_admin, false))
+  on conflict (user_id) do update set email = excluded.email;
+
+  if inv.id is not null then
+    for g in select jsonb_array_elements(inv.grants) loop
+      insert into access_grants (user_id, module, can_view, can_edit)
+      values (new.id, g->>'module',
+              coalesce((g->>'can_view')::boolean, true),
+              coalesce((g->>'can_edit')::boolean, false))
+      on conflict (user_id, module) do update
+        set can_view = excluded.can_view, can_edit = excluded.can_edit;
+    end loop;
+    update invites set used_at = now() where id = inv.id;
+  end if;
+  return new;
+end $$;
+
+drop trigger if exists on_auth_user_created on auth.users;
+create trigger on_auth_user_created after insert on auth.users
+  for each row execute function handle_new_user();
+
+-- Access helpers, read by the policies below. SECURITY DEFINER so they can read
+-- profiles/grants without tripping those tables' own RLS (and without recursing).
+create or replace function is_admin() returns boolean
+language sql stable security definer set search_path = public as $$
+  select exists (select 1 from profiles p where p.user_id = auth.uid() and p.is_admin);
+$$;
+
+create or replace function can_view(mod text) returns boolean
+language sql stable security definer set search_path = public as $$
+  select is_admin() or exists (
+    select 1 from access_grants g
+    where g.user_id = auth.uid() and g.module = mod and g.can_view);
+$$;
+
+create or replace function can_edit(mod text) returns boolean
+language sql stable security definer set search_path = public as $$
+  select is_admin() or exists (
+    select 1 from access_grants g
+    where g.user_id = auth.uid() and g.module = mod and g.can_edit);
+$$;
 
 -- ---------------------------------------------------------------------------
 -- Row level security
@@ -731,9 +852,11 @@ alter table incidents       enable row level security;
 do $$
 declare t text;
 begin
+  -- members and tasks are the private modules; they get grant-gated policies
+  -- below and so are left out of this open-read loop.
   foreach t in array array[
-    'members','societies','events','event_roles','prep_items','prep_templates',
-    'kit','kit_bookings','deliverables','tasks','playbook','contacts','ledger',
+    'societies','events','event_roles','prep_items','prep_templates',
+    'kit','kit_bookings','deliverables','playbook','contacts','ledger',
     'funding_windows'
   ] loop
     execute format('drop policy if exists %I on %I', t || '_read',  t);
@@ -762,7 +885,7 @@ end $$;
 do $$
 declare t text;
 begin
-  foreach t in array array['events', 'tasks'] loop
+  foreach t in array array['events'] loop
     execute format('drop policy if exists %I on %I', t || '_delete', t);
     execute format('create policy %I on %I for delete using (auth.role() = ''authenticated'')',
                    t || '_delete', t);
@@ -779,6 +902,56 @@ drop policy if exists event_roles_delete on event_roles;
 create policy event_roles_delete on event_roles for delete
   using (auth.role() = 'authenticated');
 
+-- members (crew) and tasks are the private modules: read and write are gated by
+-- a grant (or admin), not merely by having an account. This is what lets the
+-- Calendar URL stay public while crew details and the to-do list do not.
+do $$
+declare t text;
+begin
+  foreach t in array array['members', 'tasks'] loop
+    execute format('drop policy if exists %I on %I', t || '_read',   t);
+    execute format('drop policy if exists %I on %I', t || '_write',  t);
+    execute format('drop policy if exists %I on %I', t || '_update', t);
+    execute format('drop policy if exists %I on %I', t || '_delete', t);
+  end loop;
+end $$;
+
+create policy members_read   on members for select using (can_view('crew'));
+create policy members_write  on members for insert with check (can_edit('crew'));
+create policy members_update on members for update using (can_edit('crew')) with check (can_edit('crew'));
+
+create policy tasks_read   on tasks for select using (can_view('tasks'));
+create policy tasks_write  on tasks for insert with check (can_edit('tasks'));
+create policy tasks_update on tasks for update using (can_edit('tasks')) with check (can_edit('tasks'));
+create policy tasks_delete on tasks for delete using (can_edit('tasks'));
+
+-- The accounts tables. A user reads their own profile and grants so the client
+-- knows what to show; the admin reads and writes everyone's, and issues invites.
+alter table admins        enable row level security;
+alter table profiles      enable row level security;
+alter table access_grants enable row level security;
+alter table invites       enable row level security;
+
+drop policy if exists admins_read on admins;
+create policy admins_read on admins for select using (is_admin());
+
+drop policy if exists profiles_read on profiles;
+drop policy if exists profiles_admin_upd on profiles;
+create policy profiles_read      on profiles for select using (user_id = auth.uid() or is_admin());
+create policy profiles_admin_upd on profiles for update using (is_admin()) with check (is_admin());
+
+drop policy if exists access_read on access_grants;
+drop policy if exists access_admin_ins on access_grants;
+drop policy if exists access_admin_upd on access_grants;
+drop policy if exists access_admin_del on access_grants;
+create policy access_read      on access_grants for select using (user_id = auth.uid() or is_admin());
+create policy access_admin_ins on access_grants for insert with check (is_admin());
+create policy access_admin_upd on access_grants for update using (is_admin()) with check (is_admin());
+create policy access_admin_del on access_grants for delete using (is_admin());
+
+drop policy if exists invites_admin_all on invites;
+create policy invites_admin_all on invites for all using (is_admin()) with check (is_admin());
+
 -- incidents: authenticated only, both directions.
 drop policy if exists incidents_read on incidents;
 drop policy if exists incidents_write on incidents;
@@ -786,3 +959,32 @@ create policy incidents_read  on incidents for select
   using (auth.role() = 'authenticated');
 create policy incidents_write on incidents for insert
   with check (auth.role() = 'authenticated');
+
+-- ---------------------------------------------------------------------------
+-- Storage — kit photos
+-- ---------------------------------------------------------------------------
+-- A public bucket so a phone reading the locker shows the same picture as the
+-- laptop that uploaded it. Reads are open (public bucket); writing an object
+-- needs a session, mirroring the tables. Wrapped in a guarded block because a
+-- bare Postgres (PGlite, under npm run verify:sql) has no storage schema — the
+-- rest of the schema is still valid there, there is just nowhere to put a file.
+do $$
+begin
+  insert into storage.buckets (id, name, public)
+  values ('kit-photos', 'kit-photos', true)
+  on conflict (id) do nothing;
+
+  drop policy if exists kit_photos_read on storage.objects;
+  drop policy if exists kit_photos_write on storage.objects;
+  drop policy if exists kit_photos_update on storage.objects;
+  create policy kit_photos_read on storage.objects for select
+    using (bucket_id = 'kit-photos');
+  create policy kit_photos_write on storage.objects for insert
+    with check (bucket_id = 'kit-photos' and auth.role() = 'authenticated');
+  create policy kit_photos_update on storage.objects for update
+    using (bucket_id = 'kit-photos' and auth.role() = 'authenticated');
+exception
+  -- No storage schema (PGlite under verify:sql) or no privilege to touch it:
+  -- the rest of the schema is valid, there is just nowhere to put a file.
+  when others then null;
+end $$;

@@ -44,6 +44,7 @@ await db.exec(`
   create schema if not exists auth;
   create table if not exists auth.users (id uuid primary key default gen_random_uuid());
   create or replace function auth.role() returns text as $$ select 'anon'::text $$ language sql stable;
+  create or replace function auth.uid() returns uuid as $$ select null::uuid $$ language sql stable;
 `);
 
 console.log('\n  SCHEMA\n  ' + '-'.repeat(72));
@@ -389,40 +390,63 @@ await check('only plans can be deleted, never records', async () => {
   // role has always been an offered action; against localStorage it was a
   // shorter array, and against a shared database it has to be a DELETE or the
   // role reappears on the next pull. It is a slot in a plan, not a record.
+  // access_grants joined the list with role-based access: revoking a grant is a
+  // real DELETE the admin performs, and a grant is a decision, not a record.
   const { rows } = await db.query(
     `select tablename from pg_policies
       where schemaname = 'public' and cmd = 'DELETE' order by tablename`
   );
-  eq(rows.map((r) => r.tablename), ['event_roles', 'events', 'tasks'],
+  eq(rows.map((r) => r.tablename), ['access_grants', 'event_roles', 'events', 'tasks'],
      'tables with a DELETE policy');
   return 'kit, ledger, deliverables and incidents stay put';
 });
 
 await check('writing anything requires a session', async () => {
-  // Reads are open with the publishable key; writes are not. The key ships
-  // inside the deployed page, so an unguessable URL protects nothing.
+  // Reads of the calendar are open with the publishable key; writes are not. The
+  // key ships inside the deployed page, so an unguessable URL protects nothing.
+  // A write is protected if it requires an authenticated session, or admin, or
+  // an edit grant on a private module — never if it is open to anon.
   const { rows } = await db.query(
     `select tablename, cmd, qual, with_check from pg_policies
       where schemaname = 'public' and cmd in ('INSERT','UPDATE','DELETE')`
   );
   const open = rows.filter(
-    (r) => !/authenticated/.test(`${r.qual ?? ''} ${r.with_check ?? ''}`)
+    (r) => !/authenticated|is_admin|can_edit/.test(`${r.qual ?? ''} ${r.with_check ?? ''}`)
   );
   eq(open.map((r) => `${r.tablename}.${r.cmd}`), [], 'write policies open to anon');
-  return `${rows.length} write policies, all authenticated-only`;
+  return `${rows.length} write policies, all gated by session, admin or grant`;
 });
 
-await check('reading stays open without a session', async () => {
-  // The counterpart to the check above, and the reason it is safe: shutting
-  // anon out of writes must not shut the station out of looking at the year.
-  // incidents is the deliberate exception and is asserted separately below.
+await check('the public calendar stays readable without a session', async () => {
+  // Shutting anon out of writes must not shut the station out of looking at the
+  // year. The public tables — events and everything the calendar hangs off —
+  // read with the publishable key. The private modules (crew, tasks), the
+  // account tables and incidents are the deliberate exceptions.
+  const gated = new Set(['incidents', 'members', 'tasks',
+    'profiles', 'access_grants', 'invites', 'admins']);
   const { rows } = await db.query(
     `select tablename, qual from pg_policies
-      where schemaname = 'public' and cmd = 'SELECT' and tablename <> 'incidents'`
+      where schemaname = 'public' and cmd = 'SELECT'`
   );
-  const shut = rows.filter((r) => r.qual !== 'true');
-  eq(shut.map((r) => r.tablename), [], 'tables anon cannot read');
-  return `${rows.length} tables readable with the publishable key`;
+  const shut = rows.filter((r) => !gated.has(r.tablename) && r.qual !== 'true');
+  eq(shut.map((r) => r.tablename), [], 'public tables anon cannot read');
+  return `${rows.filter((r) => !gated.has(r.tablename)).length} public tables readable with the key`;
+});
+
+await check('crew and the to-do list are private, gated by a grant', async () => {
+  // The two modules the station manager marked private. Their read policies are
+  // not open: they resolve through can_view(), so only the admin or a granted
+  // account sees crew details or the to-do list.
+  const { rows } = await db.query(
+    `select tablename, qual from pg_policies
+      where schemaname = 'public' and cmd = 'SELECT'
+        and tablename in ('members', 'tasks') order by tablename`
+  );
+  eq(rows.map((r) => r.tablename), ['members', 'tasks'], 'both have a SELECT policy');
+  for (const r of rows) {
+    if (!/can_view/.test(r.qual ?? '')) throw new Error(`${r.tablename} read is not grant-gated`);
+  }
+  return 'members and tasks resolve through can_view()';
 });
 
 await check('incidents is not readable with the anon role', async () => {

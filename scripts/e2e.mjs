@@ -65,6 +65,13 @@ page.on('console', (m) => {
 
 await page.goto(url, { waitUntil: 'networkidle0' });
 
+// Nobody is assigned to events by default now, and the crew-gap signal — the
+// open-role counts on the nav, the red badges, the Missing Requirements panels —
+// is off by default, behind a setting. This suite is largely about that signal,
+// so it turns it on once at the start (the preference persists in localStorage,
+// so it survives the reloads later checks perform).
+await page.evaluate(() => document.querySelector('[data-pref=flagCrew]').click());
+
 let pass = 0;
 const failures = [];
 
@@ -146,6 +153,9 @@ const openSheet = async (id) => {
 const closeAndTodo = async () => {
   await page.evaluate(() => document.getElementById('sheet-x')?.click());
   await goto('tasks');
+  // List is the default layout now; the board-shaped assertions below need the
+  // board, so switch to it explicitly.
+  await page.click('[data-task-mode="board"]');
 };
 
 console.log('\n  MOVING EVENTS\n  ' + '-'.repeat(70));
@@ -237,7 +247,9 @@ await check('times can be set and cleared', async () => {
 });
 
 await check('assigning crew closes an open role', async () => {
-  const before = await openRoles();
+  // Nobody is assigned by default, so the count is relative: filling one role
+  // drops the open count by exactly one, whatever it started at.
+  const before = Number(await openRoles());
   await openSheet('rugby-rec');
   // GANTRY is index 1 on this event and starts open.
   await page.$eval('[data-role="1"]', (el) => {
@@ -245,8 +257,8 @@ await check('assigning crew closes an open role', async () => {
   });
   const ev = await eventById('rugby-rec');
   eq(ev.roles[1].member, 'nina', 'gantry');
-  const after = await openRoles();
-  eq(after, '43', 'sidebar count');
+  const after = Number(await openRoles());
+  eq(after, before - 1, 'sidebar count fell by one');
   return `${before} → ${after}`;
 });
 
@@ -254,24 +266,33 @@ await check('the calendar badge updates with it', async () => {
   // The badge is one line of colour, so its coverage lives in the accessible
   // name. Asserting the title is asserting what a screen reader is told, not
   // just what the pixel looks like.
+  const ev = await eventById('rugby-rec');
+  const total = ev.roles.length;
+  const filled = ev.roles.filter((r) => r.member).length;
   const [title, open] = await page.$eval('.ev[data-ev="rugby-rec"]',
     (el) => [el.title, el.classList.contains('is-open')]);
-  if (!title.includes('5/6 crewed')) throw new Error(`title was "${title}"`);
-  eq(open, true, 'still flagged open with one gap left');
+  if (!title.includes(`${filled}/${total} crewed`)) throw new Error(`title was "${title}"`);
+  eq(open, filled < total, 'still flagged open while gaps remain');
   await page.click('#toast-undo');
-  return '4/6 → 5/6 crewed';
+  return `badge reads ${filled}/${total} crewed`;
 });
 
 await check('reopening a role puts the gap back', async () => {
+  // With nothing assigned by default, fill a role first so there is a gap to put
+  // back. Filling drops the count by one; reopening restores it exactly.
   await openSheet('rugby-rec');
+  const base = Number(await openRoles());
+  await page.$eval('[data-role="0"]', (el) => {
+    el.value = 'nina'; el.dispatchEvent(new Event('change', { bubbles: true }));
+  });
+  eq((await eventById('rugby-rec')).roles[0].member, 'nina', 'producer filled');
+  eq(Number(await openRoles()), base - 1, 'count fell');
   await page.$eval('[data-role="0"]', (el) => {
     el.value = ''; el.dispatchEvent(new Event('change', { bubbles: true }));
   });
-  const ev = await eventById('rugby-rec');
-  eq(ev.roles[0].member, null, 'producer');
-  eq(await openRoles(), '45', 'sidebar count');
-  await page.click('#toast-undo');
-  return 'PRODUCER reopened, count rose';
+  eq((await eventById('rugby-rec')).roles[0].member, null, 'producer reopened');
+  eq(Number(await openRoles()), base, 'count rose back');
+  return `PRODUCER filled then reopened, ${base - 1} → ${base}`;
 });
 
 await check('Assign on the schedule lands on the right role', async () => {
@@ -594,9 +615,111 @@ await check('export produces the corrected year', async () => {
   return 'valid year.json with the edits in it';
 });
 
+console.log('\n  EVENT KIT + COPY\n  ' + '-'.repeat(70));
+
+await check('kit can be added to and removed from an event', async () => {
+  await goto('calendar');
+  await sheetGone();
+  await openSheet('ntd');
+  const before = (await eventById('ntd')).kit_needed?.length ?? 0;
+  await page.$eval('[data-kitneed-add]', (el) => {
+    el.value = el.querySelector('option[value]:not([value=""])').value;
+    el.dispatchEvent(new Event('change', { bubbles: true }));
+  });
+  eq((await eventById('ntd')).kit_needed.length, before + 1, 'kit added');
+  await page.click('[data-kitneed-del="0"]');
+  eq((await eventById('ntd')).kit_needed.length, before, 'kit removed');
+  await page.evaluate(() => document.getElementById('sheet-x').click());
+  return 'added then removed a kit item on NTD';
+});
+
+await check('an event copies to formatted text with its crew and kit', async () => {
+  await openSheet('rugby-rec');
+  const text = await page.evaluate(async () => {
+    let captured = null;
+    // navigator.clipboard is a read-only accessor, so replace it with defineProperty.
+    Object.defineProperty(navigator, 'clipboard', {
+      configurable: true, value: { writeText: async (t) => { captured = t; } },
+    });
+    document.getElementById('sheet-copy').click();
+    await new Promise((r) => setTimeout(r, 60));
+    return captured;
+  });
+  if (!text) throw new Error('nothing copied');
+  for (const needle of ['Rugby', 'Crew', 'Kit needed']) {
+    if (!text.includes(needle)) throw new Error(`copied text missing "${needle}"`);
+  }
+  await page.evaluate(() => document.getElementById('sheet-x').click());
+  return `${text.split('\n').length} lines, crew and kit included`;
+});
+
+console.log('\n  CREW\n  ' + '-'.repeat(70));
+
+await check('a crew member can be renamed and retrained', async () => {
+  await goto('crew');
+  await sheetGone();
+  await page.click('[data-member-edit="nina"]');
+  await page.$eval('[data-member-form="nina"] [name=committee_role]', (el) => { el.value = 'Head of Production'; });
+  await page.$eval('[data-member-form="nina"] input[name=trained][value=audio]', (el) => { if (!el.checked) el.click(); });
+  await page.click('[data-member-form="nina"] button[type=submit]');
+  const m = (await stored()).members.find((x) => x.id === 'nina');
+  eq(m.committee_role, 'Head of Production', 'committee role saved');
+  if (!m.trained.includes('audio')) throw new Error('audio training not saved');
+  return `nina → ${m.committee_role}, trained ${m.trained.join('/')}`;
+});
+
+await check('the crew page carries the handover job descriptions', async () => {
+  await goto('crew');
+  const roles = await page.$$eval('.role-def h3', (els) => els.map((e) => e.textContent.trim()));
+  if (!roles.some((r) => /Station Manager/i.test(r))) throw new Error('no committee descriptions');
+  if (!roles.some((r) => /Vision mixer/i.test(r))) throw new Error('no crew descriptions');
+  return `${roles.length} role descriptions from the handover`;
+});
+
+console.log('\n  KIT\n  ' + '-'.repeat(70));
+
+await check('a kit item opens and its usage notes save', async () => {
+  await goto('kit');
+  await sheetGone();
+  await page.click('[data-kit="cam-fx3-1"]');
+  await page.waitForSelector('#sheet.is-open');
+  await page.$eval('[data-kf="usage"]', (el) => {
+    el.value = 'Fit the cage, insert an SD card, format in-camera before the shoot.';
+    el.dispatchEvent(new Event('change', { bubbles: true }));
+  });
+  const k = (await stored()).kit.find((x) => x.id === 'cam-fx3-1');
+  if (!/format in-camera/.test(k.usage || '')) throw new Error('usage not saved');
+  await page.evaluate(() => document.getElementById('sheet-x').click());
+  return 'usage note saved on the FX3';
+});
+
+await check('a kit item can be added', async () => {
+  await goto('kit');
+  await sheetGone();
+  const before = (await stored()).kit.length;
+  await page.click('#kit-add');
+  await page.waitForSelector('#sheet.is-open');
+  eq((await stored()).kit.length, before + 1, 'kit created');
+  await page.evaluate(() => document.getElementById('sheet-x').click());
+  return `${before} → ${before + 1} kit items`;
+});
+
 console.log('\n  TO DO\n  ' + '-'.repeat(70));
 
-const gotoTodo = () => goto('tasks');
+// List is the default layout; most checks below assert against the board, so
+// this helper lands on To do and switches to it.
+const gotoTodo = async () => { await goto('tasks'); await page.click('[data-task-mode="board"]'); };
+
+await check('the to-do opens on the list view by default', async () => {
+  await goto('tasks');
+  const rows = await page.$$eval('#v-tasks .tbl tbody tr', (els) => els.length);
+  const cards = await page.$$eval('#v-tasks .tcard', (els) => els.length);
+  if (!rows) throw new Error('no list rows on the default view');
+  eq(cards, 0, 'the board is not what opens');
+  const pressed = await page.$eval('[data-task-mode="list"]', (el) => el.getAttribute('aria-pressed'));
+  eq(pressed, 'true', 'the list toggle is the active one');
+  return `${rows} rows, list is default`;
+});
 
 await check('the to-do list holds the whole handover', async () => {
   await gotoTodo();
@@ -625,7 +748,9 @@ await check('tasks are grouped by when they bite', async () => {
 await check('the list view shows the same tasks as the board', async () => {
   const n = await page.$$eval('.tcard', (els) => els.length);
   await page.click('[data-task-mode="list"]');
-  const rows = await page.$$eval('.tbl tbody tr', (els) => els.length);
+  // Scope to the tasks view: the Kit locker also renders a `.tbl`, and an
+  // unscoped selector would count its rows too.
+  const rows = await page.$$eval('#v-tasks .tbl tbody tr', (els) => els.length);
   eq(rows, n, 'rows in the table');
   await page.click('[data-task-mode="board"]');
   return `${rows} tasks either way`;
@@ -695,7 +820,7 @@ await check('exported year carries the tasks', async () => {
 await check('a to-do can be added, and it lands in the right bucket', async () => {
   // The list was read-only apart from ticking: 56 items from the handover and
   // no way to record the thing you just thought of.
-  await goto('tasks');
+  await gotoTodo();
   const before = (await stored()).tasks.length;
   await page.click('#task-new');
   await page.$eval('#task-form [name=title]', (el) => { el.value = 'Chase Helen about the risk assessment'; });
@@ -731,6 +856,35 @@ await check('a to-do can be deleted, and that is undoable', async () => {
   await page.click('#toast-undo');
   eq((await stored()).tasks.length, n, 'tasks after undo');
   return 'deleted, then undone';
+});
+
+console.log('\n  ACCOUNTS\n  ' + '-'.repeat(70));
+
+await check('the account control opens a menu and the sign-in dialog', async () => {
+  // Offline (this suite's world) the app stays fully usable and the account
+  // button offers sign-in. The read-only gate and private-module hiding only
+  // engage against the live database, which npm run e2e:sync exercises.
+  await goto('calendar');
+  await sheetGone();
+  if (await page.$eval('#account', (el) => el.hidden)) throw new Error('account button hidden');
+  await page.click('#account');
+  const menu = await page.$eval('#acct-menu', (el) => (el.hidden ? '' : el.textContent));
+  if (!/sign in/i.test(menu)) throw new Error('menu did not offer sign in');
+  await page.click('#acct-signin');
+  await page.waitForSelector('#auth:not([hidden])');
+  const title = await page.$eval('#auth-h', (el) => el.textContent.trim());
+  await page.evaluate(() => document.getElementById('auth-x').click());
+  return `account menu → "${title}"`;
+});
+
+await check('offline stays editable — the field case, not read-only', async () => {
+  // The read-only gate is for an anonymous visitor on the live site, never for a
+  // phone with no signal: those edits queue. Prove editing still works here.
+  await goto('calendar');
+  await sheetGone();
+  const readonly = await page.evaluate(() => document.body.classList.contains('is-readonly'));
+  eq(readonly, false, 'not read-only while offline');
+  return 'offline is a working state, not a locked one';
 });
 
 console.log('\n  PHONE\n  ' + '-'.repeat(70));

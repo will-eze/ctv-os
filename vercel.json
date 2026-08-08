@@ -12,7 +12,7 @@
         { "key": "Referrer-Policy", "value": "same-origin" },
         {
           "key": "Content-Security-Policy",
-          "value": "default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; font-src data:; img-src data:; connect-src https://uciyizhmuiopetrdpovy.supabase.co wss://uciyizhmuiopetrdpovy.supabase.co; base-uri 'none'; form-action 'none'; frame-ancestors 'none'"
+          "value": "default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; font-src data:; img-src data: https://uciyizhmuiopetrdpovy.supabase.co; connect-src https://uciyizhmuiopetrdpovy.supabase.co wss://uciyizhmuiopetrdpovy.supabase.co; base-uri 'none'; form-action 'none'; frame-ancestors 'none'"
         }
       ]
     }

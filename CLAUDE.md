@@ -7,6 +7,15 @@ PDF and `CampusTV_Knowledge_Summary.txt` are **gitignored**: real internal
 material, not ours to publish. They are on the station manager's machine, not
 in a clone. `data/year.json` is the derived, shareable form.
 
+**How it is used — build for that.** CTV OS is a working tool the station
+manager *and the crew* use **regularly, across the whole academic year**, to run
+real broadcasts as a student group — not a demo and not a one-off. Every feature
+must be designed for that reality: several people editing the same year, on
+phones in dark venues and on laptops in meetings, coming back week after week
+from freshers to the summer ball. Before adding or changing anything, ask what
+the crew actually does with it on a shoot day, and make the feature earn its
+place in that workflow.
+
 Sits beside the user's other projects: **Cue** (broadcast presentation
 software) and **Prism** (camera training). Sibling repo `../JSS Organiser` is
 the reference for how this user likes things built.
@@ -14,6 +23,84 @@ the reference for how this user likes things built.
 ---
 
 ## ⚠️ Read this first
+
+### 0. Station-manager redesign — APPLIED (2026-08-08)
+
+A second pass, on the manager's direct instructions, changed the product on top
+of the Stitch port. Do not revert these without being asked:
+
+- **The blue tint is gone.** Studio Essential's cool blue-grey surface ramp was
+  retuned to a warm neutral grey (`--bg #f7f7f5`, `--low #f3f3f1`, containers
+  `#ededea`/`#e6e6e2`/`#e0e0dc`). Green, error, text and outline tokens are still
+  Stitch's, verbatim. `scripts/contrast.mjs` moved the six surface tokens (and
+  the two grid tokens) from `MAP` into `EXCEPTIONS`, so they are pinned as
+  documented departures rather than checked against Stitch.
+- **The Overview page was removed. The month calendar is the home screen** and
+  is laid out to fit one viewport: a single header row, a compact one-line year
+  ribbon, a shorter (92px) day cell.
+- **Nobody is assigned by default.** Every `member` in `data/year.json` roles is
+  `null` (34 seed assignments cleared). The uncovered-role emphasis is now
+  **opt-in**: a `flagCrew` setting (Settings page, off by default, stored in
+  `localStorage` key `ctvos.prefs.v1`, never synced or exported) gates the nav
+  counts, the red calendar badges, the ribbon dots and the schedule's Missing
+  Requirements panels. `scripts/e2e.mjs` and `scripts/shots.mjs` both switch it
+  on at startup, because the invariant they test — the gap states itself in words
+  — only applies when the signal is on.
+- **The Kit locker is built.** `data/year.json` now has a `kit` array (20 items,
+  aligned to `supabase/schema.sql`'s `kit` table) and there is a read-only Kit
+  page: a summary strip, state filters and a table with worded statuses. Kit is
+  reference data, inlined by `build_prototype.py`.
+- **A Settings page exists.** The `flagCrew` toggle and Export/Reset live there.
+
+Everything below this section predates that pass; where it conflicts (the
+Overview screen, the always-on uncovered-role emphasis, "Gear Locker not built",
+the blue palette), this section wins.
+
+### 0.1 Feature build from the manager's notes — APPLIED (2026-08-08)
+
+A pass driven by a page of handwritten notes and a second Stitch project
+(`CampusTV Studio Hub`, id `1770876369783682792`). Do not revert without asking.
+
+- **Accounts and role-based access.** The top-right avatar is now a real account
+  control (sign in / out, identity, admin menu). Reads of the **calendar stay
+  public**; everything else needs an account, and the **private modules — Crew
+  and To-do — need a grant**. One admin (`willz.eze2023@gmail.com`, seeded into
+  the `admins` table) invites people and sets **per-account, per-module
+  view/edit grants** from a *Manage access* modal. New tables: `profiles`,
+  `access_grants`, `invites`, `admins`; helper SQL functions `is_admin()`,
+  `can_view(mod)`, `can_edit(mod)`; RLS on `members`/`tasks` resolves through
+  them. **Invite flow is serverless:** the admin creates a one-time token
+  (`?invite=<token>` link), the invitee signs up with it in `raw_user_meta_data`,
+  and a `handle_new_user` trigger redeems it — no service key in the page.
+- **The edit gate is connection-aware.** A client connected to the live DB and
+  signed *out* is read-only (`body.is-readonly`, `mutate()` refuses). Offline or
+  local (`file://`, the mode `npm run e2e` drives) stays fully editable and
+  queues — the field case is not read-only. So the offline suites are unaffected.
+- **Kit is built and editable.** Click a piece → a detail drawer (reuses the
+  event sheet) to edit details, **usage instructions, tips**, and attach a
+  **photo to a public Supabase Storage bucket `kit-photos`** (created by
+  `schema.sql`; offline/local falls back to an inline data URI). Kit now syncs
+  (added to `PULL`, `toDocument`, a `kit` diff), keyed by slug. `img-src` in
+  `vercel.json` gained the storage host.
+- **Crew is editable and carries job descriptions.** Inline edit of name /
+  committee role / trained-on, plus *Add crew*; members now diff and sync. A
+  *Roles & responsibilities* section copies the handover's committee roles
+  (Section Va, verbatim) and the on-the-day crew roles. Crew is a **private
+  module** (see access above).
+- **Each event has a required kit list** (`kit_needed` jsonb on the event,
+  edited in the sheet, in the copy text and the PDF) and a **Copy details**
+  button that builds a paste-ready brief. The **Schedule picker was removed**
+  (full timeline only). **To-do defaults to the list**, with the area filter
+  collapsing to a dropdown on mobile.
+- **Settings → Export PDF** is browser print-to-PDF via a print-only
+  `#print-report` (a structured brief of the whole year); no library, never on
+  screen so the design audit never sees it.
+
+**Live steps the user runs (needs their token; not done here):** `npm run
+db:push` to apply the regenerated migration (creates the accounts tables, the
+private-module RLS and the `kit-photos` bucket), `npm run seed -- --force` to
+load the new kit/`kit_needed` columns. `verify:api` and `verify:sql` were
+updated to the new model; `verify:remote` too.
 
 ### 1. The Stitch redesign — APPLIED
 
@@ -138,9 +225,16 @@ foreground/background pair the UI actually paints, compositing the ones set with
 opacity. Re-run it after any token change; the ratios in DESIGN.md come from it.
 
 `shots` enforces what replaced the old bans: no requests to any origin except
-the one configured database, Inter only, radii on the 8px scale, and no state
-carried by colour alone. That first rule reads the origin out of the built page
-rather than out of a config, so it cannot drift from what shipped.
+the one configured database, Inter only, radii on the 8px scale, **type on
+Studio Essential's seven steps, spacing on the 4px grid**, and no state carried
+by colour alone. That first rule reads the origin out of the built page rather
+than out of a config, so it cannot drift from what shipped. The type and spacing
+rules read *computed* styles off the rendered page rather than grepping the
+stylesheet, so an inline style cannot dodge them; they were added after the CSS
+was found to have drifted to thirteen type sizes and roughly forty padding
+values, and they caught three more off-grid buttons on their first run. Spacing
+checks padding and gap but not margin on purpose — `getComputedStyle` reports
+margin's used value, so `margin: 0 auto` would fail honest code.
 
 Chrome path is hardcoded in `scripts/e2e.mjs` and `scripts/shots.mjs`:
 `/Applications/Google Chrome.app/Contents/MacOS/Google Chrome`.
@@ -189,13 +283,14 @@ Do not relitigate these — the user answered them directly.
 - **The uncovered role is the primary object.** An `event_roles` row with
   `member_id IS NULL`. Every screen answers *which jobs have nobody on them*.
   Chosen over paperwork deadlines, kit loss and stalled edits.
-- **Reads are open; writes need an account.** *Superseded the original
-  "Station Manager only in v1" once the site went up on a public host and
-  several people started editing.* The publishable key ships inside the page,
-  so an unguessable URL is not an access control. Anyone can read the year;
-  every INSERT, UPDATE and DELETE policy requires `auth.role() =
-  'authenticated'`. Members are still names that hold roles — holding a role
-  and having an account are separate things.
+- **Reads of the calendar are open; the private modules and all writes need an
+  account — and, for the private modules, a grant.** *Superseded twice: first
+  "Station Manager only in v1", then "reads open, writes authenticated", now
+  role-based access (see §0.1).* The publishable key ships in the page, so the
+  URL is not access control. Anyone reads the **calendar**; **Crew and To-do are
+  private** (RLS via `can_view`/`can_edit`); writes to the public modules need a
+  session; the admin grants the rest. Members are still names that hold roles —
+  holding a role and having an account remain separate things.
 - **All four modules in v1** — crew, kit, societies, post-production — hanging
   off the event, not as four separate navigations.
 - **A clash is a conflict of physical presence.** `event_roles.on_site` exists
@@ -232,12 +327,13 @@ Modelled on `../JSS Organiser`, which has the same discipline.
 
 ## Not built
 
-Designed into the schema, absent from every interface: kit check in/out and the
-**Gear Locker screen** (Stitch designed it, but `data/year.json` has no `kit`
-rows — build the data first), the post-production board, money (`ledger`,
-`funding_windows`), playbook and handover export, safeguarding log. There is
+Designed into the schema, absent from every interface: kit check in/out
+(`kit_bookings`), the post-production board (`deliverables`), money (`ledger`,
+`funding_windows`), playbook and handover export, safeguarding log
+(`incidents`). The **Kit locker is built and editable** now (details, usage
+notes, photos) — what is not built is the check-out log against events. There is
 still **no Next.js app**: the page is one self-contained file. Export gives back
-a corrected `year.json`.
+a corrected `year.json`; **Export PDF** gives a structured brief.
 
 **The database is live.** Project `uciyizhmuiopetrdpovy` (eu-west-1) has the
 schema pushed and the year seeded: 31 events, 78 roles (44 open), 56 tasks.

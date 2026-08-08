@@ -1,2098 +1,2439 @@
 {
-  "academic_year": "2026/27",
-  "source": "Handover Document — CampusTV station manager 2026 (Caela), plus CampusTV_Knowledge_Summary.txt",
-  "date_confidence": {
-    "fixed": "Stated in the handover, or a nationally fixed date. Trust it.",
-    "estimated": "Inferred from the handover's description of when in the year it falls. CONFIRM before anything depends on it."
+ "academic_year": "2026/27",
+ "source": "Handover Document — CampusTV station manager 2026 (Caela), plus CampusTV_Knowledge_Summary.txt",
+ "date_confidence": {
+  "fixed": "Stated in the handover, or a nationally fixed date. Trust it.",
+  "estimated": "Inferred from the handover's description of when in the year it falls. CONFIRM before anything depends on it."
+ },
+ "members": [
+  {
+   "id": "will",
+   "known_as": "Will",
+   "full_name": "Will E",
+   "committee_role": "Station Manager",
+   "su_member": true,
+   "trained": [
+    "camera",
+    "edit",
+    "vision_mix",
+    "ptz"
+   ]
   },
-  "members": [
+  {
+   "id": "ela",
+   "known_as": "Ela",
+   "full_name": "Ela",
+   "committee_role": "Head of Marketing",
+   "su_member": true,
+   "trained": [
+    "camera",
+    "edit"
+   ]
+  },
+  {
+   "id": "destin",
+   "known_as": "Destin",
+   "full_name": "Destin",
+   "committee_role": "Head of Production",
+   "su_member": true,
+   "trained": [
+    "camera",
+    "vision_mix",
+    "ptz"
+   ]
+  },
+  {
+   "id": "jade",
+   "known_as": "Jade",
+   "full_name": "Jade",
+   "committee_role": "Head of Tech",
+   "su_member": true,
+   "trained": [
+    "camera",
+    "audio"
+   ]
+  },
+  {
+   "id": "sam",
+   "known_as": "Sam",
+   "full_name": "Sam",
+   "committee_role": "Head of Sport",
+   "su_member": true,
+   "trained": [
+    "camera"
+   ]
+  },
+  {
+   "id": "nina",
+   "known_as": "Nina",
+   "full_name": "Nina",
+   "committee_role": null,
+   "su_member": true,
+   "trained": [
+    "camera"
+   ]
+  },
+  {
+   "id": "theo",
+   "known_as": "Theo",
+   "full_name": "Theo",
+   "committee_role": null,
+   "su_member": false,
+   "trained": []
+  }
+ ],
+ "contacts": [
+  {
+   "name": "Helen",
+   "org": "SU",
+   "role": "Media Executive",
+   "what_for": "Finance codes, event planners, risk assessments, alumni fund, Instagram takeovers, NaSTA membership payment"
+  },
+  {
+   "name": "Joe Rumford",
+   "org": "SU",
+   "role": "Content",
+   "what_for": "Covers daytime SU events. Agree the split so you are not both filming the same thing"
+  },
+  {
+   "name": "Will Kitchen",
+   "org": "SU",
+   "role": null,
+   "what_for": "Editing the CampusTV page on the SU website"
+  },
+  {
+   "name": "Angus",
+   "org": "SU",
+   "role": "President",
+   "what_for": "Alumni fund dates"
+  },
+  {
+   "name": "Chris Lyons",
+   "org": "CampusTV",
+   "role": "Alumnus",
+   "what_for": "The member equipment-borrowing scheme he and Jade ran"
+  },
+  {
+   "name": "Peter",
+   "org": "CampusTV",
+   "role": "Former Station Manager (x3)",
+   "what_for": "Owns the CTV domain. Kit check-in/check-out system"
+  },
+  {
+   "name": "Caela",
+   "org": "CampusTV",
+   "role": "Former Station Manager",
+   "what_for": "Wrote this handover. Message her if stuck"
+  },
+  {
+   "name": "John Lucas",
+   "org": "CampusTV",
+   "role": null,
+   "what_for": "PTZ controller, if around"
+  }
+ ],
+ "societies": [
+  {
+   "id": "rugby",
+   "name": "Men's Rugby",
+   "standing_terms": "Rugby at the Rec in October is the main fixture. Befriend the chair — it buys you practice filming at ordinary matches, and you can hand them the footage afterwards.",
+   "cautions": "They have done a serious sit-down format for Movember before. Do not repeat it. They are up for anything that raises money.",
+   "charge_policy": "Not charged."
+  },
+  {
+   "id": "sport",
+   "name": "SU Sport (general)",
+   "standing_terms": "Liaise through the SU sport leads and the media exec. One named person on your team owns all comms with the SU and the rugby chair.",
+   "cautions": "Do not oversell a livestream while the team is still finding its feet — falling short after charging leaves them disgruntled.",
+   "charge_policy": "Generally free. Charge for big ticketed events they are earning from, e.g. kickboxing."
+  },
+  {
+   "id": "dancesoc",
+   "name": "Dance Soc",
+   "standing_terms": "Camera at the back of the theatre with a mic picking up the room — they want to hear the tap noises. Ask them to book the middle seats on the back row so you can set up there.",
+   "cautions": "NEVER take the sound desk feed. This was done once and it was wrong. Camera can be left static, recording, and collected afterwards.",
+   "charge_policy": "Not charged."
+  },
+  {
+   "id": "bust",
+   "name": "BUST / BUSMS",
+   "standing_terms": "BUST have their own camera now. BUSMS bring someone who makes DVDs from the footage. If they do ask, establish whether they want audience audio (mic on a camera at the back) or the sound desk feed — for BUST specifically.",
+   "cautions": null,
+   "charge_policy": "Ask."
+  },
+  {
+   "id": "backstage",
+   "name": "Backstage",
+   "standing_terms": "Freshers week and Summer Ball only. They charge for SDI reels — buy and mark up our own so the charge goes away.",
+   "cautions": "Log every item you let them rig so no cable or kit leaves with them. Cameras get set up with you present. They do not switch cameras or touch our kit during arena nights. Make sure the women on the team are respected and know to tell you if something is off.",
+   "charge_policy": "They charge us. Not the other way round."
+  }
+ ],
+ "prep_templates": [
+  {
+   "strand": "*",
+   "label": "Event planner + risk assessment to Helen",
+   "lead_days": 14,
+   "owner_role": "Head of Tech",
+   "detail": "Section Ic — the head of tech's job and their responsibility. Must be in at least two weeks before."
+  },
+  {
+   "strand": "*",
+   "label": "Kit booked out",
+   "lead_days": 3,
+   "owner_role": "Head of Tech"
+  },
+  {
+   "strand": "*",
+   "label": "Roles advertised in the group chat",
+   "lead_days": 10,
+   "owner_role": "Head of Production",
+   "detail": "Section Ic — the whole team advertises, not just you."
+  },
+  {
+   "strand": "sport",
+   "label": "Press passes / AAA names to SU Sport",
+   "lead_days": 7,
+   "owner_role": "Head of Sport"
+  },
+  {
+   "strand": "sport",
+   "label": "Agree interview slots with the chair",
+   "lead_days": 10,
+   "owner_role": "Head of Sport",
+   "detail": "Captains, coaches, and the opposing team if the SU sports officer can arrange it."
+  },
+  {
+   "strand": "freshers",
+   "label": "Merch order — joint with the other media groups",
+   "lead_days": 28,
+   "owner_role": "Station Manager",
+   "detail": "3–4 weeks prior. A joint order cuts delivery costs."
+  },
+  {
+   "strand": "freshers",
+   "label": "Book the freshers fair table",
+   "lead_days": 35,
+   "owner_role": "Station Manager",
+   "detail": "Watch the ctvmanager inbox for the booking email."
+  },
+  {
+   "strand": "freshers",
+   "label": "QR codes made and tested on two phones",
+   "lead_days": 7,
+   "owner_role": "Head of Marketing",
+   "detail": "General group chat, the SU membership page, and Instagram."
+  },
+  {
+   "strand": "freshers",
+   "label": "Press access / AAA for the whole team",
+   "lead_days": 14,
+   "owner_role": "Station Manager"
+  },
+  {
+   "strand": "ball",
+   "label": "Sort our own team's accreditation",
+   "lead_days": 21,
+   "owner_role": "Station Manager",
+   "detail": "Nobody does this for you."
+  },
+  {
+   "strand": "awards",
+   "label": "Check export settings against the NaSTA PDF",
+   "lead_days": 14,
+   "owner_role": "Station Manager",
+   "detail": "Getting this wrong invalidates the submission. Ask the NaSTA team if unsure."
+  }
+ ],
+ "kit": [
+  {
+   "id": "cam-fx3-1",
+   "name": "Sony FX3 body",
+   "category": "camera",
+   "asset_tag": "CAM-01",
+   "owner": "ctv",
+   "state": "in_hub",
+   "home": "Camera shelf A",
+   "notes": "Primary A-cam. Cage fitted."
+  },
+  {
+   "id": "cam-fx3-2",
+   "name": "Sony FX3 body",
+   "category": "camera",
+   "asset_tag": "CAM-02",
+   "owner": "ctv",
+   "state": "in_hub",
+   "home": "Camera shelf A",
+   "notes": null
+  },
+  {
+   "id": "cam-a6400",
+   "name": "Sony a6400 body",
+   "category": "camera",
+   "asset_tag": "CAM-03",
+   "owner": "ctv",
+   "state": "out",
+   "home": "Camera shelf A",
+   "notes": "On loan to Marketing for vox pops."
+  },
+  {
+   "id": "cam-ptz",
+   "name": "PTZ Optics 20x-SDI",
+   "category": "camera",
+   "asset_tag": "CAM-04",
+   "owner": "ctv",
+   "state": "in_hub",
+   "home": "Gallery rack",
+   "notes": "Gantry / locked-off wide."
+  },
+  {
+   "id": "lens-2470",
+   "name": "Sony 24-70mm f2.8 GM",
+   "category": "lens",
+   "asset_tag": "LEN-01",
+   "owner": "ctv",
+   "state": "in_hub",
+   "home": "Lens cabinet",
+   "notes": null
+  },
+  {
+   "id": "lens-50",
+   "name": "Sigma 50mm f1.4",
+   "category": "lens",
+   "asset_tag": "LEN-02",
+   "owner": "ctv",
+   "state": "repair",
+   "home": "Lens cabinet",
+   "notes": "Focus ring sticking — with SU tech since 28 Jul."
+  },
+  {
+   "id": "tripod-1",
+   "name": "Manfrotto 504X tripod",
+   "category": "tripod",
+   "asset_tag": "TRP-01",
+   "owner": "ctv",
+   "state": "in_hub",
+   "home": "Rack by door",
+   "notes": null
+  },
+  {
+   "id": "tripod-2",
+   "name": "Manfrotto 504X tripod",
+   "category": "tripod",
+   "asset_tag": "TRP-02",
+   "owner": "ctv",
+   "state": "out",
+   "home": "Rack by door",
+   "notes": "With A-cam loan."
+  },
+  {
+   "id": "mix-atem",
+   "name": "ATEM Mini Extreme ISO",
+   "category": "vision",
+   "asset_tag": "VIS-01",
+   "owner": "ctv",
+   "state": "in_hub",
+   "home": "Gallery rack",
+   "notes": "Vision mixer / multicam record."
+  },
+  {
+   "id": "mon-atomos",
+   "name": "Atomos Ninja V monitor",
+   "category": "monitor",
+   "asset_tag": "MON-01",
+   "owner": "ctv",
+   "state": "in_hub",
+   "home": "Gallery rack",
+   "notes": null
+  },
+  {
+   "id": "aud-mixer",
+   "name": "Zoom F6 field recorder",
+   "category": "audio",
+   "asset_tag": "AUD-01",
+   "owner": "ctv",
+   "state": "in_hub",
+   "home": "Audio case",
+   "notes": "6-in multitrack."
+  },
+  {
+   "id": "aud-radio",
+   "name": "Rode Wireless GO II (pair)",
+   "category": "audio",
+   "asset_tag": "AUD-02",
+   "owner": "ctv",
+   "state": "in_hub",
+   "home": "Audio case",
+   "notes": "Two TX, one RX."
+  },
+  {
+   "id": "aud-shotgun",
+   "name": "Rode NTG5 shotgun mic",
+   "category": "audio",
+   "asset_tag": "AUD-03",
+   "owner": "ctv",
+   "state": "missing",
+   "home": "Audio case",
+   "notes": "Not returned after Arena rig. Chase whoever de-rigged."
+  },
+  {
+   "id": "aud-boom",
+   "name": "Boom pole + blimp",
+   "category": "audio",
+   "asset_tag": "AUD-04",
+   "owner": "ctv",
+   "state": "in_hub",
+   "home": "Audio case",
+   "notes": null
+  },
+  {
+   "id": "light-key",
+   "name": "Aputure 300d II",
+   "category": "lighting",
+   "asset_tag": "LIT-01",
+   "owner": "ctv",
+   "state": "in_hub",
+   "home": "Lighting flightcase",
+   "notes": "Bowens mount + softbox."
+  },
+  {
+   "id": "light-panel",
+   "name": "Nanlite PavoTube (x4)",
+   "category": "lighting",
+   "asset_tag": "LIT-02",
+   "owner": "ctv",
+   "state": "in_hub",
+   "home": "Lighting flightcase",
+   "notes": "RGB tubes for set colour."
+  },
+  {
+   "id": "media-sd",
+   "name": "CFexpress/SD card wallet",
+   "category": "media",
+   "asset_tag": "MED-01",
+   "owner": "ctv",
+   "state": "in_hub",
+   "home": "Media drawer",
+   "notes": "6 cards. Format on return, never before offload."
+  },
+  {
+   "id": "media-ssd",
+   "name": "Samsung T7 2TB SSD (x3)",
+   "category": "media",
+   "asset_tag": "MED-02",
+   "owner": "ctv",
+   "state": "out",
+   "home": "Media drawer",
+   "notes": "With editors for NaSTA cut."
+  },
+  {
+   "id": "cable-sdi",
+   "name": "SDI cable run (bagged)",
+   "category": "cable",
+   "asset_tag": "CAB-01",
+   "owner": "ctv",
+   "state": "in_hub",
+   "home": "Cable bin",
+   "notes": "Assorted 3m/10m/30m."
+  },
+  {
+   "id": "comms-tecpro",
+   "name": "Tecpro comms (4 belt packs)",
+   "category": "comms",
+   "asset_tag": "COM-01",
+   "owner": "su",
+   "state": "in_hub",
+   "home": "Gallery rack",
+   "notes": "Borrowed long-term from SU."
+  }
+ ],
+ "events": [
+  {
+   "id": "results-day",
+   "title": "A-level results day post",
+   "date": "2026-08-13",
+   "strand": "social",
+   "status": "planned",
+   "confidence": "fixed",
+   "venue": null,
+   "brief": "Congratulate students and say we look forward to meeting them. Promo and tradition — Section Ia.",
+   "roles": [
     {
-      "id": "will",
-      "known_as": "Will",
-      "full_name": "Will E",
-      "committee_role": "Station Manager",
-      "su_member": true,
-      "trained": [
-        "camera",
-        "edit",
-        "vision_mix",
-        "ptz"
-      ]
-    },
-    {
-      "id": "ela",
-      "known_as": "Ela",
-      "full_name": "Ela",
-      "committee_role": "Head of Marketing",
-      "su_member": true,
-      "trained": [
-        "camera",
-        "edit"
-      ]
-    },
-    {
-      "id": "destin",
-      "known_as": "Destin",
-      "full_name": "Destin",
-      "committee_role": "Head of Production",
-      "su_member": true,
-      "trained": [
-        "camera",
-        "vision_mix",
-        "ptz"
-      ]
-    },
-    {
-      "id": "jade",
-      "known_as": "Jade",
-      "full_name": "Jade",
-      "committee_role": "Head of Tech",
-      "su_member": true,
-      "trained": [
-        "camera",
-        "audio"
-      ]
-    },
-    {
-      "id": "sam",
-      "known_as": "Sam",
-      "full_name": "Sam",
-      "committee_role": "Head of Sport",
-      "su_member": true,
-      "trained": [
-        "camera"
-      ]
-    },
-    {
-      "id": "nina",
-      "known_as": "Nina",
-      "full_name": "Nina",
-      "committee_role": null,
-      "su_member": true,
-      "trained": [
-        "camera"
-      ]
-    },
-    {
-      "id": "theo",
-      "known_as": "Theo",
-      "full_name": "Theo",
-      "committee_role": null,
-      "su_member": false,
-      "trained": []
+     "id": "b5575a31-64cb-552a-9905-a1a72e890720",
+     "label": "POST",
+     "role": "producer",
+     "member": null
     }
+   ],
+   "prep": [
+    {
+     "label": "Draft copy + graphic",
+     "lead_days": 3,
+     "owner_role": "Head of Marketing"
+    }
+   ]
+  },
+  {
+   "id": "hub-setup",
+   "title": "Media Hub set up and functional",
+   "date": "2026-09-11",
+   "strand": "admin",
+   "status": "planned",
+   "confidence": "estimated",
+   "venue": "Founders Hall Level 1",
+   "brief": "Section Ia, in bold: the hub has to be functional AHEAD of freshers week. Studio, editing area, gallery, storage.",
+   "roles": [
+    {
+     "id": "df0c9ae0-4457-591d-af55-26c3356b78ad",
+     "label": "LEAD",
+     "role": "producer",
+     "member": null
+    },
+    {
+     "id": "7fb0c5f3-4750-5708-a5d3-bda7a6ad47d2",
+     "label": "TECH",
+     "role": "producer",
+     "member": null
+    },
+    {
+     "id": "3b923c96-d8ae-5d73-b92e-776d0da7cc4c",
+     "label": "TECH",
+     "role": "producer",
+     "member": null
+    }
+   ],
+   "prep": [
+    {
+     "label": "New Google Drive folder for the year",
+     "lead_days": 21,
+     "owner_role": "Station Manager"
+    },
+    {
+     "label": "Everyone added to the Drive as contributor",
+     "lead_days": 14,
+     "owner_role": "Station Manager",
+     "detail": "Ela needs manager so she can make marketing folders."
+    },
+    {
+     "label": "Enough SD cards in stock",
+     "lead_days": 14,
+     "owner_role": "Head of Tech"
+    },
+    {
+     "label": "SU leadership + finance training done",
+     "lead_days": 30,
+     "owner_role": "Station Manager"
+    }
+   ]
+  },
+  {
+   "id": "committee-1",
+   "title": "Committee meeting — freshers plan",
+   "date": "2026-09-14",
+   "strand": "admin",
+   "status": "planned",
+   "confidence": "estimated",
+   "venue": "Media Hub",
+   "brief": "Section Ia — get to know each other, then delegate freshers coverage: who is doing what, and when they are back in Bath.",
+   "roles": [
+    {
+     "id": "9e55ba2e-97bd-5b40-8150-0fb451c0afeb",
+     "label": "CHAIR",
+     "role": "producer",
+     "member": null
+    }
+   ],
+   "prep": [
+    {
+     "label": "Meet the committee post goes up",
+     "lead_days": -3,
+     "owner_role": "Head of Marketing",
+     "detail": "The week prior to freshers."
+    }
+   ]
+  },
+  {
+   "id": "ww-fri",
+   "title": "Welcome Weekend — Night 1",
+   "date": "2026-09-18",
+   "strand": "freshers",
+   "status": "planned",
+   "confidence": "fixed",
+   "venue": "Town",
+   "call_time": "22:00",
+   "start_time": "22:30",
+   "end_time": "00:30",
+   "brief": "Interviews with freshers from 22:30 for an hour or two, until enough usable content is gathered. Lighthearted questions, nothing that insults the SU or promotes anything illegal. Clips out the next day, 3 min max, swearing cut.",
+   "roles": [
+    {
+     "id": "8849ebbd-f486-59a2-8324-1b4e1b721d74",
+     "label": "INTERVIEW",
+     "role": "interview",
+     "member": null,
+     "from": "22:30",
+     "to": "00:30"
+    },
+    {
+     "id": "49dd90da-3636-52b7-83c5-48fe7eca21e9",
+     "label": "CAM OP",
+     "role": "camera",
+     "member": null,
+     "from": "22:30",
+     "to": "00:30"
+    }
+   ],
+   "deliverables": [
+    {
+     "title": "Welcome Weekend N1 interviews",
+     "kind": "interview_clip",
+     "due_offset": 1
+    }
+   ]
+  },
+  {
+   "id": "ww-sat",
+   "title": "Welcome Weekend — Night 2",
+   "date": "2026-09-19",
+   "strand": "freshers",
+   "status": "planned",
+   "confidence": "fixed",
+   "venue": "Campus",
+   "call_time": "22:00",
+   "start_time": "22:30",
+   "end_time": "00:30",
+   "brief": "Campus night. Two teams with kit, or alternate campus and town across the weekend.",
+   "roles": [
+    {
+     "id": "cb3c37b7-6af7-543f-a386-f0fe4a1fc140",
+     "label": "INTERVIEW",
+     "role": "interview",
+     "member": null,
+     "from": "22:30",
+     "to": "00:30"
+    },
+    {
+     "id": "b92584c4-cde1-564c-b9b2-0e04b4e32be7",
+     "label": "CAM OP",
+     "role": "camera",
+     "member": null,
+     "from": "22:30",
+     "to": "00:30"
+    }
+   ],
+   "deliverables": [
+    {
+     "title": "Welcome Weekend N2 interviews",
+     "kind": "interview_clip",
+     "due_offset": 1
+    }
+   ]
+  },
+  {
+   "id": "ww-sun",
+   "title": "Welcome Weekend — Night 3",
+   "date": "2026-09-20",
+   "strand": "freshers",
+   "status": "planned",
+   "confidence": "fixed",
+   "venue": "Campus",
+   "call_time": "22:00",
+   "start_time": "22:30",
+   "end_time": "00:30",
+   "roles": [
+    {
+     "id": "98cd017e-2f3f-54b8-b228-fbad6b848a16",
+     "label": "INTERVIEW",
+     "role": "interview",
+     "member": null,
+     "from": "22:30",
+     "to": "00:30"
+    },
+    {
+     "id": "d95fadbb-430c-5f7e-b581-7d38b1de1585",
+     "label": "CAM OP",
+     "role": "camera",
+     "member": null,
+     "from": "22:30",
+     "to": "00:30"
+    }
+   ],
+   "deliverables": [
+    {
+     "title": "Welcome Weekend N3 interviews",
+     "kind": "interview_clip",
+     "due_offset": 1
+    }
+   ]
+  },
+  {
+   "id": "freshers-fair",
+   "title": "Freshers Fair — stall",
+   "date": "2026-09-21",
+   "strand": "freshers",
+   "status": "planned",
+   "confidence": "estimated",
+   "venue": "Founders Hall",
+   "call_time": "09:00",
+   "start_time": "10:00",
+   "end_time": "16:00",
+   "brief": "Sweets to draw people in, plus TV trivia for prizes: easy / medium / hard = 1 / 2 / 3 sweets. Categories the Office, Gossip Girl, Doctor Who — keep it on the TV theme so it does not overlap with Filmsoc. Three QR codes on the table.",
+   "roles": [
+    {
+     "id": "a1ebe725-f080-584d-ba0d-7b2e8aa027da",
+     "label": "STALL",
+     "role": "producer",
+     "member": null,
+     "from": "10:00",
+     "to": "16:00"
+    },
+    {
+     "id": "19cea439-52e0-5e7c-a77a-bda2a1e5686f",
+     "label": "STALL",
+     "role": "producer",
+     "member": null,
+     "from": "10:00",
+     "to": "16:00"
+    },
+    {
+     "id": "f8982830-1548-59c5-9bd6-5d1b0178cf0e",
+     "label": "INTERVIEW",
+     "role": "interview",
+     "member": null,
+     "from": "11:00",
+     "to": "15:00"
+    },
+    {
+     "id": "8154a479-7159-56df-a6be-3bd76b5f4768",
+     "label": "CAM OP",
+     "role": "camera",
+     "member": null,
+     "from": "11:00",
+     "to": "15:00"
+    }
+   ]
+  },
+  {
+   "id": "sports-fair",
+   "title": "Sports Fair — stall",
+   "date": "2026-09-22",
+   "strand": "freshers",
+   "status": "planned",
+   "confidence": "estimated",
+   "venue": "STV",
+   "call_time": "09:30",
+   "start_time": "10:00",
+   "end_time": "16:00",
+   "brief": "Section Ib, in bold: be at the sports fair to advertise livestreaming and sports coverage. Roving pair asking clubs 'did you know CampusTV can livestream your matches?'",
+   "roles": [
+    {
+     "id": "e153a452-d6e6-5ddb-8429-249dd7c92569",
+     "label": "STALL",
+     "role": "producer",
+     "member": null,
+     "from": "10:00",
+     "to": "16:00"
+    },
+    {
+     "id": "35294a36-1d51-52bc-ae9f-3e5dd482408c",
+     "label": "STALL",
+     "role": "producer",
+     "member": null,
+     "from": "10:00",
+     "to": "16:00"
+    },
+    {
+     "id": "f50c62b1-11e7-5b8a-8a91-e701b1cb6a01",
+     "label": "INTERVIEW",
+     "role": "interview",
+     "member": null,
+     "from": "11:00",
+     "to": "15:00"
+    },
+    {
+     "id": "56af4abf-9a23-5b9f-a045-1750bd8db4c6",
+     "label": "CAM OP",
+     "role": "camera",
+     "member": null,
+     "from": "11:00",
+     "to": "15:00"
+    }
+   ]
+  },
+  {
+   "id": "arena-1",
+   "title": "Arena Night 1",
+   "date": "2026-09-21",
+   "strand": "freshers",
+   "status": "planned",
+   "confidence": "estimated",
+   "venue": "Founders Hall",
+   "call_time": "21:00",
+   "doors_time": "22:00",
+   "start_time": "22:00",
+   "end_time": "23:59",
+   "brief": "Interviews outside from 22:00 — new questions and a new interviewer each night so it does not look like the same two people. Vision mix and PTZ 22:00 till 02:00. SD card into the ATEM and record pressed. Upload from the hub PC at 02:00 so it is on the Drive to edit tomorrow.",
+   "roles": [
+    {
+     "id": "61ccf7c3-7031-543d-a8ef-8b195187a279",
+     "label": "VISION MIX",
+     "role": "vision_mix",
+     "member": null,
+     "from": "21:00",
+     "to": "23:59"
+    },
+    {
+     "id": "432bf341-596c-5a8b-978a-d0cfd910fb96",
+     "label": "PTZ",
+     "role": "ptz",
+     "member": null,
+     "from": "21:00",
+     "to": "23:59"
+    },
+    {
+     "id": "80851278-3d51-5a70-b692-e50c493b7c53",
+     "label": "INTERVIEW",
+     "role": "interview",
+     "member": null,
+     "from": "22:00",
+     "to": "23:30"
+    },
+    {
+     "id": "95283516-efd2-56bf-b262-09f3953a215d",
+     "label": "INTERVIEW",
+     "role": "interview",
+     "member": null,
+     "from": "22:00",
+     "to": "23:30"
+    },
+    {
+     "id": "8b70da66-b1a2-58e7-9dc2-8c7fb9c5cca5",
+     "label": "CAM OP",
+     "role": "camera",
+     "member": null,
+     "from": "22:00",
+     "to": "23:30"
+    },
+    {
+     "id": "d1e63bfa-d5c4-55b1-b0df-09de17db6a58",
+     "label": "EDITOR",
+     "role": "editor",
+     "member": null,
+     "on_site": false
+    }
+   ],
+   "prep": [
+    {
+     "label": "SD card into the ATEM, record pressed",
+     "lead_days": 0,
+     "owner_role": "Head of Tech"
+    },
+    {
+     "label": "Rig with Backstage — log every item they touch",
+     "lead_days": 1,
+     "owner_role": "Head of Tech"
+    },
+    {
+     "label": "Arena-night graphics from Helen",
+     "lead_days": 7,
+     "owner_role": "Head of Marketing",
+     "detail": "See the 2024 freshers week folder for last year's."
+    }
+   ],
+   "deliverables": [
+    {
+     "title": "Arena Night 1 highlight",
+     "kind": "highlight",
+     "due_offset": 1
+    },
+    {
+     "title": "Arena Night 1 interviews",
+     "kind": "interview_clip",
+     "due_offset": 1
+    }
+   ],
+   "kit_needed": [
+    {
+     "id": "cam-ptz",
+     "qty": 1
+    },
+    {
+     "id": "cam-fx3-1",
+     "qty": 1
+    },
+    {
+     "id": "mix-atem",
+     "qty": 1
+    },
+    {
+     "id": "aud-radio",
+     "qty": 1
+    },
+    {
+     "id": "media-sd",
+     "qty": 1
+    }
+   ]
+  },
+  {
+   "id": "arena-2",
+   "title": "Arena Night 2",
+   "date": "2026-09-23",
+   "strand": "freshers",
+   "status": "planned",
+   "confidence": "estimated",
+   "venue": "Founders Hall",
+   "call_time": "21:00",
+   "doors_time": "22:00",
+   "start_time": "22:00",
+   "end_time": "23:59",
+   "roles": [
+    {
+     "id": "a0d286a7-9b3f-597c-add0-a145e7970334",
+     "label": "VISION MIX",
+     "role": "vision_mix",
+     "member": null,
+     "from": "21:00",
+     "to": "23:59"
+    },
+    {
+     "id": "cd53e4bc-1e28-59be-99d8-0268d131c60d",
+     "label": "PTZ",
+     "role": "ptz",
+     "member": null,
+     "from": "21:00",
+     "to": "23:59"
+    },
+    {
+     "id": "eae3169a-7df6-579e-8455-9526aa229c1b",
+     "label": "INTERVIEW",
+     "role": "interview",
+     "member": null,
+     "from": "22:00",
+     "to": "23:30"
+    },
+    {
+     "id": "d6936757-b39a-5303-8f81-72cfc458ee96",
+     "label": "INTERVIEW",
+     "role": "interview",
+     "member": null,
+     "from": "22:00",
+     "to": "23:30"
+    },
+    {
+     "id": "941ec73f-427f-5844-86b4-412e74e47f46",
+     "label": "CAM OP",
+     "role": "camera",
+     "member": null,
+     "from": "22:00",
+     "to": "23:30"
+    },
+    {
+     "id": "40856325-1dc2-57ab-841a-349dced21d75",
+     "label": "EDITOR",
+     "role": "editor",
+     "member": null,
+     "on_site": false
+    }
+   ],
+   "deliverables": [
+    {
+     "title": "Arena Night 2 highlight",
+     "kind": "highlight",
+     "due_offset": 1
+    }
+   ]
+  },
+  {
+   "id": "arena-3",
+   "title": "Arena Night 3",
+   "date": "2026-09-25",
+   "strand": "freshers",
+   "status": "planned",
+   "confidence": "estimated",
+   "venue": "Founders Hall",
+   "call_time": "21:00",
+   "doors_time": "22:00",
+   "start_time": "22:00",
+   "end_time": "23:59",
+   "roles": [
+    {
+     "id": "98e79e98-f6c5-5864-ab08-65515eb67b08",
+     "label": "VISION MIX",
+     "role": "vision_mix",
+     "member": null,
+     "from": "21:00",
+     "to": "23:59"
+    },
+    {
+     "id": "61d48d99-8e04-576d-b3ad-0bd45892ffea",
+     "label": "PTZ",
+     "role": "ptz",
+     "member": null,
+     "from": "21:00",
+     "to": "23:59"
+    },
+    {
+     "id": "eeabe22d-98b4-5a9b-9682-4061436303f1",
+     "label": "INTERVIEW",
+     "role": "interview",
+     "member": null,
+     "from": "22:00",
+     "to": "23:30"
+    },
+    {
+     "id": "56ced8ee-c2ba-5d7c-985f-fca6a454c0bd",
+     "label": "INTERVIEW",
+     "role": "interview",
+     "member": null,
+     "from": "22:00",
+     "to": "23:30"
+    },
+    {
+     "id": "6a6affcf-cd28-538e-b434-4c2ca5d7eef3",
+     "label": "CAM OP",
+     "role": "camera",
+     "member": null,
+     "from": "22:00",
+     "to": "23:30"
+    },
+    {
+     "id": "5894638a-e32a-5082-b687-cb1a5cf4cff4",
+     "label": "EDITOR",
+     "role": "editor",
+     "member": null,
+     "on_site": false
+    }
+   ],
+   "deliverables": [
+    {
+     "title": "Arena Night 3 highlight",
+     "kind": "highlight",
+     "due_offset": 1
+    }
+   ]
+  },
+  {
+   "id": "arena-4",
+   "title": "Arena Night 4",
+   "date": "2026-09-26",
+   "strand": "freshers",
+   "status": "planned",
+   "confidence": "estimated",
+   "venue": "Founders Hall",
+   "call_time": "21:00",
+   "doors_time": "22:00",
+   "start_time": "22:00",
+   "end_time": "23:59",
+   "roles": [
+    {
+     "id": "3d3cf148-f8e5-5b59-9eb5-86a9ee202340",
+     "label": "VISION MIX",
+     "role": "vision_mix",
+     "member": null,
+     "from": "21:00",
+     "to": "23:59"
+    },
+    {
+     "id": "4ed4b014-f9f6-5248-9617-c5154255e3a7",
+     "label": "PTZ",
+     "role": "ptz",
+     "member": null,
+     "from": "21:00",
+     "to": "23:59"
+    },
+    {
+     "id": "cabd04f8-a4cb-5a86-9217-15e9ae58c5be",
+     "label": "INTERVIEW",
+     "role": "interview",
+     "member": null,
+     "from": "22:00",
+     "to": "23:30"
+    },
+    {
+     "id": "552618aa-ddb7-5f70-94ca-25029a851a24",
+     "label": "INTERVIEW",
+     "role": "interview",
+     "member": null,
+     "from": "22:00",
+     "to": "23:30"
+    },
+    {
+     "id": "53d7bde5-e1f1-5b10-9909-e91aa4f4f698",
+     "label": "CAM OP",
+     "role": "camera",
+     "member": null,
+     "from": "22:00",
+     "to": "23:30"
+    },
+    {
+     "id": "9dc5e082-8ec6-520f-a9f9-569c1e1a3c4c",
+     "label": "EDITOR",
+     "role": "editor",
+     "member": null,
+     "on_site": false
+    }
+   ]
+  },
+  {
+   "id": "camera-training",
+   "title": "Camera training — new members",
+   "date": "2026-09-30",
+   "strand": "training",
+   "status": "planned",
+   "confidence": "estimated",
+   "venue": "Media Hub",
+   "start_time": "14:00",
+   "end_time": "17:00",
+   "brief": "The week after freshers, while the interest is still fresh. Membership required to attend — check the SU list. 2–3 of the team confident enough to assist and answer questions.",
+   "roles": [
+    {
+     "id": "fe9c5262-a467-534d-8865-7c9e16db48ad",
+     "label": "LEAD",
+     "role": "producer",
+     "member": null
+    },
+    {
+     "id": "8b662674-4c89-579e-a8a3-266b2a0c8458",
+     "label": "ASSIST",
+     "role": "producer",
+     "member": null
+    },
+    {
+     "id": "4ad15df6-1f93-532b-99d7-088c5fe452fe",
+     "label": "ASSIST",
+     "role": "producer",
+     "member": null
+    }
+   ],
+   "prep": [
+    {
+     "label": "Cross-check attendee memberships on the SU site",
+     "lead_days": 2,
+     "owner_role": "Station Manager"
+    }
+   ]
+  },
+  {
+   "id": "edit-training",
+   "title": "Editing training — DaVinci",
+   "date": "2026-10-07",
+   "strand": "training",
+   "status": "planned",
+   "confidence": "estimated",
+   "venue": "Edge digital suite",
+   "start_time": "14:00",
+   "end_time": "16:00",
+   "brief": "DaVinci because it is free. Members can equally learn at home on Drive material — but they must not have delete access to the footage.",
+   "roles": [
+    {
+     "id": "a9c5d02b-0a30-58d3-9191-bd93fbba7b24",
+     "label": "LEAD",
+     "role": "producer",
+     "member": null
+    }
+   ]
+  },
+  {
+   "id": "rugby-rec",
+   "title": "Rugby at the Rec",
+   "date": "2026-10-10",
+   "strand": "sport",
+   "status": "planned",
+   "confidence": "estimated",
+   "society": "rugby",
+   "venue": "The Rec",
+   "call_time": "14:00",
+   "doors_time": "17:00",
+   "start_time": "19:45",
+   "end_time": "22:00",
+   "brief": "Arrive three hours before, and before gates open, so everyone knows their role and everything is set up. Three cameras minimum: gantry (roof), SU box, and one roaming which doubles for interviews. B-roll for the highlights video. De-rig kit can go home with someone, but travel back to campus together and check everything you brought is back.",
+   "roles": [
+    {
+     "id": "0d07c2b9-4649-52d6-9007-6f79c565c946",
+     "label": "PRODUCER",
+     "role": "producer",
+     "member": null,
+     "from": "14:00",
+     "to": "22:00"
+    },
+    {
+     "id": "c82f099c-282c-528f-82d3-941d9df5a987",
+     "label": "GANTRY",
+     "role": "camera",
+     "member": null,
+     "from": "16:00",
+     "to": "22:00"
+    },
+    {
+     "id": "1a03e3eb-e207-540c-8526-ccc5c5ac1e65",
+     "label": "SU BOX",
+     "role": "camera",
+     "member": null,
+     "from": "16:00",
+     "to": "22:00"
+    },
+    {
+     "id": "3ddf9ae7-7978-54ed-9cb2-fb5134111fd7",
+     "label": "ROAMING",
+     "role": "camera",
+     "member": null,
+     "from": "16:00",
+     "to": "22:00"
+    },
+    {
+     "id": "79857ab5-2945-5377-8a15-bf873372ba15",
+     "label": "INTERVIEW",
+     "role": "interview",
+     "member": null,
+     "from": "17:00",
+     "to": "19:30"
+    },
+    {
+     "id": "eae44a68-eb84-5373-ac8e-aab606ee493b",
+     "label": "AUDIO",
+     "role": "audio",
+     "member": null,
+     "from": "16:00",
+     "to": "22:00"
+    }
+   ],
+   "prep": [
+    {
+     "label": "Bus / driver sorted for kit to the venue",
+     "lead_days": 5,
+     "owner_role": "Head of Production"
+    },
+    {
+     "label": "Count kit back in at campus, not at the venue",
+     "lead_days": 0,
+     "owner_role": "Head of Tech"
+    }
+   ],
+   "deliverables": [
+    {
+     "title": "Rugby at the Rec highlights",
+     "kind": "highlight",
+     "due_offset": 3,
+     "nasta_category": "Best Sport"
+    },
+    {
+     "title": "Rec interviews",
+     "kind": "interview_clip",
+     "due_offset": 1
+    }
+   ],
+   "kit_needed": [
+    {
+     "id": "cam-fx3-1",
+     "qty": 1
+    },
+    {
+     "id": "cam-fx3-2",
+     "qty": 1
+    },
+    {
+     "id": "cam-a6400",
+     "qty": 1
+    },
+    {
+     "id": "lens-2470",
+     "qty": 1
+    },
+    {
+     "id": "tripod-1",
+     "qty": 1
+    },
+    {
+     "id": "tripod-2",
+     "qty": 1
+    },
+    {
+     "id": "aud-radio",
+     "qty": 1
+    },
+    {
+     "id": "aud-shotgun",
+     "qty": 1
+    },
+    {
+     "id": "mix-atem",
+     "qty": 1
+    },
+    {
+     "id": "media-sd",
+     "qty": 2
+    },
+    {
+     "id": "cable-sdi",
+     "qty": 1
+    }
+   ]
+  },
+  {
+   "id": "su-takeover",
+   "title": "SU Instagram takeover",
+   "date": "2026-10-10",
+   "strand": "social",
+   "status": "idea",
+   "confidence": "estimated",
+   "brief": "Section IVb — organise far in advance of a big event and post the day across their stories. Speak to Helen a few weeks ahead. Pinned to Rugby at the Rec.",
+   "roles": [
+    {
+     "id": "6f7fc1fa-ccee-5ac7-8fbf-3325ea74fbcc",
+     "label": "POSTING",
+     "role": "producer",
+     "member": null
+    }
+   ],
+   "prep": [
+    {
+     "label": "Agree the date with Helen",
+     "lead_days": 21,
+     "owner_role": "Head of Marketing"
+    }
+   ]
+  },
+  {
+   "id": "alumni-1",
+   "title": "Alumni fund — window 1",
+   "date": "2026-11-06",
+   "strand": "admin",
+   "status": "planned",
+   "confidence": "estimated",
+   "brief": "Section IIId — opens around October/November, and again in January. The later you apply the later the money arrives. Look through Peter's previous applications. Portray a need and how it benefits the group.",
+   "roles": [
+    {
+     "id": "ebcbe0c9-ae88-5dd5-9cf3-afdebfc14c62",
+     "label": "APPLICATION",
+     "role": "producer",
+     "member": null
+    }
+   ],
+   "prep": [
+    {
+     "label": "Confirm the exact dates with Helen and Angus",
+     "lead_days": 21,
+     "owner_role": "Station Manager"
+    },
+    {
+     "label": "Read Peter's previous applications",
+     "lead_days": 14,
+     "owner_role": "Station Manager"
+    }
+   ]
+  },
+  {
+   "id": "movember",
+   "title": "Movember with Men's Rugby",
+   "date": "2026-11-14",
+   "strand": "society",
+   "status": "idea",
+   "confidence": "estimated",
+   "society": "rugby",
+   "brief": "They are always up for raising money. Do NOT repeat the serious sit-down format — they have done it before.",
+   "roles": [
+    {
+     "id": "4315dfc5-11f6-5c98-bbe2-30fe8483e5fd",
+     "label": "CAM OP",
+     "role": "camera",
+     "member": null
+    },
+    {
+     "id": "5e3aa3cc-3ed2-51a9-bd4b-f61b48f878e6",
+     "label": "INTERVIEW",
+     "role": "interview",
+     "member": null
+    }
+   ]
+  },
+  {
+   "id": "ntd",
+   "title": "National Television Day",
+   "date": "2026-11-21",
+   "strand": "studio",
+   "status": "idea",
+   "confidence": "fixed",
+   "brief": "Section If, in full: 'Please do something its on the 21st of November.' Nothing planned yet.",
+   "roles": []
+  },
+  {
+   "id": "bbc-trip",
+   "title": "NaSTA BBC trip — London",
+   "date": "2026-11-25",
+   "strand": "awards",
+   "status": "idea",
+   "confidence": "estimated",
+   "brief": "Section VId — keep your eyes peeled on the NaSTA group chats, they run BBC trips in November. Advertise to the general chat and organise group travel by train.",
+   "roles": [
+    {
+     "id": "9fc030b3-c060-59e9-805f-2481ad4dce3c",
+     "label": "ORGANISER",
+     "role": "producer",
+     "member": null
+    }
+   ]
+  },
+  {
+   "id": "snowball",
+   "title": "Snowball",
+   "date": "2026-12-04",
+   "strand": "ball",
+   "status": "planned",
+   "confidence": "estimated",
+   "venue": "Founders Hall",
+   "call_time": "20:00",
+   "start_time": "21:00",
+   "end_time": "23:59",
+   "brief": "Section Ie — B-roll for a montage. Interviews optional, the team decides.",
+   "roles": [
+    {
+     "id": "f3032839-384f-5dba-8306-cb6d540df834",
+     "label": "CAM OP",
+     "role": "camera",
+     "member": null,
+     "from": "21:00",
+     "to": "23:59"
+    },
+    {
+     "id": "39194954-cc9e-53ae-bd42-5a180563b546",
+     "label": "CAM OP",
+     "role": "camera",
+     "member": null,
+     "from": "21:00",
+     "to": "23:59"
+    }
+   ],
+   "deliverables": [
+    {
+     "title": "Snowball montage",
+     "kind": "highlight",
+     "due_offset": 4
+    }
+   ]
+  },
+  {
+   "id": "alumni-2",
+   "title": "Alumni fund — window 2",
+   "date": "2027-01-15",
+   "strand": "admin",
+   "status": "planned",
+   "confidence": "estimated",
+   "brief": "The January opening. Caela's view: unlikely to land two years running, but worth the application.",
+   "roles": [
+    {
+     "id": "b9843186-eec5-5ea9-82c6-7fcd6ecac315",
+     "label": "APPLICATION",
+     "role": "producer",
+     "member": null
+    }
+   ]
+  },
+  {
+   "id": "nasta-fee",
+   "title": "NaSTA membership fee due",
+   "date": "2027-01-29",
+   "strand": "awards",
+   "status": "planned",
+   "confidence": "estimated",
+   "brief": "Section VIa — an email lands in the ctvmanager account. Speak to the NaSTA Instagram or Helen if the payment gives trouble.",
+   "roles": [
+    {
+     "id": "095ab4f4-b8dc-56ad-8fe8-7f1ccecb8c8a",
+     "label": "PAYMENT",
+     "role": "producer",
+     "member": null
+    }
+   ]
+  },
+  {
+   "id": "bust-show",
+   "title": "BUST winter show",
+   "date": "2027-02-12",
+   "strand": "society",
+   "status": "idea",
+   "confidence": "estimated",
+   "society": "bust",
+   "roles": [
+    {
+     "id": "8e54fe3d-b6a5-5518-a56e-f0ec4a520168",
+     "label": "BACK CAM",
+     "role": "camera",
+     "member": null
+    },
+    {
+     "id": "43a4e6fe-0529-56e2-83e5-4f6d8c62dafc",
+     "label": "AUDIO",
+     "role": "audio",
+     "member": null
+    }
+   ]
+  },
+  {
+   "id": "masquerade",
+   "title": "Masquerade Ball",
+   "date": "2027-02-26",
+   "strand": "ball",
+   "status": "planned",
+   "confidence": "estimated",
+   "venue": "Founders Hall",
+   "call_time": "20:00",
+   "start_time": "21:00",
+   "end_time": "23:59",
+   "brief": "Section Ie — B-roll for a montage, interviews at the team's discretion.",
+   "roles": [
+    {
+     "id": "aa223724-9a76-5aa8-b49c-e13dcd6175d1",
+     "label": "CAM OP",
+     "role": "camera",
+     "member": null,
+     "from": "21:00",
+     "to": "23:59"
+    },
+    {
+     "id": "30b8d3a9-fe52-5196-815b-f7e068136a6b",
+     "label": "CAM OP",
+     "role": "camera",
+     "member": null,
+     "from": "21:00",
+     "to": "23:59"
+    }
+   ]
+  },
+  {
+   "id": "dancesoc",
+   "title": "Dance Soc showcase",
+   "date": "2027-03-05",
+   "strand": "society",
+   "status": "planned",
+   "confidence": "estimated",
+   "society": "dancesoc",
+   "venue": "The Edge",
+   "call_time": "18:00",
+   "start_time": "19:30",
+   "end_time": "22:00",
+   "brief": "Static camera on the back row, middle seats, with a mic picking up the room. Set it recording, leave, come back for it.",
+   "roles": [
+    {
+     "id": "0a842c64-0843-53fb-86e1-80c53365cfcb",
+     "label": "BACK CAM",
+     "role": "camera",
+     "member": null,
+     "from": "18:00",
+     "to": "22:00"
+    },
+    {
+     "id": "608264ad-6fc5-5315-8e45-84ef43376174",
+     "label": "AUDIO",
+     "role": "audio",
+     "member": null,
+     "from": "18:00",
+     "to": "19:30"
+    }
+   ]
+  },
+  {
+   "id": "varsity",
+   "title": "Varsity — Cardiff Met",
+   "date": "2027-03-20",
+   "strand": "sport",
+   "status": "planned",
+   "confidence": "estimated",
+   "venue": "Cardiff Met",
+   "brief": "Section Ig — set up a team, plan whether you are going, discuss plans with Cardiff Met. Caela's view: B-roll only, because the SU will not allow kit to travel that far.",
+   "roles": [
+    {
+     "id": "2b77ee3c-1768-5876-a801-83cdef278550",
+     "label": "LEAD",
+     "role": "producer",
+     "member": null
+    },
+    {
+     "id": "006dc823-0f87-5c94-83cd-a72c89a3eb33",
+     "label": "CAM OP",
+     "role": "camera",
+     "member": null
+    }
+   ]
+  },
+  {
+   "id": "nasta-submit",
+   "title": "NaSTA submissions close",
+   "date": "2027-04-02",
+   "strand": "awards",
+   "status": "planned",
+   "confidence": "estimated",
+   "brief": "Section VIe — read the export settings carefully and look up how to meet them. Getting this wrong costs awards and invalidates submissions. Submit for as many categories as possible.",
+   "roles": [
+    {
+     "id": "ff8868aa-a761-5d4f-bfe1-541eeb41c6f2",
+     "label": "SUBMISSIONS",
+     "role": "producer",
+     "member": null
+    }
+   ]
+  },
+  {
+   "id": "nasta-awards",
+   "title": "NaSTA Awards",
+   "date": "2027-04-17",
+   "strand": "awards",
+   "status": "planned",
+   "confidence": "estimated",
+   "brief": "Section VIf/VIg — advertise hard, it is not fun when nobody goes. Travel together, share an Airbnb, count everyone in and out. Nominations are announced beforehand but there are unannounced categories, so go regardless.",
+   "roles": [
+    {
+     "id": "fdbb76cb-547f-5d8d-aa8f-db03e8c36ae7",
+     "label": "ORGANISER",
+     "role": "producer",
+     "member": null
+    }
+   ],
+   "prep": [
+    {
+     "label": "Advertise to the wider media membership",
+     "lead_days": 42,
+     "owner_role": "Head of Marketing"
+    },
+    {
+     "label": "Group travel + accommodation booked",
+     "lead_days": 28,
+     "owner_role": "Station Manager"
+    },
+    {
+     "label": "Ask the exec what can be subsidised",
+     "lead_days": 35,
+     "owner_role": "Station Manager"
+    }
+   ]
+  },
+  {
+   "id": "summer-ball",
+   "title": "Summer Ball",
+   "date": "2027-06-12",
+   "strand": "ball",
+   "status": "planned",
+   "confidence": "estimated",
+   "venue": "Campus",
+   "call_time": "17:00",
+   "start_time": "19:00",
+   "end_time": "23:59",
+   "brief": "Section Ih — like a freshers arena night but one night, plus B-roll of the fair ground. SORT YOUR OWN TEAM'S ACCREDITATION.",
+   "roles": [
+    {
+     "id": "f745c9ce-703b-5999-ac29-a2ec7c8c968c",
+     "label": "VISION MIX",
+     "role": "vision_mix",
+     "member": null,
+     "from": "18:00",
+     "to": "23:59"
+    },
+    {
+     "id": "8440c457-d076-54d6-80de-8175b0b1b180",
+     "label": "PTZ",
+     "role": "ptz",
+     "member": null,
+     "from": "18:00",
+     "to": "23:59"
+    },
+    {
+     "id": "230acc9c-4900-587f-874a-d20ee0a9fc6c",
+     "label": "CAM OP",
+     "role": "camera",
+     "member": null,
+     "from": "19:00",
+     "to": "23:59"
+    },
+    {
+     "id": "eeaa36ab-cbd8-5efa-9b33-4c31cbb99008",
+     "label": "CAM OP",
+     "role": "camera",
+     "member": null,
+     "from": "19:00",
+     "to": "23:59"
+    },
+    {
+     "id": "95e94f95-e89c-5ccb-8c14-df409f6c929d",
+     "label": "INTERVIEW",
+     "role": "interview",
+     "member": null,
+     "from": "19:00",
+     "to": "22:00"
+    }
+   ]
+  },
+  {
+   "id": "handover",
+   "title": "Handover — next station manager",
+   "date": "2027-06-25",
+   "strand": "admin",
+   "status": "planned",
+   "confidence": "estimated",
+   "brief": "Section VII, Caela's closing note: securing a station manager for next year is the priority that keeps CTV alive. CTV OS exports the document.",
+   "roles": [
+    {
+     "id": "1c1e01b4-dafc-541a-902e-e285aa915be3",
+     "label": "LEAD",
+     "role": "producer",
+     "member": null
+    }
+   ],
+   "prep": [
+    {
+     "label": "Successor identified",
+     "lead_days": 60,
+     "owner_role": "Station Manager"
+    },
+    {
+     "label": "Export the playbook as next year's handover",
+     "lead_days": 7,
+     "owner_role": "Station Manager"
+    }
+   ]
+  }
+ ],
+ "tasks": [
+  {
+   "id": "outlook",
+   "title": "Get Helen to give you access to the ctvmanager mailbox",
+   "detail": "Log in to your own Outlook account, then open the other mailbox from there.",
+   "area": "setup",
+   "source": "Ia",
+   "owner_role": "Station Manager",
+   "anchor": "ww-fri",
+   "lead_days": 35,
+   "due": null,
+   "done": false
+  },
+  {
+   "id": "socials-audit",
+   "title": "Log into Instagram and YouTube and review the last few years",
+   "detail": "Caela will pass you the passwords. The whole committee needs Instagram access so they can post. Delete nothing from previous years — cover images are fine for neatening the feed.",
+   "area": "setup",
+   "source": "Ia",
+   "owner_role": "Station Manager",
+   "anchor": "ww-fri",
+   "lead_days": 35,
+   "due": null,
+   "done": false
+  },
+  {
+   "id": "drive-folder",
+   "title": "Make this year's Google Drive folder",
+   "detail": "Copy the structure of the last few years. Change the folder text colour on your laptop so you do not confuse it with last year's.",
+   "area": "setup",
+   "source": "Ia",
+   "owner_role": "Station Manager",
+   "anchor": "ww-fri",
+   "lead_days": 35,
+   "due": null,
+   "done": false
+  },
+  {
+   "id": "su-training",
+   "title": "Complete the SU leadership training",
+   "detail": "Dull, mandatory, and it is where the finance forms are explained.",
+   "area": "setup",
+   "source": "Ia",
+   "owner_role": "Station Manager",
+   "anchor": "ww-fri",
+   "lead_days": 42,
+   "due": null,
+   "done": false
+  },
+  {
+   "id": "finance-training",
+   "title": "Complete the mandatory finance training module",
+   "detail": "Section IIIa — required before you can start the role.",
+   "area": "money",
+   "source": "IIIa",
+   "owner_role": "Station Manager",
+   "anchor": "ww-fri",
+   "lead_days": 42,
+   "due": null,
+   "done": false
+  },
+  {
+   "id": "wa-committee",
+   "title": "Make the WhatsApp committee chat",
+   "detail": null,
+   "area": "setup",
+   "source": "Ia",
+   "owner_role": "Station Manager",
+   "anchor": "ww-fri",
+   "lead_days": 35,
+   "due": null,
+   "done": false
+  },
+  {
+   "id": "wa-community",
+   "title": "Make the CampusTV 2026/27 WhatsApp community and general chat",
+   "detail": "Monitor it for bots. Make the whole committee admin.",
+   "area": "setup",
+   "source": "Ia",
+   "owner_role": "Station Manager",
+   "anchor": "ww-fri",
+   "lead_days": 35,
+   "due": null,
+   "done": false
+  },
+  {
+   "id": "drive-access",
+   "title": "Add everyone to the Drive as a contributor",
+   "detail": "Ela needs manager so she can create marketing folders. Make sure everyone knows to upload edited AND unedited content, plus marketing material.",
+   "area": "setup",
+   "source": "Ia",
+   "owner_role": "Station Manager",
+   "anchor": "ww-fri",
+   "lead_days": 21,
+   "due": null,
+   "done": false
+  },
+  {
+   "id": "merch",
+   "title": "Order merch — joint order with the other media groups",
+   "detail": "T-shirts, hoodies, leaflets. Three to four weeks ahead. A joint order cuts the delivery cost.",
+   "area": "setup",
+   "source": "Ia",
+   "owner_role": "Station Manager",
+   "anchor": "ww-fri",
+   "lead_days": 28,
+   "due": null,
+   "done": false
+  },
+  {
+   "id": "fair-table",
+   "title": "Book the freshers fair table",
+   "detail": "The booking email lands in the ctvmanager inbox — watch for it.",
+   "area": "setup",
+   "source": "Ia",
+   "owner_role": "Station Manager",
+   "anchor": "ww-fri",
+   "lead_days": 35,
+   "due": null,
+   "done": false
+  },
+  {
+   "id": "sports-table",
+   "title": "Book the sports fair table",
+   "detail": "Section Ib is emphatic about being at this one: it is where livestreaming gets sold.",
+   "area": "setup",
+   "source": "Ia",
+   "owner_role": "Head of Sport",
+   "anchor": "ww-fri",
+   "lead_days": 35,
+   "due": null,
+   "done": false
+  },
+  {
+   "id": "qr",
+   "title": "Make the QR codes and test them on two phones",
+   "detail": "Three of them: the general group chat, the SU page to buy membership, and Instagram. Use a free generator. Test on two phones in case one fails.",
+   "area": "setup",
+   "source": "Ia",
+   "owner_role": "Head of Marketing",
+   "anchor": "ww-fri",
+   "lead_days": 7,
+   "due": null,
+   "done": false
+  },
+  {
+   "id": "stall-plan",
+   "title": "Plan the stall: sweets and TV trivia",
+   "detail": "Easy / medium / hard questions for 1 / 2 / 3 sweets. Keep the categories on a TV theme — the Office, Gossip Girl, Doctor Who — so it does not overlap with Filmsoc.",
+   "area": "setup",
+   "source": "Ia",
+   "owner_role": "Head of Marketing",
+   "anchor": "ww-fri",
+   "lead_days": 14,
+   "due": null,
+   "done": false
+  },
+  {
+   "id": "backstage-rig",
+   "title": "Speak to Backstage about the freshers rig",
+   "detail": "Note down every item you let them set up so no cable leaves with them. Cameras get rigged with you present.",
+   "area": "setup",
+   "source": "Ia",
+   "owner_role": "Head of Tech",
+   "anchor": "ww-fri",
+   "lead_days": 21,
+   "due": null,
+   "done": false
+  },
+  {
+   "id": "press-aaa",
+   "title": "Sort press access and AAA for the whole team",
+   "detail": null,
+   "area": "setup",
+   "source": "Ia",
+   "owner_role": "Station Manager",
+   "anchor": "ww-fri",
+   "lead_days": 14,
+   "due": null,
+   "done": false
+  },
+  {
+   "id": "sd-cards",
+   "title": "Check there are enough SD cards",
+   "detail": "One goes into the ATEM every arena night and gets emptied at 02:00.",
+   "area": "setup",
+   "source": "Ia",
+   "owner_role": "Head of Tech",
+   "anchor": "ww-fri",
+   "lead_days": 14,
+   "due": null,
+   "done": false
+  },
+  {
+   "id": "cam-mic-basics",
+   "title": "Give the team basic camera and mic training",
+   "detail": "Enough that they can go out and do interviews without you.",
+   "area": "training",
+   "source": "Ia",
+   "owner_role": "Head of Tech",
+   "anchor": "ww-fri",
+   "lead_days": 10,
+   "due": null,
+   "done": false
+  },
+  {
+   "id": "davinci",
+   "title": "Get everyone learning DaVinci and sending you what they make",
+   "detail": "It is free. The more of them who can edit, the more of pre- and post-production you can hand over when you are busy.",
+   "area": "training",
+   "source": "Ia",
+   "owner_role": "Station Manager",
+   "anchor": "ww-fri",
+   "lead_days": 21,
+   "due": null,
+   "done": false
+  },
+  {
+   "id": "delegate-freshers",
+   "title": "Delegate freshers coverage — who does what, and when",
+   "detail": "You need to know when everyone is back in Bath and moved in. Caela used ClickUp for this.",
+   "area": "setup",
+   "source": "Ia",
+   "owner_role": "Station Manager",
+   "anchor": "ww-fri",
+   "lead_days": 21,
+   "due": null,
+   "done": false
+  },
+  {
+   "id": "meet-committee-post",
+   "title": "Put up the meet-the-committee post",
+   "detail": "The week before freshers.",
+   "area": "socials",
+   "source": "Ia",
+   "owner_role": "Head of Marketing",
+   "anchor": "ww-fri",
+   "lead_days": 7,
+   "due": null,
+   "done": false
+  },
+  {
+   "id": "social-sec",
+   "title": "Make sure the social sec advertises all the groups equally",
+   "detail": "Not just URB. If they will not, get Ela to make CTV adverts herself — she will need to be in contact with them either way.",
+   "area": "team",
+   "source": "Ia",
+   "owner_role": "Head of Marketing",
+   "anchor": "ww-fri",
+   "lead_days": 14,
+   "due": null,
+   "done": false
+  },
+  {
+   "id": "whats-on",
+   "title": "Check the SU what's-on page and decide what to cover in daytime freshers",
+   "detail": "Decide as a team. Do not over-commit — most of the team cannot edit yet and the arena night edits still have to happen alongside.",
+   "area": "setup",
+   "source": "Ib",
+   "owner_role": "Head of Production",
+   "anchor": "ww-fri",
+   "lead_days": 10,
+   "due": null,
+   "done": false
+  },
+  {
+   "id": "joe-split",
+   "title": "Agree with Joe Rumford which daytime events he is filming",
+   "detail": "So you are not both filming the same thing and posting reels about it. He generally covers what he thinks you will miss.",
+   "area": "setup",
+   "source": "Ib",
+   "owner_role": "Station Manager",
+   "anchor": "ww-fri",
+   "lead_days": 10,
+   "due": null,
+   "done": false
+  },
+  {
+   "id": "buffer",
+   "title": "Set up the free Buffer account",
+   "detail": "Posts to Instagram, Facebook, YouTube shorts and TikTok at once. You and Ela both need to be logged in and comfortable using it before freshers.",
+   "area": "socials",
+   "source": "IVa",
+   "owner_role": "Head of Marketing",
+   "anchor": "ww-fri",
+   "lead_days": 14,
+   "due": null,
+   "done": false
+  },
+  {
+   "id": "interview-qs",
+   "title": "Write the interview questions",
+   "detail": "Nothing that insults the SU, promotes drugs or anything illegal. Lighthearted and fun. New questions for arena nights so it does not look like the same two people.",
+   "area": "setup",
+   "source": "Ib",
+   "owner_role": "Head of Production",
+   "anchor": "ww-fri",
+   "lead_days": 5,
+   "due": null,
+   "done": false
+  },
+  {
+   "id": "training-assist",
+   "title": "Get 2–3 of the team confident enough to teach",
+   "detail": "They need to be able to assist at training and answer questions, not just attend.",
+   "area": "training",
+   "source": "Ic",
+   "owner_role": "Head of Tech",
+   "anchor": null,
+   "lead_days": null,
+   "due": "2026-09-28",
+   "done": false
+  },
+  {
+   "id": "su-takeover",
+   "title": "Schedule an SU takeover around a big event",
+   "detail": "Rugby at the Rec, fight night or a livestream. It is their stories, so plan what you show.",
+   "area": "socials",
+   "source": "Ic",
+   "owner_role": "Head of Marketing",
+   "anchor": null,
+   "lead_days": null,
+   "due": "2026-10-01",
+   "done": false
+  },
+  {
+   "id": "event-chats",
+   "title": "Make a WhatsApp group chat for each event",
+   "detail": null,
+   "area": "team",
+   "source": "Ic",
+   "owner_role": "Head of Production",
+   "anchor": null,
+   "lead_days": null,
+   "due": "2026-09-28",
+   "done": false
+  },
+  {
+   "id": "kit-system",
+   "title": "Put the kit check-in / check-out system in place",
+   "detail": "Head of Tech owns it. You need to know what is booked out, when it leaves and when it comes back. Ask Peter — he has thoughts on this.",
+   "area": "training",
+   "source": "Ic",
+   "owner_role": "Head of Tech",
+   "anchor": null,
+   "lead_days": null,
+   "due": "2026-10-05",
+   "done": false
+  },
+  {
+   "id": "finance-forms",
+   "title": "Find the finance forms and read Caela's examples",
+   "detail": "thesubath.com/finance/interactive_forms — and her old emails show what a filled-in one looks like. Ask Helen if you cannot find a finance code.",
+   "area": "money",
+   "source": "IIIa",
+   "owner_role": "Station Manager",
+   "anchor": null,
+   "lead_days": null,
+   "due": "2026-09-14",
+   "done": false
+  },
+  {
+   "id": "finance-system",
+   "title": "Learn the new finance system yourself",
+   "detail": "It is changing. Do not rely on the treasurer to know how much money you have left — they are often not on top of it.",
+   "area": "money",
+   "source": "IIIc",
+   "owner_role": "Station Manager",
+   "anchor": null,
+   "lead_days": null,
+   "due": "2026-10-05",
+   "done": false
+  },
+  {
+   "id": "membership-check",
+   "title": "Set up a way to check SU memberships before anyone touches kit",
+   "detail": "SU website → settings → media exec → memberships, cross-checked against the name list.",
+   "area": "money",
+   "source": "IIIb",
+   "owner_role": "Head of Tech",
+   "anchor": null,
+   "lead_days": null,
+   "due": "2026-09-28",
+   "done": false
+  },
+  {
+   "id": "borrow-scheme",
+   "title": "Ask Chris Lyons about the equipment borrowing scheme",
+   "detail": "He and Jade ran it — it let members rent kit safely for their own projects.",
+   "area": "money",
+   "source": "IIIb",
+   "owner_role": "Head of Tech",
+   "anchor": null,
+   "lead_days": null,
+   "due": "2026-10-19",
+   "done": false
+  },
+  {
+   "id": "alumni-dates",
+   "title": "Get the alumni fund dates from Helen and Angus",
+   "detail": "One window around October/November, one in January. The later you apply the later the money arrives. Read Peter's previous applications first.",
+   "area": "money",
+   "source": "IIId",
+   "owner_role": "Station Manager",
+   "anchor": null,
+   "lead_days": null,
+   "due": "2026-10-05",
+   "done": false
+  },
+  {
+   "id": "reimbursement",
+   "title": "Learn the claims flow well enough to teach it",
+   "detail": "The finance app is changing. You can claim back some or all of your NaSTA ticket, and you need to be able to show everyone else how.",
+   "area": "money",
+   "source": "IIIe",
+   "owner_role": "Station Manager",
+   "anchor": null,
+   "lead_days": null,
+   "due": "2026-11-02",
+   "done": false
+  },
+  {
+   "id": "budget-share",
+   "title": "Agree with the other media groups about sharing kit",
+   "detail": "Ours came out of our budget — they should ask, and vice versa.",
+   "area": "money",
+   "source": "IIIc",
+   "owner_role": "Station Manager",
+   "anchor": null,
+   "lead_days": null,
+   "due": "2026-10-12",
+   "done": false
+  },
+  {
+   "id": "linktree",
+   "title": "Update the linktree",
+   "detail": "Website, group chats, membership. Effective immediately once the new chats exist.",
+   "area": "socials",
+   "source": "IVb",
+   "owner_role": "Head of Marketing",
+   "anchor": "ww-fri",
+   "lead_days": 21,
+   "due": null,
+   "done": false
+  },
+  {
+   "id": "reel-covers",
+   "title": "Set up custom reel covers so the feed reads as one thing",
+   "detail": "Short form on Instagram, and use it to push people to YouTube for livestreams and long form.",
+   "area": "socials",
+   "source": "IVb",
+   "owner_role": "Head of Marketing",
+   "anchor": null,
+   "lead_days": null,
+   "due": "2026-10-12",
+   "done": false
+  },
+  {
+   "id": "su-website",
+   "title": "Update the CampusTV page on the SU website",
+   "detail": "Speak to Will Kitchen about how to edit it. This is how a lot of freshers find us, and the linktree points at it.",
+   "area": "socials",
+   "source": "IVd",
+   "owner_role": "Head of Marketing",
+   "anchor": "ww-fri",
+   "lead_days": 21,
+   "due": null,
+   "done": false
+  },
+  {
+   "id": "ctv-website",
+   "title": "Speak to Peter about the CTV website",
+   "detail": "He owns the domain now.",
+   "area": "socials",
+   "source": "IVe",
+   "owner_role": "Station Manager",
+   "anchor": null,
+   "lead_days": null,
+   "due": "2026-10-26",
+   "done": false
+  },
+  {
+   "id": "youtube",
+   "title": "Get livestreams and long-form onto YouTube",
+   "detail": "Treat YouTube shorts like Instagram reels — post the same content to build the channel.",
+   "area": "socials",
+   "source": "IVc",
+   "owner_role": "Head of Marketing",
+   "anchor": null,
+   "lead_days": null,
+   "due": "2026-11-09",
+   "done": false
+  },
+  {
+   "id": "roles-written",
+   "title": "Write down who handles what",
+   "detail": "Committee roles and per-event roles. This is the thing that prevents fallouts. Remember it is a society, not a job — adjust responsibility when interest wanes.",
+   "area": "team",
+   "source": "Va",
+   "owner_role": "Station Manager",
+   "anchor": "ww-fri",
+   "lead_days": 21,
+   "due": null,
+   "done": false
+  },
+  {
+   "id": "safeguarding",
+   "title": "Complete the safeguarding training",
+   "detail": "You are the HR if it is needed.",
+   "area": "team",
+   "source": "Vb",
+   "owner_role": "Station Manager",
+   "anchor": "ww-fri",
+   "lead_days": 30,
+   "due": null,
+   "done": false
+  },
+  {
+   "id": "speak-up",
+   "title": "Make sure the team know to tell you if something is off",
+   "detail": "Especially the women in leadership roles, and especially around Backstage. Caela was explicit about this.",
+   "area": "team",
+   "source": "Vb",
+   "owner_role": "Station Manager",
+   "anchor": "ww-fri",
+   "lead_days": 7,
+   "due": null,
+   "done": false
+  },
+  {
+   "id": "ctv-socials",
+   "title": "Decide whether to run CTV-only socials",
+   "detail": "Someone can take on a CTV social sec role alongside their main one if the group wants it.",
+   "area": "team",
+   "source": "Vc",
+   "owner_role": "Station Manager",
+   "anchor": null,
+   "lead_days": null,
+   "due": "2026-10-19",
+   "done": false
+  },
+  {
+   "id": "nasta-chats",
+   "title": "Join the NaSTA regional and main group chats",
+   "detail": "Caela cannot add you — message the NaSTA Instagram account for the links. The whole team can join everything except the station manager chat.",
+   "area": "nasta",
+   "source": "VIc",
+   "owner_role": "Station Manager",
+   "anchor": null,
+   "lead_days": null,
+   "due": "2026-10-12",
+   "done": false
+  },
+  {
+   "id": "nasta-categories",
+   "title": "Read the categories and plan projects to the spec",
+   "detail": "nasta.tv/awards, and there is a detailed PDF at the bottom of the page. Plan content to fit categories rather than hunting for entries in April.",
+   "area": "nasta",
+   "source": "VIb",
+   "owner_role": "Station Manager",
+   "anchor": null,
+   "lead_days": null,
+   "due": "2026-10-12",
+   "done": false
+  },
+  {
+   "id": "nasta-fee",
+   "title": "Pay the NaSTA membership fee",
+   "detail": "The email lands in the ctvmanager account. If the payment gives trouble, message the NaSTA Instagram or ask Helen.",
+   "area": "nasta",
+   "source": "VIa",
+   "owner_role": "Station Manager",
+   "anchor": null,
+   "lead_days": null,
+   "due": "2027-01-29",
+   "done": false
+  },
+  {
+   "id": "nasta-exports",
+   "title": "Check every submission against the export settings",
+   "detail": "Getting this wrong costs you awards and can invalidate the entry. The settings are in the PDF; ask the NaSTA team if anything is unclear.",
+   "area": "nasta",
+   "source": "VIe",
+   "owner_role": "Station Manager",
+   "anchor": "nasta-submit",
+   "lead_days": 14,
+   "due": null,
+   "done": false
+  },
+  {
+   "id": "nasta-maximise",
+   "title": "Submit for as many categories as possible",
+   "detail": "It is the only lever you have on the odds.",
+   "area": "nasta",
+   "source": "VIe",
+   "owner_role": "Station Manager",
+   "anchor": "nasta-submit",
+   "lead_days": 0,
+   "due": null,
+   "done": false
+  },
+  {
+   "id": "nasta-advertise",
+   "title": "Advertise the awards hard, early",
+   "detail": "It genuinely is not fun when nobody goes. Push it to everyone who was involved and to the wider media membership. Nominations come out beforehand, but there are unannounced categories — do not let a quiet nominations list put people off.",
+   "area": "nasta",
+   "source": "VIf",
+   "owner_role": "Head of Marketing",
+   "anchor": "nasta-awards",
+   "lead_days": 42,
+   "due": null,
+   "done": false
+  },
+  {
+   "id": "nasta-travel",
+   "title": "Book group travel and a shared Airbnb",
+   "detail": "Everyone together so you can look after each other. Count the number leaving and the number coming back — people wander off when there is alcohol.",
+   "area": "nasta",
+   "source": "VIg",
+   "owner_role": "Station Manager",
+   "anchor": "nasta-awards",
+   "lead_days": 28,
+   "due": null,
+   "done": false
+  },
+  {
+   "id": "nasta-subsidy",
+   "title": "Ask the exec what can be subsidised",
+   "detail": "Tickets certainly, accommodation possibly — Helen will know whether the budget can cover it.",
+   "area": "nasta",
+   "source": "VIg",
+   "owner_role": "Station Manager",
+   "anchor": "nasta-awards",
+   "lead_days": 35,
+   "due": null,
+   "done": false
+  },
+  {
+   "id": "successor",
+   "title": "Secure a station manager for next year",
+   "detail": "Caela's closing note names this as the priority that keeps CampusTV alive. Start looking long before you need to.",
+   "area": "legacy",
+   "source": "VII",
+   "owner_role": "Station Manager",
+   "anchor": "handover",
+   "lead_days": 60,
+   "due": null,
+   "done": false
+  },
+  {
+   "id": "write-handover",
+   "title": "Write next year's handover",
+   "detail": "CTV OS can export it from everything logged during the year, but it still needs your judgement on top.",
+   "area": "legacy",
+   "source": "VII",
+   "owner_role": "Station Manager",
+   "anchor": "handover",
+   "lead_days": 7,
+   "due": null,
+   "done": false
+  },
+  {
+   "id": "peter-notes",
+   "title": "Chase Peter for his section of the handover",
+   "detail": "Section VIII is still 'TBC when he has time'. He has run the station three times and has the kit check-in/check-out system in his head.",
+   "area": "legacy",
+   "source": "VIII",
+   "owner_role": "Station Manager",
+   "anchor": null,
+   "lead_days": null,
+   "due": "2026-09-21",
+   "done": false
+  }
+ ],
+ "role_descriptions": {
+  "committee": [
+   {
+    "role": "Station Manager",
+    "desc": "Oversees event organisation, kit purchase, liaising with societies, team management, NaSTA submissions and award attendance."
+   },
+   {
+    "role": "Head of Production",
+    "desc": "Runs events with the station manager, or alone if they are unavailable. Organises the role call for events and sorts the team on the day's roles. Can lead project and content-strategy meetings."
+   },
+   {
+    "role": "Head of Tech",
+    "desc": "Kit hire, kit logs and what gets booked out, risk-assessment forms for events, and maintenance of kit in general — keeping everything in its right place."
+   },
+   {
+    "role": "Head of Marketing",
+    "desc": "Handles socials, promotion of our work and events, and the society in general."
+   },
+   {
+    "role": "Head of Sport",
+    "desc": "Handles sports events and comms with the groups — building relationships to get us into more sports, and staying aware of events we can cover."
+   }
   ],
-  "contacts": [
-    {
-      "name": "Helen",
-      "org": "SU",
-      "role": "Media Executive",
-      "what_for": "Finance codes, event planners, risk assessments, alumni fund, Instagram takeovers, NaSTA membership payment"
-    },
-    {
-      "name": "Joe Rumford",
-      "org": "SU",
-      "role": "Content",
-      "what_for": "Covers daytime SU events. Agree the split so you are not both filming the same thing"
-    },
-    {
-      "name": "Will Kitchen",
-      "org": "SU",
-      "role": null,
-      "what_for": "Editing the CampusTV page on the SU website"
-    },
-    {
-      "name": "Angus",
-      "org": "SU",
-      "role": "President",
-      "what_for": "Alumni fund dates"
-    },
-    {
-      "name": "Chris Lyons",
-      "org": "CampusTV",
-      "role": "Alumnus",
-      "what_for": "The member equipment-borrowing scheme he and Jade ran"
-    },
-    {
-      "name": "Peter",
-      "org": "CampusTV",
-      "role": "Former Station Manager (x3)",
-      "what_for": "Owns the CTV domain. Kit check-in/check-out system"
-    },
-    {
-      "name": "Caela",
-      "org": "CampusTV",
-      "role": "Former Station Manager",
-      "what_for": "Wrote this handover. Message her if stuck"
-    },
-    {
-      "name": "John Lucas",
-      "org": "CampusTV",
-      "role": null,
-      "what_for": "PTZ controller, if around"
-    }
-  ],
-  "societies": [
-    {
-      "id": "rugby",
-      "name": "Men's Rugby",
-      "standing_terms": "Rugby at the Rec in October is the main fixture. Befriend the chair — it buys you practice filming at ordinary matches, and you can hand them the footage afterwards.",
-      "cautions": "They have done a serious sit-down format for Movember before. Do not repeat it. They are up for anything that raises money.",
-      "charge_policy": "Not charged."
-    },
-    {
-      "id": "sport",
-      "name": "SU Sport (general)",
-      "standing_terms": "Liaise through the SU sport leads and the media exec. One named person on your team owns all comms with the SU and the rugby chair.",
-      "cautions": "Do not oversell a livestream while the team is still finding its feet — falling short after charging leaves them disgruntled.",
-      "charge_policy": "Generally free. Charge for big ticketed events they are earning from, e.g. kickboxing."
-    },
-    {
-      "id": "dancesoc",
-      "name": "Dance Soc",
-      "standing_terms": "Camera at the back of the theatre with a mic picking up the room — they want to hear the tap noises. Ask them to book the middle seats on the back row so you can set up there.",
-      "cautions": "NEVER take the sound desk feed. This was done once and it was wrong. Camera can be left static, recording, and collected afterwards.",
-      "charge_policy": "Not charged."
-    },
-    {
-      "id": "bust",
-      "name": "BUST / BUSMS",
-      "standing_terms": "BUST have their own camera now. BUSMS bring someone who makes DVDs from the footage. If they do ask, establish whether they want audience audio (mic on a camera at the back) or the sound desk feed — for BUST specifically.",
-      "cautions": null,
-      "charge_policy": "Ask."
-    },
-    {
-      "id": "backstage",
-      "name": "Backstage",
-      "standing_terms": "Freshers week and Summer Ball only. They charge for SDI reels — buy and mark up our own so the charge goes away.",
-      "cautions": "Log every item you let them rig so no cable or kit leaves with them. Cameras get set up with you present. They do not switch cameras or touch our kit during arena nights. Make sure the women on the team are respected and know to tell you if something is off.",
-      "charge_policy": "They charge us. Not the other way round."
-    }
-  ],
-  "prep_templates": [
-    {
-      "strand": "*",
-      "label": "Event planner + risk assessment to Helen",
-      "lead_days": 14,
-      "owner_role": "Head of Tech",
-      "detail": "Section Ic — the head of tech's job and their responsibility. Must be in at least two weeks before."
-    },
-    {
-      "strand": "*",
-      "label": "Kit booked out",
-      "lead_days": 3,
-      "owner_role": "Head of Tech"
-    },
-    {
-      "strand": "*",
-      "label": "Roles advertised in the group chat",
-      "lead_days": 10,
-      "owner_role": "Head of Production",
-      "detail": "Section Ic — the whole team advertises, not just you."
-    },
-    {
-      "strand": "sport",
-      "label": "Press passes / AAA names to SU Sport",
-      "lead_days": 7,
-      "owner_role": "Head of Sport"
-    },
-    {
-      "strand": "sport",
-      "label": "Agree interview slots with the chair",
-      "lead_days": 10,
-      "owner_role": "Head of Sport",
-      "detail": "Captains, coaches, and the opposing team if the SU sports officer can arrange it."
-    },
-    {
-      "strand": "freshers",
-      "label": "Merch order — joint with the other media groups",
-      "lead_days": 28,
-      "owner_role": "Station Manager",
-      "detail": "3–4 weeks prior. A joint order cuts delivery costs."
-    },
-    {
-      "strand": "freshers",
-      "label": "Book the freshers fair table",
-      "lead_days": 35,
-      "owner_role": "Station Manager",
-      "detail": "Watch the ctvmanager inbox for the booking email."
-    },
-    {
-      "strand": "freshers",
-      "label": "QR codes made and tested on two phones",
-      "lead_days": 7,
-      "owner_role": "Head of Marketing",
-      "detail": "General group chat, the SU membership page, and Instagram."
-    },
-    {
-      "strand": "freshers",
-      "label": "Press access / AAA for the whole team",
-      "lead_days": 14,
-      "owner_role": "Station Manager"
-    },
-    {
-      "strand": "ball",
-      "label": "Sort our own team's accreditation",
-      "lead_days": 21,
-      "owner_role": "Station Manager",
-      "detail": "Nobody does this for you."
-    },
-    {
-      "strand": "awards",
-      "label": "Check export settings against the NaSTA PDF",
-      "lead_days": 14,
-      "owner_role": "Station Manager",
-      "detail": "Getting this wrong invalidates the submission. Ask the NaSTA team if unsure."
-    }
-  ],
-  "events": [
-    {
-      "id": "results-day",
-      "title": "A-level results day post",
-      "date": "2026-08-13",
-      "strand": "social",
-      "status": "planned",
-      "confidence": "fixed",
-      "venue": null,
-      "brief": "Congratulate students and say we look forward to meeting them. Promo and tradition — Section Ia.",
-      "roles": [
-        {
-          "id": "b5575a31-64cb-552a-9905-a1a72e890720",
-          "label": "POST",
-          "role": "producer",
-          "member": "ela"
-        }
-      ],
-      "prep": [
-        {
-          "label": "Draft copy + graphic",
-          "lead_days": 3,
-          "owner_role": "Head of Marketing"
-        }
-      ]
-    },
-    {
-      "id": "hub-setup",
-      "title": "Media Hub set up and functional",
-      "date": "2026-09-11",
-      "strand": "admin",
-      "status": "planned",
-      "confidence": "estimated",
-      "venue": "Founders Hall Level 1",
-      "brief": "Section Ia, in bold: the hub has to be functional AHEAD of freshers week. Studio, editing area, gallery, storage.",
-      "roles": [
-        {
-          "id": "df0c9ae0-4457-591d-af55-26c3356b78ad",
-          "label": "LEAD",
-          "role": "producer",
-          "member": "will"
-        },
-        {
-          "id": "7fb0c5f3-4750-5708-a5d3-bda7a6ad47d2",
-          "label": "TECH",
-          "role": "producer",
-          "member": "jade"
-        },
-        {
-          "id": "3b923c96-d8ae-5d73-b92e-776d0da7cc4c",
-          "label": "TECH",
-          "role": "producer",
-          "member": null
-        }
-      ],
-      "prep": [
-        {
-          "label": "New Google Drive folder for the year",
-          "lead_days": 21,
-          "owner_role": "Station Manager"
-        },
-        {
-          "label": "Everyone added to the Drive as contributor",
-          "lead_days": 14,
-          "owner_role": "Station Manager",
-          "detail": "Ela needs manager so she can make marketing folders."
-        },
-        {
-          "label": "Enough SD cards in stock",
-          "lead_days": 14,
-          "owner_role": "Head of Tech"
-        },
-        {
-          "label": "SU leadership + finance training done",
-          "lead_days": 30,
-          "owner_role": "Station Manager"
-        }
-      ]
-    },
-    {
-      "id": "committee-1",
-      "title": "Committee meeting — freshers plan",
-      "date": "2026-09-14",
-      "strand": "admin",
-      "status": "planned",
-      "confidence": "estimated",
-      "venue": "Media Hub",
-      "brief": "Section Ia — get to know each other, then delegate freshers coverage: who is doing what, and when they are back in Bath.",
-      "roles": [
-        {
-          "id": "9e55ba2e-97bd-5b40-8150-0fb451c0afeb",
-          "label": "CHAIR",
-          "role": "producer",
-          "member": "will"
-        }
-      ],
-      "prep": [
-        {
-          "label": "Meet the committee post goes up",
-          "lead_days": -3,
-          "owner_role": "Head of Marketing",
-          "detail": "The week prior to freshers."
-        }
-      ]
-    },
-    {
-      "id": "ww-fri",
-      "title": "Welcome Weekend — Night 1",
-      "date": "2026-09-18",
-      "strand": "freshers",
-      "status": "planned",
-      "confidence": "fixed",
-      "venue": "Town",
-      "call_time": "22:00",
-      "start_time": "22:30",
-      "end_time": "00:30",
-      "brief": "Interviews with freshers from 22:30 for an hour or two, until enough usable content is gathered. Lighthearted questions, nothing that insults the SU or promotes anything illegal. Clips out the next day, 3 min max, swearing cut.",
-      "roles": [
-        {
-          "id": "8849ebbd-f486-59a2-8324-1b4e1b721d74",
-          "label": "INTERVIEW",
-          "role": "interview",
-          "member": "ela",
-          "from": "22:30",
-          "to": "00:30"
-        },
-        {
-          "id": "49dd90da-3636-52b7-83c5-48fe7eca21e9",
-          "label": "CAM OP",
-          "role": "camera",
-          "member": "nina",
-          "from": "22:30",
-          "to": "00:30"
-        }
-      ],
-      "deliverables": [
-        {
-          "title": "Welcome Weekend N1 interviews",
-          "kind": "interview_clip",
-          "due_offset": 1
-        }
-      ]
-    },
-    {
-      "id": "ww-sat",
-      "title": "Welcome Weekend — Night 2",
-      "date": "2026-09-19",
-      "strand": "freshers",
-      "status": "planned",
-      "confidence": "fixed",
-      "venue": "Campus",
-      "call_time": "22:00",
-      "start_time": "22:30",
-      "end_time": "00:30",
-      "brief": "Campus night. Two teams with kit, or alternate campus and town across the weekend.",
-      "roles": [
-        {
-          "id": "cb3c37b7-6af7-543f-a386-f0fe4a1fc140",
-          "label": "INTERVIEW",
-          "role": "interview",
-          "member": null,
-          "from": "22:30",
-          "to": "00:30"
-        },
-        {
-          "id": "b92584c4-cde1-564c-b9b2-0e04b4e32be7",
-          "label": "CAM OP",
-          "role": "camera",
-          "member": "theo",
-          "from": "22:30",
-          "to": "00:30"
-        }
-      ],
-      "deliverables": [
-        {
-          "title": "Welcome Weekend N2 interviews",
-          "kind": "interview_clip",
-          "due_offset": 1
-        }
-      ]
-    },
-    {
-      "id": "ww-sun",
-      "title": "Welcome Weekend — Night 3",
-      "date": "2026-09-20",
-      "strand": "freshers",
-      "status": "planned",
-      "confidence": "fixed",
-      "venue": "Campus",
-      "call_time": "22:00",
-      "start_time": "22:30",
-      "end_time": "00:30",
-      "roles": [
-        {
-          "id": "98cd017e-2f3f-54b8-b228-fbad6b848a16",
-          "label": "INTERVIEW",
-          "role": "interview",
-          "member": null,
-          "from": "22:30",
-          "to": "00:30"
-        },
-        {
-          "id": "d95fadbb-430c-5f7e-b581-7d38b1de1585",
-          "label": "CAM OP",
-          "role": "camera",
-          "member": null,
-          "from": "22:30",
-          "to": "00:30"
-        }
-      ],
-      "deliverables": [
-        {
-          "title": "Welcome Weekend N3 interviews",
-          "kind": "interview_clip",
-          "due_offset": 1
-        }
-      ]
-    },
-    {
-      "id": "freshers-fair",
-      "title": "Freshers Fair — stall",
-      "date": "2026-09-21",
-      "strand": "freshers",
-      "status": "planned",
-      "confidence": "estimated",
-      "venue": "Founders Hall",
-      "call_time": "09:00",
-      "start_time": "10:00",
-      "end_time": "16:00",
-      "brief": "Sweets to draw people in, plus TV trivia for prizes: easy / medium / hard = 1 / 2 / 3 sweets. Categories the Office, Gossip Girl, Doctor Who — keep it on the TV theme so it does not overlap with Filmsoc. Three QR codes on the table.",
-      "roles": [
-        {
-          "id": "a1ebe725-f080-584d-ba0d-7b2e8aa027da",
-          "label": "STALL",
-          "role": "producer",
-          "member": "will",
-          "from": "10:00",
-          "to": "16:00"
-        },
-        {
-          "id": "19cea439-52e0-5e7c-a77a-bda2a1e5686f",
-          "label": "STALL",
-          "role": "producer",
-          "member": "ela",
-          "from": "10:00",
-          "to": "16:00"
-        },
-        {
-          "id": "f8982830-1548-59c5-9bd6-5d1b0178cf0e",
-          "label": "INTERVIEW",
-          "role": "interview",
-          "member": null,
-          "from": "11:00",
-          "to": "15:00"
-        },
-        {
-          "id": "8154a479-7159-56df-a6be-3bd76b5f4768",
-          "label": "CAM OP",
-          "role": "camera",
-          "member": null,
-          "from": "11:00",
-          "to": "15:00"
-        }
-      ]
-    },
-    {
-      "id": "sports-fair",
-      "title": "Sports Fair — stall",
-      "date": "2026-09-22",
-      "strand": "freshers",
-      "status": "planned",
-      "confidence": "estimated",
-      "venue": "STV",
-      "call_time": "09:30",
-      "start_time": "10:00",
-      "end_time": "16:00",
-      "brief": "Section Ib, in bold: be at the sports fair to advertise livestreaming and sports coverage. Roving pair asking clubs 'did you know CampusTV can livestream your matches?'",
-      "roles": [
-        {
-          "id": "e153a452-d6e6-5ddb-8429-249dd7c92569",
-          "label": "STALL",
-          "role": "producer",
-          "member": "sam",
-          "from": "10:00",
-          "to": "16:00"
-        },
-        {
-          "id": "35294a36-1d51-52bc-ae9f-3e5dd482408c",
-          "label": "STALL",
-          "role": "producer",
-          "member": null,
-          "from": "10:00",
-          "to": "16:00"
-        },
-        {
-          "id": "f50c62b1-11e7-5b8a-8a91-e701b1cb6a01",
-          "label": "INTERVIEW",
-          "role": "interview",
-          "member": null,
-          "from": "11:00",
-          "to": "15:00"
-        },
-        {
-          "id": "56af4abf-9a23-5b9f-a045-1750bd8db4c6",
-          "label": "CAM OP",
-          "role": "camera",
-          "member": null,
-          "from": "11:00",
-          "to": "15:00"
-        }
-      ]
-    },
-    {
-      "id": "arena-1",
-      "title": "Arena Night 1",
-      "date": "2026-09-21",
-      "strand": "freshers",
-      "status": "planned",
-      "confidence": "estimated",
-      "venue": "Founders Hall",
-      "call_time": "21:00",
-      "doors_time": "22:00",
-      "start_time": "22:00",
-      "end_time": "23:59",
-      "brief": "Interviews outside from 22:00 — new questions and a new interviewer each night so it does not look like the same two people. Vision mix and PTZ 22:00 till 02:00. SD card into the ATEM and record pressed. Upload from the hub PC at 02:00 so it is on the Drive to edit tomorrow.",
-      "roles": [
-        {
-          "id": "61ccf7c3-7031-543d-a8ef-8b195187a279",
-          "label": "VISION MIX",
-          "role": "vision_mix",
-          "member": "destin",
-          "from": "21:00",
-          "to": "23:59"
-        },
-        {
-          "id": "432bf341-596c-5a8b-978a-d0cfd910fb96",
-          "label": "PTZ",
-          "role": "ptz",
-          "member": "will",
-          "from": "21:00",
-          "to": "23:59"
-        },
-        {
-          "id": "80851278-3d51-5a70-b692-e50c493b7c53",
-          "label": "INTERVIEW",
-          "role": "interview",
-          "member": "ela",
-          "from": "22:00",
-          "to": "23:30"
-        },
-        {
-          "id": "95283516-efd2-56bf-b262-09f3953a215d",
-          "label": "INTERVIEW",
-          "role": "interview",
-          "member": "nina",
-          "from": "22:00",
-          "to": "23:30"
-        },
-        {
-          "id": "8b70da66-b1a2-58e7-9dc2-8c7fb9c5cca5",
-          "label": "CAM OP",
-          "role": "camera",
-          "member": "theo",
-          "from": "22:00",
-          "to": "23:30"
-        },
-        {
-          "id": "d1e63bfa-d5c4-55b1-b0df-09de17db6a58",
-          "label": "EDITOR",
-          "role": "editor",
-          "member": "ela",
-          "on_site": false
-        }
-      ],
-      "prep": [
-        {
-          "label": "SD card into the ATEM, record pressed",
-          "lead_days": 0,
-          "owner_role": "Head of Tech"
-        },
-        {
-          "label": "Rig with Backstage — log every item they touch",
-          "lead_days": 1,
-          "owner_role": "Head of Tech"
-        },
-        {
-          "label": "Arena-night graphics from Helen",
-          "lead_days": 7,
-          "owner_role": "Head of Marketing",
-          "detail": "See the 2024 freshers week folder for last year's."
-        }
-      ],
-      "deliverables": [
-        {
-          "title": "Arena Night 1 highlight",
-          "kind": "highlight",
-          "due_offset": 1
-        },
-        {
-          "title": "Arena Night 1 interviews",
-          "kind": "interview_clip",
-          "due_offset": 1
-        }
-      ]
-    },
-    {
-      "id": "arena-2",
-      "title": "Arena Night 2",
-      "date": "2026-09-23",
-      "strand": "freshers",
-      "status": "planned",
-      "confidence": "estimated",
-      "venue": "Founders Hall",
-      "call_time": "21:00",
-      "doors_time": "22:00",
-      "start_time": "22:00",
-      "end_time": "23:59",
-      "roles": [
-        {
-          "id": "a0d286a7-9b3f-597c-add0-a145e7970334",
-          "label": "VISION MIX",
-          "role": "vision_mix",
-          "member": "destin",
-          "from": "21:00",
-          "to": "23:59"
-        },
-        {
-          "id": "cd53e4bc-1e28-59be-99d8-0268d131c60d",
-          "label": "PTZ",
-          "role": "ptz",
-          "member": null,
-          "from": "21:00",
-          "to": "23:59"
-        },
-        {
-          "id": "eae3169a-7df6-579e-8455-9526aa229c1b",
-          "label": "INTERVIEW",
-          "role": "interview",
-          "member": "nina",
-          "from": "22:00",
-          "to": "23:30"
-        },
-        {
-          "id": "d6936757-b39a-5303-8f81-72cfc458ee96",
-          "label": "INTERVIEW",
-          "role": "interview",
-          "member": null,
-          "from": "22:00",
-          "to": "23:30"
-        },
-        {
-          "id": "941ec73f-427f-5844-86b4-412e74e47f46",
-          "label": "CAM OP",
-          "role": "camera",
-          "member": "theo",
-          "from": "22:00",
-          "to": "23:30"
-        },
-        {
-          "id": "40856325-1dc2-57ab-841a-349dced21d75",
-          "label": "EDITOR",
-          "role": "editor",
-          "member": null,
-          "on_site": false
-        }
-      ],
-      "deliverables": [
-        {
-          "title": "Arena Night 2 highlight",
-          "kind": "highlight",
-          "due_offset": 1
-        }
-      ]
-    },
-    {
-      "id": "arena-3",
-      "title": "Arena Night 3",
-      "date": "2026-09-25",
-      "strand": "freshers",
-      "status": "planned",
-      "confidence": "estimated",
-      "venue": "Founders Hall",
-      "call_time": "21:00",
-      "doors_time": "22:00",
-      "start_time": "22:00",
-      "end_time": "23:59",
-      "roles": [
-        {
-          "id": "98e79e98-f6c5-5864-ab08-65515eb67b08",
-          "label": "VISION MIX",
-          "role": "vision_mix",
-          "member": "will",
-          "from": "21:00",
-          "to": "23:59"
-        },
-        {
-          "id": "61d48d99-8e04-576d-b3ad-0bd45892ffea",
-          "label": "PTZ",
-          "role": "ptz",
-          "member": "destin",
-          "from": "21:00",
-          "to": "23:59"
-        },
-        {
-          "id": "eeabe22d-98b4-5a9b-9682-4061436303f1",
-          "label": "INTERVIEW",
-          "role": "interview",
-          "member": null,
-          "from": "22:00",
-          "to": "23:30"
-        },
-        {
-          "id": "56ced8ee-c2ba-5d7c-985f-fca6a454c0bd",
-          "label": "INTERVIEW",
-          "role": "interview",
-          "member": null,
-          "from": "22:00",
-          "to": "23:30"
-        },
-        {
-          "id": "6a6affcf-cd28-538e-b434-4c2ca5d7eef3",
-          "label": "CAM OP",
-          "role": "camera",
-          "member": null,
-          "from": "22:00",
-          "to": "23:30"
-        },
-        {
-          "id": "5894638a-e32a-5082-b687-cb1a5cf4cff4",
-          "label": "EDITOR",
-          "role": "editor",
-          "member": null,
-          "on_site": false
-        }
-      ],
-      "deliverables": [
-        {
-          "title": "Arena Night 3 highlight",
-          "kind": "highlight",
-          "due_offset": 1
-        }
-      ]
-    },
-    {
-      "id": "arena-4",
-      "title": "Arena Night 4",
-      "date": "2026-09-26",
-      "strand": "freshers",
-      "status": "planned",
-      "confidence": "estimated",
-      "venue": "Founders Hall",
-      "call_time": "21:00",
-      "doors_time": "22:00",
-      "start_time": "22:00",
-      "end_time": "23:59",
-      "roles": [
-        {
-          "id": "3d3cf148-f8e5-5b59-9eb5-86a9ee202340",
-          "label": "VISION MIX",
-          "role": "vision_mix",
-          "member": "destin",
-          "from": "21:00",
-          "to": "23:59"
-        },
-        {
-          "id": "4ed4b014-f9f6-5248-9617-c5154255e3a7",
-          "label": "PTZ",
-          "role": "ptz",
-          "member": null,
-          "from": "21:00",
-          "to": "23:59"
-        },
-        {
-          "id": "cabd04f8-a4cb-5a86-9217-15e9ae58c5be",
-          "label": "INTERVIEW",
-          "role": "interview",
-          "member": "ela",
-          "from": "22:00",
-          "to": "23:30"
-        },
-        {
-          "id": "552618aa-ddb7-5f70-94ca-25029a851a24",
-          "label": "INTERVIEW",
-          "role": "interview",
-          "member": null,
-          "from": "22:00",
-          "to": "23:30"
-        },
-        {
-          "id": "53d7bde5-e1f1-5b10-9909-e91aa4f4f698",
-          "label": "CAM OP",
-          "role": "camera",
-          "member": null,
-          "from": "22:00",
-          "to": "23:30"
-        },
-        {
-          "id": "9dc5e082-8ec6-520f-a9f9-569c1e1a3c4c",
-          "label": "EDITOR",
-          "role": "editor",
-          "member": "nina",
-          "on_site": false
-        }
-      ]
-    },
-    {
-      "id": "camera-training",
-      "title": "Camera training — new members",
-      "date": "2026-09-30",
-      "strand": "training",
-      "status": "planned",
-      "confidence": "estimated",
-      "venue": "Media Hub",
-      "start_time": "14:00",
-      "end_time": "17:00",
-      "brief": "The week after freshers, while the interest is still fresh. Membership required to attend — check the SU list. 2–3 of the team confident enough to assist and answer questions.",
-      "roles": [
-        {
-          "id": "fe9c5262-a467-534d-8865-7c9e16db48ad",
-          "label": "LEAD",
-          "role": "producer",
-          "member": "jade"
-        },
-        {
-          "id": "8b662674-4c89-579e-a8a3-266b2a0c8458",
-          "label": "ASSIST",
-          "role": "producer",
-          "member": null
-        },
-        {
-          "id": "4ad15df6-1f93-532b-99d7-088c5fe452fe",
-          "label": "ASSIST",
-          "role": "producer",
-          "member": null
-        }
-      ],
-      "prep": [
-        {
-          "label": "Cross-check attendee memberships on the SU site",
-          "lead_days": 2,
-          "owner_role": "Station Manager"
-        }
-      ]
-    },
-    {
-      "id": "edit-training",
-      "title": "Editing training — DaVinci",
-      "date": "2026-10-07",
-      "strand": "training",
-      "status": "planned",
-      "confidence": "estimated",
-      "venue": "Edge digital suite",
-      "start_time": "14:00",
-      "end_time": "16:00",
-      "brief": "DaVinci because it is free. Members can equally learn at home on Drive material — but they must not have delete access to the footage.",
-      "roles": [
-        {
-          "id": "a9c5d02b-0a30-58d3-9191-bd93fbba7b24",
-          "label": "LEAD",
-          "role": "producer",
-          "member": null
-        }
-      ]
-    },
-    {
-      "id": "rugby-rec",
-      "title": "Rugby at the Rec",
-      "date": "2026-10-10",
-      "strand": "sport",
-      "status": "planned",
-      "confidence": "estimated",
-      "society": "rugby",
-      "venue": "The Rec",
-      "call_time": "14:00",
-      "doors_time": "17:00",
-      "start_time": "19:45",
-      "end_time": "22:00",
-      "brief": "Arrive three hours before, and before gates open, so everyone knows their role and everything is set up. Three cameras minimum: gantry (roof), SU box, and one roaming which doubles for interviews. B-roll for the highlights video. De-rig kit can go home with someone, but travel back to campus together and check everything you brought is back.",
-      "roles": [
-        {
-          "id": "0d07c2b9-4649-52d6-9007-6f79c565c946",
-          "label": "PRODUCER",
-          "role": "producer",
-          "member": "will",
-          "from": "14:00",
-          "to": "22:00"
-        },
-        {
-          "id": "c82f099c-282c-528f-82d3-941d9df5a987",
-          "label": "GANTRY",
-          "role": "camera",
-          "member": null,
-          "from": "16:00",
-          "to": "22:00"
-        },
-        {
-          "id": "1a03e3eb-e207-540c-8526-ccc5c5ac1e65",
-          "label": "SU BOX",
-          "role": "camera",
-          "member": "destin",
-          "from": "16:00",
-          "to": "22:00"
-        },
-        {
-          "id": "3ddf9ae7-7978-54ed-9cb2-fb5134111fd7",
-          "label": "ROAMING",
-          "role": "camera",
-          "member": null,
-          "from": "16:00",
-          "to": "22:00"
-        },
-        {
-          "id": "79857ab5-2945-5377-8a15-bf873372ba15",
-          "label": "INTERVIEW",
-          "role": "interview",
-          "member": "sam",
-          "from": "17:00",
-          "to": "19:30"
-        },
-        {
-          "id": "eae44a68-eb84-5373-ac8e-aab606ee493b",
-          "label": "AUDIO",
-          "role": "audio",
-          "member": "jade",
-          "from": "16:00",
-          "to": "22:00"
-        }
-      ],
-      "prep": [
-        {
-          "label": "Bus / driver sorted for kit to the venue",
-          "lead_days": 5,
-          "owner_role": "Head of Production"
-        },
-        {
-          "label": "Count kit back in at campus, not at the venue",
-          "lead_days": 0,
-          "owner_role": "Head of Tech"
-        }
-      ],
-      "deliverables": [
-        {
-          "title": "Rugby at the Rec highlights",
-          "kind": "highlight",
-          "due_offset": 3,
-          "nasta_category": "Best Sport"
-        },
-        {
-          "title": "Rec interviews",
-          "kind": "interview_clip",
-          "due_offset": 1
-        }
-      ]
-    },
-    {
-      "id": "su-takeover",
-      "title": "SU Instagram takeover",
-      "date": "2026-10-10",
-      "strand": "social",
-      "status": "idea",
-      "confidence": "estimated",
-      "brief": "Section IVb — organise far in advance of a big event and post the day across their stories. Speak to Helen a few weeks ahead. Pinned to Rugby at the Rec.",
-      "roles": [
-        {
-          "id": "6f7fc1fa-ccee-5ac7-8fbf-3325ea74fbcc",
-          "label": "POSTING",
-          "role": "producer",
-          "member": null
-        }
-      ],
-      "prep": [
-        {
-          "label": "Agree the date with Helen",
-          "lead_days": 21,
-          "owner_role": "Head of Marketing"
-        }
-      ]
-    },
-    {
-      "id": "alumni-1",
-      "title": "Alumni fund — window 1",
-      "date": "2026-11-06",
-      "strand": "admin",
-      "status": "planned",
-      "confidence": "estimated",
-      "brief": "Section IIId — opens around October/November, and again in January. The later you apply the later the money arrives. Look through Peter's previous applications. Portray a need and how it benefits the group.",
-      "roles": [
-        {
-          "id": "ebcbe0c9-ae88-5dd5-9cf3-afdebfc14c62",
-          "label": "APPLICATION",
-          "role": "producer",
-          "member": "will"
-        }
-      ],
-      "prep": [
-        {
-          "label": "Confirm the exact dates with Helen and Angus",
-          "lead_days": 21,
-          "owner_role": "Station Manager"
-        },
-        {
-          "label": "Read Peter's previous applications",
-          "lead_days": 14,
-          "owner_role": "Station Manager"
-        }
-      ]
-    },
-    {
-      "id": "movember",
-      "title": "Movember with Men's Rugby",
-      "date": "2026-11-14",
-      "strand": "society",
-      "status": "idea",
-      "confidence": "estimated",
-      "society": "rugby",
-      "brief": "They are always up for raising money. Do NOT repeat the serious sit-down format — they have done it before.",
-      "roles": [
-        {
-          "id": "4315dfc5-11f6-5c98-bbe2-30fe8483e5fd",
-          "label": "CAM OP",
-          "role": "camera",
-          "member": null
-        },
-        {
-          "id": "5e3aa3cc-3ed2-51a9-bd4b-f61b48f878e6",
-          "label": "INTERVIEW",
-          "role": "interview",
-          "member": null
-        }
-      ]
-    },
-    {
-      "id": "ntd",
-      "title": "National Television Day",
-      "date": "2026-11-21",
-      "strand": "studio",
-      "status": "idea",
-      "confidence": "fixed",
-      "brief": "Section If, in full: 'Please do something its on the 21st of November.' Nothing planned yet.",
-      "roles": []
-    },
-    {
-      "id": "bbc-trip",
-      "title": "NaSTA BBC trip — London",
-      "date": "2026-11-25",
-      "strand": "awards",
-      "status": "idea",
-      "confidence": "estimated",
-      "brief": "Section VId — keep your eyes peeled on the NaSTA group chats, they run BBC trips in November. Advertise to the general chat and organise group travel by train.",
-      "roles": [
-        {
-          "id": "9fc030b3-c060-59e9-805f-2481ad4dce3c",
-          "label": "ORGANISER",
-          "role": "producer",
-          "member": null
-        }
-      ]
-    },
-    {
-      "id": "snowball",
-      "title": "Snowball",
-      "date": "2026-12-04",
-      "strand": "ball",
-      "status": "planned",
-      "confidence": "estimated",
-      "venue": "Founders Hall",
-      "call_time": "20:00",
-      "start_time": "21:00",
-      "end_time": "23:59",
-      "brief": "Section Ie — B-roll for a montage. Interviews optional, the team decides.",
-      "roles": [
-        {
-          "id": "f3032839-384f-5dba-8306-cb6d540df834",
-          "label": "CAM OP",
-          "role": "camera",
-          "member": null,
-          "from": "21:00",
-          "to": "23:59"
-        },
-        {
-          "id": "39194954-cc9e-53ae-bd42-5a180563b546",
-          "label": "CAM OP",
-          "role": "camera",
-          "member": null,
-          "from": "21:00",
-          "to": "23:59"
-        }
-      ],
-      "deliverables": [
-        {
-          "title": "Snowball montage",
-          "kind": "highlight",
-          "due_offset": 4
-        }
-      ]
-    },
-    {
-      "id": "alumni-2",
-      "title": "Alumni fund — window 2",
-      "date": "2027-01-15",
-      "strand": "admin",
-      "status": "planned",
-      "confidence": "estimated",
-      "brief": "The January opening. Caela's view: unlikely to land two years running, but worth the application.",
-      "roles": [
-        {
-          "id": "b9843186-eec5-5ea9-82c6-7fcd6ecac315",
-          "label": "APPLICATION",
-          "role": "producer",
-          "member": null
-        }
-      ]
-    },
-    {
-      "id": "nasta-fee",
-      "title": "NaSTA membership fee due",
-      "date": "2027-01-29",
-      "strand": "awards",
-      "status": "planned",
-      "confidence": "estimated",
-      "brief": "Section VIa — an email lands in the ctvmanager account. Speak to the NaSTA Instagram or Helen if the payment gives trouble.",
-      "roles": [
-        {
-          "id": "095ab4f4-b8dc-56ad-8fe8-7f1ccecb8c8a",
-          "label": "PAYMENT",
-          "role": "producer",
-          "member": "will"
-        }
-      ]
-    },
-    {
-      "id": "bust-show",
-      "title": "BUST winter show",
-      "date": "2027-02-12",
-      "strand": "society",
-      "status": "idea",
-      "confidence": "estimated",
-      "society": "bust",
-      "roles": [
-        {
-          "id": "8e54fe3d-b6a5-5518-a56e-f0ec4a520168",
-          "label": "BACK CAM",
-          "role": "camera",
-          "member": null
-        },
-        {
-          "id": "43a4e6fe-0529-56e2-83e5-4f6d8c62dafc",
-          "label": "AUDIO",
-          "role": "audio",
-          "member": null
-        }
-      ]
-    },
-    {
-      "id": "masquerade",
-      "title": "Masquerade Ball",
-      "date": "2027-02-26",
-      "strand": "ball",
-      "status": "planned",
-      "confidence": "estimated",
-      "venue": "Founders Hall",
-      "call_time": "20:00",
-      "start_time": "21:00",
-      "end_time": "23:59",
-      "brief": "Section Ie — B-roll for a montage, interviews at the team's discretion.",
-      "roles": [
-        {
-          "id": "aa223724-9a76-5aa8-b49c-e13dcd6175d1",
-          "label": "CAM OP",
-          "role": "camera",
-          "member": null,
-          "from": "21:00",
-          "to": "23:59"
-        },
-        {
-          "id": "30b8d3a9-fe52-5196-815b-f7e068136a6b",
-          "label": "CAM OP",
-          "role": "camera",
-          "member": null,
-          "from": "21:00",
-          "to": "23:59"
-        }
-      ]
-    },
-    {
-      "id": "dancesoc",
-      "title": "Dance Soc showcase",
-      "date": "2027-03-05",
-      "strand": "society",
-      "status": "planned",
-      "confidence": "estimated",
-      "society": "dancesoc",
-      "venue": "The Edge",
-      "call_time": "18:00",
-      "start_time": "19:30",
-      "end_time": "22:00",
-      "brief": "Static camera on the back row, middle seats, with a mic picking up the room. Set it recording, leave, come back for it.",
-      "roles": [
-        {
-          "id": "0a842c64-0843-53fb-86e1-80c53365cfcb",
-          "label": "BACK CAM",
-          "role": "camera",
-          "member": null,
-          "from": "18:00",
-          "to": "22:00"
-        },
-        {
-          "id": "608264ad-6fc5-5315-8e45-84ef43376174",
-          "label": "AUDIO",
-          "role": "audio",
-          "member": null,
-          "from": "18:00",
-          "to": "19:30"
-        }
-      ]
-    },
-    {
-      "id": "varsity",
-      "title": "Varsity — Cardiff Met",
-      "date": "2027-03-20",
-      "strand": "sport",
-      "status": "planned",
-      "confidence": "estimated",
-      "venue": "Cardiff Met",
-      "brief": "Section Ig — set up a team, plan whether you are going, discuss plans with Cardiff Met. Caela's view: B-roll only, because the SU will not allow kit to travel that far.",
-      "roles": [
-        {
-          "id": "2b77ee3c-1768-5876-a801-83cdef278550",
-          "label": "LEAD",
-          "role": "producer",
-          "member": null
-        },
-        {
-          "id": "006dc823-0f87-5c94-83cd-a72c89a3eb33",
-          "label": "CAM OP",
-          "role": "camera",
-          "member": null
-        }
-      ]
-    },
-    {
-      "id": "nasta-submit",
-      "title": "NaSTA submissions close",
-      "date": "2027-04-02",
-      "strand": "awards",
-      "status": "planned",
-      "confidence": "estimated",
-      "brief": "Section VIe — read the export settings carefully and look up how to meet them. Getting this wrong costs awards and invalidates submissions. Submit for as many categories as possible.",
-      "roles": [
-        {
-          "id": "ff8868aa-a761-5d4f-bfe1-541eeb41c6f2",
-          "label": "SUBMISSIONS",
-          "role": "producer",
-          "member": "will"
-        }
-      ]
-    },
-    {
-      "id": "nasta-awards",
-      "title": "NaSTA Awards",
-      "date": "2027-04-17",
-      "strand": "awards",
-      "status": "planned",
-      "confidence": "estimated",
-      "brief": "Section VIf/VIg — advertise hard, it is not fun when nobody goes. Travel together, share an Airbnb, count everyone in and out. Nominations are announced beforehand but there are unannounced categories, so go regardless.",
-      "roles": [
-        {
-          "id": "fdbb76cb-547f-5d8d-aa8f-db03e8c36ae7",
-          "label": "ORGANISER",
-          "role": "producer",
-          "member": "will"
-        }
-      ],
-      "prep": [
-        {
-          "label": "Advertise to the wider media membership",
-          "lead_days": 42,
-          "owner_role": "Head of Marketing"
-        },
-        {
-          "label": "Group travel + accommodation booked",
-          "lead_days": 28,
-          "owner_role": "Station Manager"
-        },
-        {
-          "label": "Ask the exec what can be subsidised",
-          "lead_days": 35,
-          "owner_role": "Station Manager"
-        }
-      ]
-    },
-    {
-      "id": "summer-ball",
-      "title": "Summer Ball",
-      "date": "2027-06-12",
-      "strand": "ball",
-      "status": "planned",
-      "confidence": "estimated",
-      "venue": "Campus",
-      "call_time": "17:00",
-      "start_time": "19:00",
-      "end_time": "23:59",
-      "brief": "Section Ih — like a freshers arena night but one night, plus B-roll of the fair ground. SORT YOUR OWN TEAM'S ACCREDITATION.",
-      "roles": [
-        {
-          "id": "f745c9ce-703b-5999-ac29-a2ec7c8c968c",
-          "label": "VISION MIX",
-          "role": "vision_mix",
-          "member": null,
-          "from": "18:00",
-          "to": "23:59"
-        },
-        {
-          "id": "8440c457-d076-54d6-80de-8175b0b1b180",
-          "label": "PTZ",
-          "role": "ptz",
-          "member": null,
-          "from": "18:00",
-          "to": "23:59"
-        },
-        {
-          "id": "230acc9c-4900-587f-874a-d20ee0a9fc6c",
-          "label": "CAM OP",
-          "role": "camera",
-          "member": null,
-          "from": "19:00",
-          "to": "23:59"
-        },
-        {
-          "id": "eeaa36ab-cbd8-5efa-9b33-4c31cbb99008",
-          "label": "CAM OP",
-          "role": "camera",
-          "member": null,
-          "from": "19:00",
-          "to": "23:59"
-        },
-        {
-          "id": "95e94f95-e89c-5ccb-8c14-df409f6c929d",
-          "label": "INTERVIEW",
-          "role": "interview",
-          "member": null,
-          "from": "19:00",
-          "to": "22:00"
-        }
-      ]
-    },
-    {
-      "id": "handover",
-      "title": "Handover — next station manager",
-      "date": "2027-06-25",
-      "strand": "admin",
-      "status": "planned",
-      "confidence": "estimated",
-      "brief": "Section VII, Caela's closing note: securing a station manager for next year is the priority that keeps CTV alive. CTV OS exports the document.",
-      "roles": [
-        {
-          "id": "1c1e01b4-dafc-541a-902e-e285aa915be3",
-          "label": "LEAD",
-          "role": "producer",
-          "member": "will"
-        }
-      ],
-      "prep": [
-        {
-          "label": "Successor identified",
-          "lead_days": 60,
-          "owner_role": "Station Manager"
-        },
-        {
-          "label": "Export the playbook as next year's handover",
-          "lead_days": 7,
-          "owner_role": "Station Manager"
-        }
-      ]
-    }
-  ],
-  "tasks": [
-    {
-      "id": "outlook",
-      "title": "Get Helen to give you access to the ctvmanager mailbox",
-      "detail": "Log in to your own Outlook account, then open the other mailbox from there.",
-      "area": "setup",
-      "source": "Ia",
-      "owner_role": "Station Manager",
-      "anchor": "ww-fri",
-      "lead_days": 35,
-      "due": null,
-      "done": false
-    },
-    {
-      "id": "socials-audit",
-      "title": "Log into Instagram and YouTube and review the last few years",
-      "detail": "Caela will pass you the passwords. The whole committee needs Instagram access so they can post. Delete nothing from previous years — cover images are fine for neatening the feed.",
-      "area": "setup",
-      "source": "Ia",
-      "owner_role": "Station Manager",
-      "anchor": "ww-fri",
-      "lead_days": 35,
-      "due": null,
-      "done": false
-    },
-    {
-      "id": "drive-folder",
-      "title": "Make this year's Google Drive folder",
-      "detail": "Copy the structure of the last few years. Change the folder text colour on your laptop so you do not confuse it with last year's.",
-      "area": "setup",
-      "source": "Ia",
-      "owner_role": "Station Manager",
-      "anchor": "ww-fri",
-      "lead_days": 35,
-      "due": null,
-      "done": false
-    },
-    {
-      "id": "su-training",
-      "title": "Complete the SU leadership training",
-      "detail": "Dull, mandatory, and it is where the finance forms are explained.",
-      "area": "setup",
-      "source": "Ia",
-      "owner_role": "Station Manager",
-      "anchor": "ww-fri",
-      "lead_days": 42,
-      "due": null,
-      "done": false
-    },
-    {
-      "id": "finance-training",
-      "title": "Complete the mandatory finance training module",
-      "detail": "Section IIIa — required before you can start the role.",
-      "area": "money",
-      "source": "IIIa",
-      "owner_role": "Station Manager",
-      "anchor": "ww-fri",
-      "lead_days": 42,
-      "due": null,
-      "done": false
-    },
-    {
-      "id": "wa-committee",
-      "title": "Make the WhatsApp committee chat",
-      "detail": null,
-      "area": "setup",
-      "source": "Ia",
-      "owner_role": "Station Manager",
-      "anchor": "ww-fri",
-      "lead_days": 35,
-      "due": null,
-      "done": false
-    },
-    {
-      "id": "wa-community",
-      "title": "Make the CampusTV 2026/27 WhatsApp community and general chat",
-      "detail": "Monitor it for bots. Make the whole committee admin.",
-      "area": "setup",
-      "source": "Ia",
-      "owner_role": "Station Manager",
-      "anchor": "ww-fri",
-      "lead_days": 35,
-      "due": null,
-      "done": false
-    },
-    {
-      "id": "drive-access",
-      "title": "Add everyone to the Drive as a contributor",
-      "detail": "Ela needs manager so she can create marketing folders. Make sure everyone knows to upload edited AND unedited content, plus marketing material.",
-      "area": "setup",
-      "source": "Ia",
-      "owner_role": "Station Manager",
-      "anchor": "ww-fri",
-      "lead_days": 21,
-      "due": null,
-      "done": false
-    },
-    {
-      "id": "merch",
-      "title": "Order merch — joint order with the other media groups",
-      "detail": "T-shirts, hoodies, leaflets. Three to four weeks ahead. A joint order cuts the delivery cost.",
-      "area": "setup",
-      "source": "Ia",
-      "owner_role": "Station Manager",
-      "anchor": "ww-fri",
-      "lead_days": 28,
-      "due": null,
-      "done": false
-    },
-    {
-      "id": "fair-table",
-      "title": "Book the freshers fair table",
-      "detail": "The booking email lands in the ctvmanager inbox — watch for it.",
-      "area": "setup",
-      "source": "Ia",
-      "owner_role": "Station Manager",
-      "anchor": "ww-fri",
-      "lead_days": 35,
-      "due": null,
-      "done": false
-    },
-    {
-      "id": "sports-table",
-      "title": "Book the sports fair table",
-      "detail": "Section Ib is emphatic about being at this one: it is where livestreaming gets sold.",
-      "area": "setup",
-      "source": "Ia",
-      "owner_role": "Head of Sport",
-      "anchor": "ww-fri",
-      "lead_days": 35,
-      "due": null,
-      "done": false
-    },
-    {
-      "id": "qr",
-      "title": "Make the QR codes and test them on two phones",
-      "detail": "Three of them: the general group chat, the SU page to buy membership, and Instagram. Use a free generator. Test on two phones in case one fails.",
-      "area": "setup",
-      "source": "Ia",
-      "owner_role": "Head of Marketing",
-      "anchor": "ww-fri",
-      "lead_days": 7,
-      "due": null,
-      "done": false
-    },
-    {
-      "id": "stall-plan",
-      "title": "Plan the stall: sweets and TV trivia",
-      "detail": "Easy / medium / hard questions for 1 / 2 / 3 sweets. Keep the categories on a TV theme — the Office, Gossip Girl, Doctor Who — so it does not overlap with Filmsoc.",
-      "area": "setup",
-      "source": "Ia",
-      "owner_role": "Head of Marketing",
-      "anchor": "ww-fri",
-      "lead_days": 14,
-      "due": null,
-      "done": false
-    },
-    {
-      "id": "backstage-rig",
-      "title": "Speak to Backstage about the freshers rig",
-      "detail": "Note down every item you let them set up so no cable leaves with them. Cameras get rigged with you present.",
-      "area": "setup",
-      "source": "Ia",
-      "owner_role": "Head of Tech",
-      "anchor": "ww-fri",
-      "lead_days": 21,
-      "due": null,
-      "done": false
-    },
-    {
-      "id": "press-aaa",
-      "title": "Sort press access and AAA for the whole team",
-      "detail": null,
-      "area": "setup",
-      "source": "Ia",
-      "owner_role": "Station Manager",
-      "anchor": "ww-fri",
-      "lead_days": 14,
-      "due": null,
-      "done": false
-    },
-    {
-      "id": "sd-cards",
-      "title": "Check there are enough SD cards",
-      "detail": "One goes into the ATEM every arena night and gets emptied at 02:00.",
-      "area": "setup",
-      "source": "Ia",
-      "owner_role": "Head of Tech",
-      "anchor": "ww-fri",
-      "lead_days": 14,
-      "due": null,
-      "done": false
-    },
-    {
-      "id": "cam-mic-basics",
-      "title": "Give the team basic camera and mic training",
-      "detail": "Enough that they can go out and do interviews without you.",
-      "area": "training",
-      "source": "Ia",
-      "owner_role": "Head of Tech",
-      "anchor": "ww-fri",
-      "lead_days": 10,
-      "due": null,
-      "done": false
-    },
-    {
-      "id": "davinci",
-      "title": "Get everyone learning DaVinci and sending you what they make",
-      "detail": "It is free. The more of them who can edit, the more of pre- and post-production you can hand over when you are busy.",
-      "area": "training",
-      "source": "Ia",
-      "owner_role": "Station Manager",
-      "anchor": "ww-fri",
-      "lead_days": 21,
-      "due": null,
-      "done": false
-    },
-    {
-      "id": "delegate-freshers",
-      "title": "Delegate freshers coverage — who does what, and when",
-      "detail": "You need to know when everyone is back in Bath and moved in. Caela used ClickUp for this.",
-      "area": "setup",
-      "source": "Ia",
-      "owner_role": "Station Manager",
-      "anchor": "ww-fri",
-      "lead_days": 21,
-      "due": null,
-      "done": false
-    },
-    {
-      "id": "meet-committee-post",
-      "title": "Put up the meet-the-committee post",
-      "detail": "The week before freshers.",
-      "area": "socials",
-      "source": "Ia",
-      "owner_role": "Head of Marketing",
-      "anchor": "ww-fri",
-      "lead_days": 7,
-      "due": null,
-      "done": false
-    },
-    {
-      "id": "social-sec",
-      "title": "Make sure the social sec advertises all the groups equally",
-      "detail": "Not just URB. If they will not, get Ela to make CTV adverts herself — she will need to be in contact with them either way.",
-      "area": "team",
-      "source": "Ia",
-      "owner_role": "Head of Marketing",
-      "anchor": "ww-fri",
-      "lead_days": 14,
-      "due": null,
-      "done": false
-    },
-    {
-      "id": "whats-on",
-      "title": "Check the SU what's-on page and decide what to cover in daytime freshers",
-      "detail": "Decide as a team. Do not over-commit — most of the team cannot edit yet and the arena night edits still have to happen alongside.",
-      "area": "setup",
-      "source": "Ib",
-      "owner_role": "Head of Production",
-      "anchor": "ww-fri",
-      "lead_days": 10,
-      "due": null,
-      "done": false
-    },
-    {
-      "id": "joe-split",
-      "title": "Agree with Joe Rumford which daytime events he is filming",
-      "detail": "So you are not both filming the same thing and posting reels about it. He generally covers what he thinks you will miss.",
-      "area": "setup",
-      "source": "Ib",
-      "owner_role": "Station Manager",
-      "anchor": "ww-fri",
-      "lead_days": 10,
-      "due": null,
-      "done": false
-    },
-    {
-      "id": "buffer",
-      "title": "Set up the free Buffer account",
-      "detail": "Posts to Instagram, Facebook, YouTube shorts and TikTok at once. You and Ela both need to be logged in and comfortable using it before freshers.",
-      "area": "socials",
-      "source": "IVa",
-      "owner_role": "Head of Marketing",
-      "anchor": "ww-fri",
-      "lead_days": 14,
-      "due": null,
-      "done": false
-    },
-    {
-      "id": "interview-qs",
-      "title": "Write the interview questions",
-      "detail": "Nothing that insults the SU, promotes drugs or anything illegal. Lighthearted and fun. New questions for arena nights so it does not look like the same two people.",
-      "area": "setup",
-      "source": "Ib",
-      "owner_role": "Head of Production",
-      "anchor": "ww-fri",
-      "lead_days": 5,
-      "due": null,
-      "done": false
-    },
-    {
-      "id": "training-assist",
-      "title": "Get 2–3 of the team confident enough to teach",
-      "detail": "They need to be able to assist at training and answer questions, not just attend.",
-      "area": "training",
-      "source": "Ic",
-      "owner_role": "Head of Tech",
-      "anchor": null,
-      "lead_days": null,
-      "due": "2026-09-28",
-      "done": false
-    },
-    {
-      "id": "su-takeover",
-      "title": "Schedule an SU takeover around a big event",
-      "detail": "Rugby at the Rec, fight night or a livestream. It is their stories, so plan what you show.",
-      "area": "socials",
-      "source": "Ic",
-      "owner_role": "Head of Marketing",
-      "anchor": null,
-      "lead_days": null,
-      "due": "2026-10-01",
-      "done": false
-    },
-    {
-      "id": "event-chats",
-      "title": "Make a WhatsApp group chat for each event",
-      "detail": null,
-      "area": "team",
-      "source": "Ic",
-      "owner_role": "Head of Production",
-      "anchor": null,
-      "lead_days": null,
-      "due": "2026-09-28",
-      "done": false
-    },
-    {
-      "id": "kit-system",
-      "title": "Put the kit check-in / check-out system in place",
-      "detail": "Head of Tech owns it. You need to know what is booked out, when it leaves and when it comes back. Ask Peter — he has thoughts on this.",
-      "area": "training",
-      "source": "Ic",
-      "owner_role": "Head of Tech",
-      "anchor": null,
-      "lead_days": null,
-      "due": "2026-10-05",
-      "done": false
-    },
-    {
-      "id": "finance-forms",
-      "title": "Find the finance forms and read Caela's examples",
-      "detail": "thesubath.com/finance/interactive_forms — and her old emails show what a filled-in one looks like. Ask Helen if you cannot find a finance code.",
-      "area": "money",
-      "source": "IIIa",
-      "owner_role": "Station Manager",
-      "anchor": null,
-      "lead_days": null,
-      "due": "2026-09-14",
-      "done": false
-    },
-    {
-      "id": "finance-system",
-      "title": "Learn the new finance system yourself",
-      "detail": "It is changing. Do not rely on the treasurer to know how much money you have left — they are often not on top of it.",
-      "area": "money",
-      "source": "IIIc",
-      "owner_role": "Station Manager",
-      "anchor": null,
-      "lead_days": null,
-      "due": "2026-10-05",
-      "done": false
-    },
-    {
-      "id": "membership-check",
-      "title": "Set up a way to check SU memberships before anyone touches kit",
-      "detail": "SU website → settings → media exec → memberships, cross-checked against the name list.",
-      "area": "money",
-      "source": "IIIb",
-      "owner_role": "Head of Tech",
-      "anchor": null,
-      "lead_days": null,
-      "due": "2026-09-28",
-      "done": false
-    },
-    {
-      "id": "borrow-scheme",
-      "title": "Ask Chris Lyons about the equipment borrowing scheme",
-      "detail": "He and Jade ran it — it let members rent kit safely for their own projects.",
-      "area": "money",
-      "source": "IIIb",
-      "owner_role": "Head of Tech",
-      "anchor": null,
-      "lead_days": null,
-      "due": "2026-10-19",
-      "done": false
-    },
-    {
-      "id": "alumni-dates",
-      "title": "Get the alumni fund dates from Helen and Angus",
-      "detail": "One window around October/November, one in January. The later you apply the later the money arrives. Read Peter's previous applications first.",
-      "area": "money",
-      "source": "IIId",
-      "owner_role": "Station Manager",
-      "anchor": null,
-      "lead_days": null,
-      "due": "2026-10-05",
-      "done": false
-    },
-    {
-      "id": "reimbursement",
-      "title": "Learn the claims flow well enough to teach it",
-      "detail": "The finance app is changing. You can claim back some or all of your NaSTA ticket, and you need to be able to show everyone else how.",
-      "area": "money",
-      "source": "IIIe",
-      "owner_role": "Station Manager",
-      "anchor": null,
-      "lead_days": null,
-      "due": "2026-11-02",
-      "done": false
-    },
-    {
-      "id": "budget-share",
-      "title": "Agree with the other media groups about sharing kit",
-      "detail": "Ours came out of our budget — they should ask, and vice versa.",
-      "area": "money",
-      "source": "IIIc",
-      "owner_role": "Station Manager",
-      "anchor": null,
-      "lead_days": null,
-      "due": "2026-10-12",
-      "done": false
-    },
-    {
-      "id": "linktree",
-      "title": "Update the linktree",
-      "detail": "Website, group chats, membership. Effective immediately once the new chats exist.",
-      "area": "socials",
-      "source": "IVb",
-      "owner_role": "Head of Marketing",
-      "anchor": "ww-fri",
-      "lead_days": 21,
-      "due": null,
-      "done": false
-    },
-    {
-      "id": "reel-covers",
-      "title": "Set up custom reel covers so the feed reads as one thing",
-      "detail": "Short form on Instagram, and use it to push people to YouTube for livestreams and long form.",
-      "area": "socials",
-      "source": "IVb",
-      "owner_role": "Head of Marketing",
-      "anchor": null,
-      "lead_days": null,
-      "due": "2026-10-12",
-      "done": false
-    },
-    {
-      "id": "su-website",
-      "title": "Update the CampusTV page on the SU website",
-      "detail": "Speak to Will Kitchen about how to edit it. This is how a lot of freshers find us, and the linktree points at it.",
-      "area": "socials",
-      "source": "IVd",
-      "owner_role": "Head of Marketing",
-      "anchor": "ww-fri",
-      "lead_days": 21,
-      "due": null,
-      "done": false
-    },
-    {
-      "id": "ctv-website",
-      "title": "Speak to Peter about the CTV website",
-      "detail": "He owns the domain now.",
-      "area": "socials",
-      "source": "IVe",
-      "owner_role": "Station Manager",
-      "anchor": null,
-      "lead_days": null,
-      "due": "2026-10-26",
-      "done": false
-    },
-    {
-      "id": "youtube",
-      "title": "Get livestreams and long-form onto YouTube",
-      "detail": "Treat YouTube shorts like Instagram reels — post the same content to build the channel.",
-      "area": "socials",
-      "source": "IVc",
-      "owner_role": "Head of Marketing",
-      "anchor": null,
-      "lead_days": null,
-      "due": "2026-11-09",
-      "done": false
-    },
-    {
-      "id": "roles-written",
-      "title": "Write down who handles what",
-      "detail": "Committee roles and per-event roles. This is the thing that prevents fallouts. Remember it is a society, not a job — adjust responsibility when interest wanes.",
-      "area": "team",
-      "source": "Va",
-      "owner_role": "Station Manager",
-      "anchor": "ww-fri",
-      "lead_days": 21,
-      "due": null,
-      "done": false
-    },
-    {
-      "id": "safeguarding",
-      "title": "Complete the safeguarding training",
-      "detail": "You are the HR if it is needed.",
-      "area": "team",
-      "source": "Vb",
-      "owner_role": "Station Manager",
-      "anchor": "ww-fri",
-      "lead_days": 30,
-      "due": null,
-      "done": false
-    },
-    {
-      "id": "speak-up",
-      "title": "Make sure the team know to tell you if something is off",
-      "detail": "Especially the women in leadership roles, and especially around Backstage. Caela was explicit about this.",
-      "area": "team",
-      "source": "Vb",
-      "owner_role": "Station Manager",
-      "anchor": "ww-fri",
-      "lead_days": 7,
-      "due": null,
-      "done": false
-    },
-    {
-      "id": "ctv-socials",
-      "title": "Decide whether to run CTV-only socials",
-      "detail": "Someone can take on a CTV social sec role alongside their main one if the group wants it.",
-      "area": "team",
-      "source": "Vc",
-      "owner_role": "Station Manager",
-      "anchor": null,
-      "lead_days": null,
-      "due": "2026-10-19",
-      "done": false
-    },
-    {
-      "id": "nasta-chats",
-      "title": "Join the NaSTA regional and main group chats",
-      "detail": "Caela cannot add you — message the NaSTA Instagram account for the links. The whole team can join everything except the station manager chat.",
-      "area": "nasta",
-      "source": "VIc",
-      "owner_role": "Station Manager",
-      "anchor": null,
-      "lead_days": null,
-      "due": "2026-10-12",
-      "done": false
-    },
-    {
-      "id": "nasta-categories",
-      "title": "Read the categories and plan projects to the spec",
-      "detail": "nasta.tv/awards, and there is a detailed PDF at the bottom of the page. Plan content to fit categories rather than hunting for entries in April.",
-      "area": "nasta",
-      "source": "VIb",
-      "owner_role": "Station Manager",
-      "anchor": null,
-      "lead_days": null,
-      "due": "2026-10-12",
-      "done": false
-    },
-    {
-      "id": "nasta-fee",
-      "title": "Pay the NaSTA membership fee",
-      "detail": "The email lands in the ctvmanager account. If the payment gives trouble, message the NaSTA Instagram or ask Helen.",
-      "area": "nasta",
-      "source": "VIa",
-      "owner_role": "Station Manager",
-      "anchor": null,
-      "lead_days": null,
-      "due": "2027-01-29",
-      "done": false
-    },
-    {
-      "id": "nasta-exports",
-      "title": "Check every submission against the export settings",
-      "detail": "Getting this wrong costs you awards and can invalidate the entry. The settings are in the PDF; ask the NaSTA team if anything is unclear.",
-      "area": "nasta",
-      "source": "VIe",
-      "owner_role": "Station Manager",
-      "anchor": "nasta-submit",
-      "lead_days": 14,
-      "due": null,
-      "done": false
-    },
-    {
-      "id": "nasta-maximise",
-      "title": "Submit for as many categories as possible",
-      "detail": "It is the only lever you have on the odds.",
-      "area": "nasta",
-      "source": "VIe",
-      "owner_role": "Station Manager",
-      "anchor": "nasta-submit",
-      "lead_days": 0,
-      "due": null,
-      "done": false
-    },
-    {
-      "id": "nasta-advertise",
-      "title": "Advertise the awards hard, early",
-      "detail": "It genuinely is not fun when nobody goes. Push it to everyone who was involved and to the wider media membership. Nominations come out beforehand, but there are unannounced categories — do not let a quiet nominations list put people off.",
-      "area": "nasta",
-      "source": "VIf",
-      "owner_role": "Head of Marketing",
-      "anchor": "nasta-awards",
-      "lead_days": 42,
-      "due": null,
-      "done": false
-    },
-    {
-      "id": "nasta-travel",
-      "title": "Book group travel and a shared Airbnb",
-      "detail": "Everyone together so you can look after each other. Count the number leaving and the number coming back — people wander off when there is alcohol.",
-      "area": "nasta",
-      "source": "VIg",
-      "owner_role": "Station Manager",
-      "anchor": "nasta-awards",
-      "lead_days": 28,
-      "due": null,
-      "done": false
-    },
-    {
-      "id": "nasta-subsidy",
-      "title": "Ask the exec what can be subsidised",
-      "detail": "Tickets certainly, accommodation possibly — Helen will know whether the budget can cover it.",
-      "area": "nasta",
-      "source": "VIg",
-      "owner_role": "Station Manager",
-      "anchor": "nasta-awards",
-      "lead_days": 35,
-      "due": null,
-      "done": false
-    },
-    {
-      "id": "successor",
-      "title": "Secure a station manager for next year",
-      "detail": "Caela's closing note names this as the priority that keeps CampusTV alive. Start looking long before you need to.",
-      "area": "legacy",
-      "source": "VII",
-      "owner_role": "Station Manager",
-      "anchor": "handover",
-      "lead_days": 60,
-      "due": null,
-      "done": false
-    },
-    {
-      "id": "write-handover",
-      "title": "Write next year's handover",
-      "detail": "CTV OS can export it from everything logged during the year, but it still needs your judgement on top.",
-      "area": "legacy",
-      "source": "VII",
-      "owner_role": "Station Manager",
-      "anchor": "handover",
-      "lead_days": 7,
-      "due": null,
-      "done": false
-    },
-    {
-      "id": "peter-notes",
-      "title": "Chase Peter for his section of the handover",
-      "detail": "Section VIII is still 'TBC when he has time'. He has run the station three times and has the kit check-in/check-out system in his head.",
-      "area": "legacy",
-      "source": "VIII",
-      "owner_role": "Station Manager",
-      "anchor": null,
-      "lead_days": null,
-      "due": "2026-09-21",
-      "done": false
-    }
+  "crew": [
+   {
+    "role": "producer",
+    "title": "Producer",
+    "desc": "Runs the event on the day with or for the station manager: role call, making sure everyone knows their job, the kit is set, and the coverage plan actually happens."
+   },
+   {
+    "role": "camera",
+    "title": "Camera operator",
+    "desc": "Operates a camera — gantry (roof), SU box or roaming at the Rec, and interviews on welcome/arena nights. Bring the right lens and SD cards, get plenty of B-roll for highlights, and check kit back in at the de-rig."
+   },
+   {
+    "role": "interview",
+    "title": "Interviewer",
+    "desc": "Fronts interviews with freshers, players and punters. Lighthearted, SU-safe questions, clips kept under ~3 minutes, working in a pair with a cam op."
+   },
+   {
+    "role": "vision_mix",
+    "title": "Vision mixer",
+    "desc": "Runs the ATEM on live/arena nights to a pre-agreed shot plan. Loads the SD card and presses record every night; works alongside the PTZ op."
+   },
+   {
+    "role": "ptz",
+    "title": "PTZ operator",
+    "desc": "Drives the PTZ camera on live nights to the vision mixer's plan. Ask John Lucas / Destin if unsure how the controller works."
+   },
+   {
+    "role": "audio",
+    "title": "Audio",
+    "desc": "Sets up and monitors sound — radio mics for interviews, a room mic for audience audio (e.g. Dance Soc's tap noises). Never take the sound-desk feed unless it has been agreed."
+   },
+   {
+    "role": "editor",
+    "title": "Editor",
+    "desc": "Cuts and delivers footage — interview clips published the next day, arena-night highlight reels. Ideally the interviewer edits their own clips; the station manager reviews every edit for language and SU slander before it posts."
+   },
+   {
+    "role": "runner",
+    "title": "Runner",
+    "desc": "General support on the day: helping load and carry kit to and from the venue, keeping track of gear, and assisting the crew."
+   },
+   {
+    "role": "stills",
+    "title": "Stills",
+    "desc": "Shoots stills and B-roll for montages and socials."
+   }
   ]
+ }
 }

@@ -87,8 +87,15 @@ def main() -> None:
         ],
         "societies": data["societies"],
         "prep_templates": data["prep_templates"],
+        # Job descriptions for the crew page: committee roles verbatim from the
+        # handover (Section Va) and the operational crew roles. Reference data,
+        # not edited in the prototype.
+        "role_descriptions": data.get("role_descriptions", {}),
         "events": data["events"],
         "tasks": data["tasks"],
+        # The Kit locker renders the inventory. It is read-only in the prototype,
+        # so it travels as reference data alongside societies and prep templates.
+        "kit": data.get("kit", []),
     }
 
     cfg = supabase_config()

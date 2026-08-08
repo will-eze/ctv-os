@@ -114,7 +114,7 @@ const socs = await upsert('societies', year.societies.map((s) => ({
   charge_policy: nz(s.charge_policy),
 })), 'slug');
 const socId = new Map(socs.map((s) => [s.slug, s.id]));
-step('1/7', `${socs.length} societies`);
+step('1/8', `${socs.length} societies`);
 
 // members --------------------------------------------------------------------
 const mems = await upsert('members', year.members.map((m) => ({
@@ -126,7 +126,7 @@ const mems = await upsert('members', year.members.map((m) => ({
   trained: m.trained ?? [],
 })), 'slug');
 const memId = new Map(mems.map((m) => [m.slug, m.id]));
-step('2/7', `${mems.length} members`);
+step('2/8', `${mems.length} members`);
 
 // prep templates -------------------------------------------------------------
 // Replaced outright rather than upserted. Their uniqueness is enforced by two
@@ -150,7 +150,7 @@ const tpl = await rest('prep_templates', {
   }))),
 });
 const universal = tpl.filter((t) => t.strand === null).length;
-step('3/7', `${tpl.length} prep templates — ${universal} apply to every strand`);
+step('3/8', `${tpl.length} prep templates — ${universal} apply to every strand`);
 
 // events ---------------------------------------------------------------------
 const evs = await upsert('events', year.events.map((e) => ({
@@ -168,9 +168,10 @@ const evs = await upsert('events', year.events.map((e) => ({
   end_time: nz(e.end_time),
   brief: nz(e.brief),
   society_id: e.society ? (socId.get(e.society) ?? null) : null,
+  kit_needed: e.kit_needed ?? [],
 })), 'slug');
 const evId = new Map(evs.map((e) => [e.slug, e.id]));
-step('4/7', `${evs.length} events`);
+step('4/8', `${evs.length} events`);
 
 // event roles ----------------------------------------------------------------
 // THE primary object. An `event_roles` row with member_id NULL is the thing
@@ -195,7 +196,7 @@ for (const e of year.events) {
 }
 await upsert('event_roles', roles, 'id');
 const open = roles.filter((r) => !r.member_id).length;
-step('5/7', `${roles.length} roles — ${open} of them open`);
+step('5/8', `${roles.length} roles — ${open} of them open`);
 
 // prep items and deliverables ------------------------------------------------
 const prep = [];
@@ -220,7 +221,7 @@ for (const e of year.events) {
 }
 await upsert('prep_items', prep, 'id');
 await upsert('deliverables', delivs, 'id');
-step('6/7', `${prep.length} prep items, ${delivs.length} deliverables`);
+step('6/8', `${prep.length} prep items, ${delivs.length} deliverables`);
 
 // tasks ----------------------------------------------------------------------
 const tasks = await upsert('tasks', year.tasks.map((t, i) => ({
@@ -238,7 +239,25 @@ const tasks = await upsert('tasks', year.tasks.map((t, i) => ({
   academic_year: year.academic_year,
   sort_order: i,
 })), 'slug');
-step('7/7', `${tasks.length} tasks`);
+step('7/8', `${tasks.length} tasks`);
+
+// kit ------------------------------------------------------------------------
+// The locker. Editable from the interface now, so it is seeded like the rest,
+// keyed by slug (the id from data/year.json).
+const kit = await upsert('kit', (year.kit ?? []).map((k) => ({
+  slug: k.id,
+  name: k.name,
+  category: nz(k.category),
+  asset_tag: nz(k.asset_tag),
+  owner: k.owner ?? 'ctv',
+  state: k.state ?? 'in_hub',
+  home: nz(k.home),
+  notes: nz(k.notes),
+  usage: nz(k.usage),
+  tips: nz(k.tips),
+  photo_url: nz(k.photo_url),
+})), 'slug');
+step('8/8', `${kit.length} kit items`);
 
 // --- What the database now says --------------------------------------------
 // Read it back through the view the interface reads, rather than trusting the

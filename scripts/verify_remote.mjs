@@ -130,24 +130,28 @@ await check('RLS is enabled on every table', async () => {
 });
 
 await check('only plans can be deleted, never records', async () => {
+  // access_grants joined the list with role-based access: revoking a grant is a
+  // real DELETE the admin performs, and a grant is a decision, not a record.
   const rows = await all(
     `select tablename from pg_policies
       where schemaname = 'public' and cmd = 'DELETE' order by tablename`);
-  eq([...new Set(rows.map((r) => r.tablename))], ['event_roles', 'events', 'tasks'],
+  eq([...new Set(rows.map((r) => r.tablename))],
+     ['access_grants', 'event_roles', 'events', 'tasks'],
      'tables with a DELETE policy');
   return 'kit, ledger, deliverables and incidents stay put';
 });
 
 await check('writing anything requires a session', async () => {
   // The deployed page carries the publishable key, so this policy set is the
-  // only thing standing between a stranger with the URL and the crew list.
+  // only thing standing between a stranger with the URL and the crew list. A
+  // write is protected if it needs a session, admin, or an edit grant.
   const rows = await all(
     `select tablename, cmd, qual, with_check from pg_policies
       where schemaname = 'public' and cmd in ('INSERT','UPDATE','DELETE')`);
   const open = rows.filter(
-    (r) => !/authenticated/.test(`${r.qual ?? ''} ${r.with_check ?? ''}`));
+    (r) => !/authenticated|is_admin|can_edit/.test(`${r.qual ?? ''} ${r.with_check ?? ''}`));
   eq(open.map((r) => `${r.tablename}.${r.cmd}`), [], 'write policies open to anon');
-  return `${rows.length} write policies, all authenticated-only`;
+  return `${rows.length} write policies, all gated by session, admin or grant`;
 });
 
 await check('safeguarding requires a real session', async () => {
