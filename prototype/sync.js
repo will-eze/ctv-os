@@ -360,9 +360,16 @@ const Sync = (() => {
       }
       return out;
     };
-    const prepByEvent = nest(rows.prep_items, 'event_id', (p) => ({
-      label: p.label, lead_days: p.lead_days, owner_role: p.owner_role, detail: p.detail,
-    }));
+    // Sorted by sort_order so the sheet lists prep the way it was arranged, and
+    // carrying the uuid so an edit in the sheet diffs against the right row
+    // rather than delete-and-recreating the list.
+    const prepByEvent = nest(
+      [...(rows.prep_items ?? [])].sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0)),
+      'event_id', (p) => ({
+        id: p.id, label: p.label, lead_days: p.lead_days, owner_role: p.owner_role, detail: p.detail,
+        // The FK comes back as a uuid; the document addresses events by slug.
+        event_ref: p.event_ref ? (evById.get(p.event_ref)?.slug ?? null) : undefined,
+      }));
     const delByEvent = nest(rows.deliverables, 'event_id', (d) => ({
       title: d.title, kind: d.kind, due_offset: d.due_offset ?? 1,
       nasta_category: d.nasta_category ?? undefined,
@@ -401,6 +408,7 @@ const Sync = (() => {
           brief: e.brief,
           society: e.society_id ? (socById.get(e.society_id)?.slug ?? null) : undefined,
           kit_needed: e.kit_needed ?? [],
+          prep_skip: e.prep_skip ?? [],
           roles: rolesByEvent.get(e.id) ?? [],
           prep: prepByEvent.get(e.id) ?? undefined,
           deliverables: delByEvent.get(e.id) ?? undefined,
@@ -445,6 +453,9 @@ const Sync = (() => {
     // {id, qty} against kit slugs. Small, event-scoped, and it travels with the
     // same events upsert/update the rest of the sheet already writes.
     kit_needed: e.kit_needed ?? [],
+    // Template steps this event has opted out of, by label. Rides on the event
+    // row like kit_needed.
+    prep_skip: e.prep_skip ?? [],
   });
 
   const taskRow = (t) => ({
@@ -496,6 +507,19 @@ const Sync = (() => {
     sort_order: i,
   });
 
+  // A per-event prep step. Keyed by uuid like a role, so adding or removing one
+  // in the sheet is an insert/delete against prep_items and not a rewrite of the
+  // whole list. The template lines the sheet also shows are the strand-wide rule
+  // in prep_templates; they are never in e.prep and so never reach this row.
+  const prepRow = (p, i) => ({
+    id: p.id,
+    label: p.label,
+    detail: nz(p.detail),
+    lead_days: p.lead_days ?? 0,
+    owner_role: nz(p.owner_role),
+    sort_order: i,
+  });
+
   // --- Pull -----------------------------------------------------------------
   // The whole year, every time, rather than rows changed since a watermark.
   //
@@ -506,6 +530,28 @@ const Sync = (() => {
   // to find the deletions costs a query of the same size as just fetching
   // everything, because an academic year is ~31 events and ~56 tasks. It is
   // about 60 KB. When that stops being true, this is the function to revisit.
+  // A pull is the database's whole truth — but the outbox holds writes this
+  // client has made and not yet flushed. Without this, a pull that lands between
+  // a local delete and its DELETE reaching Postgres would put the deleted row
+  // straight back on screen (and it would sit there until the delete's own
+  // Realtime echo triggered another pull). So the still-pending deletes are
+  // subtracted from the incoming document before it is shown: what you removed
+  // stays removed until the server has actually caught up.
+  function reconcilePending(doc) {
+    for (const op of readOutbox()) {
+      if (op.op !== 'delete') continue;
+      const key = op.by.match(/=eq\.(.+)$/)?.[1];
+      if (!key) continue;
+      if (op.table === 'events') doc.events = (doc.events ?? []).filter((e) => e.id !== key);
+      else if (op.table === 'tasks') doc.tasks = (doc.tasks ?? []).filter((t) => t.id !== key);
+      else if (op.table === 'event_roles')
+        for (const e of doc.events ?? []) e.roles = (e.roles ?? []).filter((r) => r.id !== key);
+      else if (op.table === 'prep_items')
+        for (const e of doc.events ?? []) if (e.prep) e.prep = e.prep.filter((p) => p.id !== key);
+    }
+    return doc;
+  }
+
   async function pull() {
     if (!enabled()) return null;
     if (pulling) { pullAgain = true; return null; }
@@ -520,7 +566,7 @@ const Sync = (() => {
         setStatus({ mode: 'empty', error: 'Database is reachable but empty — run npm run seed' });
         return null;
       }
-      const doc = toDocument(rows);
+      const doc = reconcilePending(toDocument(rows));
       hooks.setDoc?.(doc);
       setStatus({ mode: 'synced', error: null, at: Date.now() });
       return doc;
@@ -602,6 +648,33 @@ const Sync = (() => {
       if (!rB.has(id)) ops.push({ table: 'event_roles', op: 'delete', by: `id=eq.${id}` });
     }
 
+    // Prep items. Same shape as roles: keyed by uuid, resolved to their event
+    // through a slug lookup at flush time, and deletable — a prep step removed
+    // in the sheet has to be a real DELETE or it returns on the next pull.
+    const prepOf = (doc) => {
+      const m = new Map();
+      for (const e of doc.events ?? []) {
+        (e.prep ?? []).forEach((p, i) => { if (p.id) m.set(p.id, { p, i, event: e.id }); });
+      }
+      return m;
+    };
+    const pA = prepOf(before), pB = prepOf(after);
+    for (const [id, { p, i, event }] of pB) {
+      const was = pA.get(id);
+      // _event_slug is the owning event; _ref_slug is the optional event this
+      // step links to. Both are resolved to uuids at flush. The link is folded
+      // into the change comparison so re-pointing a step is seen as a change.
+      const payload = { ...prepRow(p, i), _event_slug: event, _ref_slug: p.event_ref ?? null };
+      if (!was) ops.push({ table: 'prep_items', op: 'upsert', on: 'id', row: payload });
+      else if (!same({ ...prepRow(was.p, was.i), r: was.p.event_ref ?? null },
+                     { ...prepRow(p, i), r: p.event_ref ?? null })) {
+        ops.push({ table: 'prep_items', op: 'update', by: `id=eq.${id}`, row: payload });
+      }
+    }
+    for (const id of pA.keys()) {
+      if (!pB.has(id)) ops.push({ table: 'prep_items', op: 'delete', by: `id=eq.${id}` });
+    }
+
     // Tasks
     const tA = index(before.tasks), tB = index(after.tasks);
     for (const [id, t] of tB) {
@@ -645,6 +718,12 @@ const Sync = (() => {
     if (row._member_slug !== undefined) {
       row.member_id = await resolve('members', row._member_slug);
       delete row._member_slug;
+    }
+    if (row._ref_slug !== undefined) {
+      // A linked event that this client cannot resolve (deleted, or never seen)
+      // lands as null — the same state the on-delete-set-null FK would produce.
+      row.event_ref = await resolve('events', row._ref_slug);
+      delete row._ref_slug;
     }
     if (row._anchor_slug !== undefined) {
       row.anchor_event_id = await resolve('events', row._anchor_slug);
@@ -695,6 +774,9 @@ const Sync = (() => {
         // which by returning 4xx; anything else is treated as the network.
         const fatal = /^4\d\d /.test(String(err.message));
         if (!fatal) { setStatus({ mode: 'offline', error: String(err.message) }); return; }
+        // Dropping it silently is how a delete looks like it "did not persist":
+        // gone locally, still in the database, back on the next pull. Say so.
+        setStatus({ error: `A change was rejected by the database (${ops[0].table} ${ops[0].op}) — reload to see the current state.` });
       }
       ops = ops.slice(1);
       writeOutbox(ops);

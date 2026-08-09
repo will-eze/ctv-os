@@ -150,6 +150,17 @@ const openSheet = async (id) => {
   await sheetSettled();
 };
 
+// Deleting an event now asks first: the button opens a confirm toast whose
+// action reads "Delete". This confirms it.
+const confirmDelete = async () => {
+  await page.click('#sheet-del');
+  await page.waitForFunction(() => {
+    const b = document.getElementById('toast-undo');
+    return !document.getElementById('toast').hidden && b.textContent.trim() === 'Delete';
+  });
+  await page.click('#toast-undo');
+};
+
 const closeAndTodo = async () => {
   await page.evaluate(() => document.getElementById('sheet-x')?.click());
   await goto('tasks');
@@ -363,6 +374,100 @@ await check('every month of the year is whole weeks of equal days', async () => 
   return `Aug→Jun, ${Math.min(...rows)}–${Math.max(...rows)} rows, all columns ${months[0].widths[0]}px`;
 });
 
+await check('today is a filled badge, and a day can be selected then cleared', async () => {
+  // The station manager asked for a clearer "today" than the old light grey, and
+  // for the day you tap to focus to be visible. Today is a filled green badge —
+  // read by shape and colour, not shade alone — and a tap rings exactly one day.
+  await goto('calendar');
+  await sheetGone();
+  // The month test above left the ribbon on the last month; return to today's.
+  await page.evaluate(() => document.getElementById('today').click());
+  const r = await page.evaluate(() => {
+    const TODAY = '2026-08-07';
+    const todayCell = document.querySelector(`.day[data-day="${TODAY}"]`);
+    const hasToday = !!todayCell && todayCell.classList.contains('is-today');
+    const badge = todayCell?.querySelector('.daynum');
+    const bg = badge && getComputedStyle(badge).backgroundColor;
+    // Select a different August day; the ring must land only on it.
+    const other = [...document.querySelectorAll('.day[data-day]')]
+      .find((d) => d.dataset.day !== TODAY && d.dataset.day.startsWith('2026-08'));
+    const selKey = other.dataset.day;
+    other.click();   // renderCalendar replaces the DOM
+    const selected = [...document.querySelectorAll('.day.is-selected')].map((d) => d.dataset.day);
+    // Tapping the selected day again clears it.
+    document.querySelector(`.day[data-day="${selKey}"]`).click();
+    const afterClear = document.querySelectorAll('.day.is-selected').length;
+    return { hasToday, bg, selected, selKey, afterClear };
+  });
+  if (!r.hasToday) throw new Error('today cell is not marked is-today');
+  if (!/rgb\(0,\s*68,\s*33\)/.test(r.bg || '')) throw new Error(`today badge is not the primary fill — got ${r.bg}`);
+  eq(r.selected, [r.selKey], 'exactly the tapped day is ringed');
+  if (r.afterClear !== 0) throw new Error('tapping the selected day again did not clear the ring');
+  return 'today is a green badge; one tap rings a day, a second clears it';
+});
+
+console.log('\n  SEARCH\n  ' + '-'.repeat(70));
+
+// Type into the real search box and wait past the 120ms debounce.
+const typeSearch = (text) => page.evaluate(async (t) => {
+  const input = document.getElementById('q');
+  input.focus();
+  input.value = t;
+  input.dispatchEvent(new Event('input', { bubbles: true }));
+  await new Promise((r) => setTimeout(r, 220));
+}, text);
+
+await check('search reaches beyond events into crew and kit', async () => {
+  // The complaint: from the calendar the box only touched calendar events. It
+  // now opens a dropdown of matches from every module, so a name or a piece of
+  // gear is found without first navigating to its page.
+  await goto('calendar');
+  await sheetGone();
+  await typeSearch('sony');
+  const kit = await page.evaluate(() => {
+    const box = document.getElementById('search-results');
+    return {
+      open: !box.hidden,
+      groups: [...box.querySelectorAll('.sr-group')].map((g) => g.textContent),
+      titles: [...box.querySelectorAll('.sr-row .sr-title')].map((t) => t.textContent),
+    };
+  });
+  if (!kit.open) throw new Error('the results dropdown did not open');
+  if (!kit.groups.includes('Kit')) throw new Error(`no Kit group for "sony" — got ${kit.groups.join(', ')}`);
+  if (!kit.titles.some((t) => /FX3/i.test(t))) throw new Error('the FX3 did not surface for "sony"');
+
+  await typeSearch('will');
+  const crew = await page.evaluate(() =>
+    [...document.querySelectorAll('#search-results .sr-group')].map((g) => g.textContent));
+  if (!crew.includes('Crew')) throw new Error(`no Crew group for "will" — got ${crew.join(', ')}`);
+  return `"sony" → Kit (FX3), "will" → Crew, all from the calendar`;
+});
+
+await check('a search result jumps to the thing and opens it', async () => {
+  await goto('calendar');
+  await sheetGone();
+  await typeSearch('sony');
+  await page.evaluate(() =>
+    document.querySelector('#search-results .sr-row[data-goto="kit"]').click());
+  await page.evaluate(() => new Promise((r) => setTimeout(r, 260)));  // sheet slides in
+  const landed = await page.evaluate(() => ({
+    onKit: !document.getElementById('v-kit').hidden,
+    sheetOpen: document.getElementById('sheet').classList.contains('is-open'),
+    dropdownClosed: document.getElementById('search-results').hidden,
+    sheetText: document.getElementById('sheet-in').textContent.includes('FX3'),
+  }));
+  if (!landed.onKit) throw new Error('clicking a kit result did not switch to the Kit view');
+  if (!landed.sheetOpen || !landed.sheetText) throw new Error('the kit detail drawer did not open on the result');
+  if (!landed.dropdownClosed) throw new Error('the results dropdown stayed open after a pick');
+  // Leave the box empty so later suites are not filtering on a stale query.
+  await page.evaluate(() => {
+    const i = document.getElementById('q');
+    i.value = ''; i.dispatchEvent(new Event('input', { bubbles: true }));
+  });
+  await page.evaluate(() => new Promise((r) => setTimeout(r, 160)));
+  return 'picked the FX3 → Kit view, drawer open, dropdown closed';
+});
+
 console.log('\n  CREWING\n  ' + '-'.repeat(70));
 
 await check('the assign list separates free, busy and unqualified', async () => {
@@ -497,7 +602,7 @@ await check('undo refreshes the sheet that is still open', async () => {
 
 await check('deleting the event the sheet is showing closes it', async () => {
   await openSheet('arena-4');
-  await page.click('#sheet-del');
+  await confirmDelete();
   await sheetGone();
   eq(await page.$eval('#sheet', (el) => el.classList.contains('is-open')), false, 'sheet open');
   await page.click('#toast-undo');
@@ -547,9 +652,18 @@ await check('a new event starts with no crew, not with no gap', async () => {
   return 'neutral badge, "no roles yet" on both screens';
 });
 
-await check('deleting removes the event', async () => {
+await check('deleting asks first, and Cancel keeps the event', async () => {
   const id = (await stored()).events.find((e) => e.date === '2026-10-15').id;
   await page.click('#sheet-del');
+  await page.waitForFunction(() => !document.getElementById('toast-cancel').hidden);
+  await page.click('#toast-cancel');
+  eq((await stored()).events.some((e) => e.id === id), true, 'event survived the cancel');
+  return 'the confirm toast can be backed out of';
+});
+
+await check('deleting removes the event', async () => {
+  const id = (await stored()).events.find((e) => e.date === '2026-10-15').id;
+  await confirmDelete();
   const gone = (await stored()).events.some((e) => e.id === id);
   eq(gone, false, 'still present');
   return 'and the sheet closed';
@@ -563,7 +677,7 @@ await check('undo restores a deleted event', async () => {
   await page.click(`.ev[data-ev="${evs[0].id}"]`);
   await page.waitForSelector('#sheet.is-open');
   await sheetSettled();
-  await page.click('#sheet-del');
+  await confirmDelete();
   return 'restored, then cleaned up';
 });
 
@@ -704,6 +818,97 @@ await check('a kit item can be added', async () => {
   return `${before} → ${before + 1} kit items`;
 });
 
+await check('a prep step can be added to an event, and removed again', async () => {
+  await openSheet('rugby-rec');
+  const before = ((await eventById('rugby-rec')).prep || []).length;
+  // Open the add form, fill it, submit.
+  await page.click('#prep-add');
+  await page.waitForSelector('#prep-form [name=label]', { visible: true });
+  await page.type('#prep-form [name=label]', 'Confirm parking with the Rec');
+  await page.$eval('#prep-form [name=lead]', (el) => { el.value = '5'; });
+  await page.click('#prep-form button[type=submit]');
+  await page.waitForFunction((n) => {
+    const d = JSON.parse(localStorage.getItem('ctvos.year.v2'));
+    return (d.events.find((e) => e.id === 'rugby-rec').prep || []).length === n + 1;
+  }, {}, before);
+  const added = (await eventById('rugby-rec')).prep.at(-1);
+  eq(added.label, 'Confirm parking with the Rec', 'label stored');
+  eq(added.lead_days, 5, 'lead days stored');
+  if (!added.id) throw new Error('added prep has no id to sync by');
+  // The own-prep delete control is present; use it to remove what we added.
+  const dels = await page.$$('[data-prep-del]');
+  if (!dels.length) throw new Error('no delete control on the event-own prep');
+  await dels.at(-1).click();
+  await page.waitForFunction((n) => {
+    const d = JSON.parse(localStorage.getItem('ctvos.year.v2'));
+    return (d.events.find((e) => e.id === 'rugby-rec').prep || []).length === n;
+  }, {}, before);
+  await page.evaluate(() => document.getElementById('sheet-x').click());
+  await sheetGone();   // don't leave the sheet covering the next test's controls
+  return `prep ${before} → ${before + 1} → ${before}, keyed for sync`;
+});
+
+await check('a template prep step can be dismissed for one event', async () => {
+  await openSheet('rugby-rec');
+  // Template lines carry a skip control (not a delete). Dismiss the first one.
+  const skips = await page.$$('[data-prep-skip]');
+  if (!skips.length) throw new Error('no template step to dismiss');
+  const label = await page.evaluate((b) => b.dataset.prepSkip, skips[0]);
+  await skips[0].click();
+  await page.waitForFunction((lbl) => {
+    const d = JSON.parse(localStorage.getItem('ctvos.year.v2'));
+    return (d.events.find((e) => e.id === 'rugby-rec').prep_skip || []).includes(lbl);
+  }, {}, label);
+  // The dismissal is per-event, not a change to the shared template.
+  const tmplUntouched = await page.evaluate(() =>
+    JSON.parse(localStorage.getItem('ctvos.year.v2')).prep_templates.length);
+  if (!tmplUntouched) throw new Error('templates were emptied');
+  await page.click('#toast-undo');   // restore, keeping the seed state clean
+  await page.waitForFunction((lbl) => {
+    const d = JSON.parse(localStorage.getItem('ctvos.year.v2'));
+    return !(d.events.find((e) => e.id === 'rugby-rec').prep_skip || []).includes(lbl);
+  }, {}, label);
+  await page.evaluate(() => document.getElementById('sheet-x').click());
+  await sheetGone();
+  return `"${label}" hidden for this event, template intact, then undone`;
+});
+
+await check('a calendar event can be linked as a prep step', async () => {
+  await openSheet('rugby-rec');
+  const before = ((await eventById('rugby-rec')).prep || []).length;
+  await page.click('#prep-add');
+  await page.waitForSelector('#prep-form [name=ref]', { visible: true });
+  // Pick the first real event in the link dropdown (index 0 is the free-text row).
+  const ref = await page.$eval('#prep-form [name=ref] option:nth-child(2)', (o) => o.value);
+  await page.select('#prep-form [name=ref]', ref);
+  await page.click('#prep-form button[type=submit]');
+  await page.waitForFunction((n) => {
+    const d = JSON.parse(localStorage.getItem('ctvos.year.v2'));
+    return (d.events.find((e) => e.id === 'rugby-rec').prep || []).length === n + 1;
+  }, {}, before);
+  const added = (await eventById('rugby-rec')).prep.at(-1);
+  eq(added.event_ref, ref, 'linked event slug stored');
+  // The linked step renders as a jump into that event's sheet.
+  const link = await page.$(`[data-prep-open="${ref}"]`);
+  if (!link) throw new Error('no link control for the linked event');
+  // Its due is the linked event's date, so clicking through opens that event.
+  await link.click();
+  await page.waitForSelector('#sheet.is-open [data-f="date"]', { visible: true });
+  const openTitle = await page.$eval('#sheet-in h2', (h) => h.textContent.trim());
+  const linkedEv = await eventById(ref);
+  eq(openTitle, linkedEv.title, 'clicking the step opened the linked event');
+  // Clean up: reopen rugby-rec and remove the linked step.
+  await openSheet('rugby-rec');
+  await page.$$eval('[data-prep-del]', (bs) => bs[bs.length - 1].click());
+  await page.waitForFunction((n) => {
+    const d = JSON.parse(localStorage.getItem('ctvos.year.v2'));
+    return (d.events.find((e) => e.id === 'rugby-rec').prep || []).length === n;
+  }, {}, before);
+  await page.evaluate(() => document.getElementById('sheet-x').click());
+  await sheetGone();
+  return `linked ${linkedEv.title}, opened it, then removed the step`;
+});
+
 console.log('\n  TO DO\n  ' + '-'.repeat(70));
 
 // List is the default layout; most checks below assert against the board, so
@@ -788,13 +993,34 @@ await check('ticking a task persists and is undoable', async () => {
   return 'progress counted, then undone';
 });
 
+await check('completed to-dos move behind their own pill', async () => {
+  await goto('tasks');
+  await page.click('[data-task-mode="list"]');
+  await page.click('[data-status="upcoming"]');
+  // Tick a task; it must leave the upcoming list entirely, not just grey out.
+  await page.click('#v-tasks [data-task="outlook"]');
+  await page.waitForFunction(() => !document.querySelector('#v-tasks [data-task="outlook"]'));
+  // The Completed pill holds it, and everything shown there is done.
+  await page.click('[data-status="done"]');
+  await page.waitForSelector('#v-tasks [data-task="outlook"]');
+  const allDone = await page.$$eval('#v-tasks tbody tr', (rows) =>
+    rows.length > 0 && rows.every((r) => r.querySelector('.box')?.checked));
+  if (!allDone) throw new Error('the completed view is showing a not-done task');
+  // Put it back and return to the upcoming view for the checks that follow.
+  await page.click('#v-tasks [data-task="outlook"]');
+  await page.click('[data-status="upcoming"]');
+  eq((await stored()).tasks.find((t) => t.id === 'outlook').done, false, 'restored to not-done');
+  return 'ticked → gone from upcoming → shown under Completed → restored';
+});
+
 await check('the area filter narrows the list', async () => {
   await gotoTodo();
-  await page.click('[data-area="nasta"]');
+  // The area pills collapsed into a sort/filter dropdown; drive that instead.
+  await page.select('[data-area-select]', 'nasta');
   const areas = await page.$$eval('.tcard .tag', (els) =>
     [...new Set(els.map((e) => e.textContent.trim()))]);
   eq(areas, ['NaSTA'], 'areas shown');
-  await page.click('[data-area="all"]');
+  await page.select('[data-area-select]', 'all');
   return '8 NaSTA tasks, nothing else';
 });
 

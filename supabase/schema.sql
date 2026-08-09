@@ -232,9 +232,15 @@ create index if not exists prep_items_event_idx on prep_items (event_id, sort_or
 
 -- Due date lives in a view rather than a generated column: a generated column
 -- cannot reference another table, and the rule genuinely belongs to the pair.
+-- Columns are listed rather than `p.*` on purpose: `create or replace view`
+-- cannot insert a column into the middle of an existing view, so a later
+-- `alter table prep_items add column` (event_ref) would otherwise change what
+-- `p.*` expands to and break the replace on the second run. Naming the columns
+-- pins the view's shape regardless of what the table gains.
 create or replace view prep_due as
   select
-    p.*,
+    p.id, p.event_id, p.label, p.detail, p.lead_days,
+    p.owner_role, p.owner_id, p.done_on, p.sort_order, p.created_at,
     e.date                                    as event_date,
     e.title                                   as event_title,
     (e.date - p.lead_days)                    as due_on,
@@ -464,6 +470,19 @@ create unique index if not exists kit_slug_key on kit (slug);
 -- and the interface reads it straight back. A join table (event_kit) would be
 -- the move if kit needed its own coverage view; it does not yet.
 alter table events add column if not exists kit_needed jsonb not null default '[]'::jsonb;
+
+-- A template prep step is the strand-wide rule, applied to every event of the
+-- strand. An event can opt out of one without touching the shared template: the
+-- template's label goes in this per-event skip list and it stops showing on that
+-- event. Small and event-scoped, so it rides on the event row like kit_needed.
+alter table events add column if not exists prep_skip jsonb not null default '[]'::jsonb;
+
+-- A prep step can instead be a link to another event on the calendar — a shoot
+-- whose date is the prep deadline (camera training before the match). It then
+-- takes its date from that event rather than a lead time, and moves when the
+-- event moves. Nulled if the referenced event is deleted; the step survives so
+-- it can be cleaned up.
+alter table prep_items add column if not exists event_ref uuid references events(id) on delete set null;
 
 create unique index if not exists members_slug_key   on members (slug);
 create unique index if not exists societies_slug_key on societies (slug);
@@ -892,6 +911,16 @@ end $$;
 -- and the event survives.
 drop policy if exists event_roles_delete on event_roles;
 create policy event_roles_delete on event_roles for delete
+  using (auth.role() = 'authenticated');
+
+-- prep_items is deletable for the same reason event_roles is. A per-event prep
+-- step is a plan, editable on the event, and the sheet has always been able to
+-- add and remove them; against a shared database that removal has to be a real
+-- DELETE or the step comes back on the next pull. The record protected is the
+-- event, and the event survives. (The reusable rule lives in prep_templates,
+-- which is not deletable this way.)
+drop policy if exists prep_items_delete on prep_items;
+create policy prep_items_delete on prep_items for delete
   using (auth.role() = 'authenticated');
 
 -- members (crew) and tasks are the private modules: read and write are gated by

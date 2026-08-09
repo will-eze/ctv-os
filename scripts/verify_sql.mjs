@@ -392,11 +392,14 @@ await check('only plans can be deleted, never records', async () => {
   // role reappears on the next pull. It is a slot in a plan, not a record.
   // access_grants joined the list with role-based access: revoking a grant is a
   // real DELETE the admin performs, and a grant is a decision, not a record.
+  // prep_items joined it when per-event prep became editable in the sheet: a
+  // prep step is a plan like a role, and removing one has to be a DELETE or it
+  // returns on the next pull. The reusable rule lives in prep_templates.
   const { rows } = await db.query(
     `select tablename from pg_policies
       where schemaname = 'public' and cmd = 'DELETE' order by tablename`
   );
-  eq(rows.map((r) => r.tablename), ['access_grants', 'event_roles', 'events', 'tasks'],
+  eq(rows.map((r) => r.tablename), ['access_grants', 'event_roles', 'events', 'prep_items', 'tasks'],
      'tables with a DELETE policy');
   return 'kit, ledger, deliverables and incidents stay put';
 });

@@ -61,10 +61,25 @@
   --on-error-c:      #93000a;
   --tertiary:        #2b3b50;
 
+  /* Kit "away on a clock" (out / booked). Not a Stitch token — the palette
+     ships one accent (error red); the station manager asked each kit state to
+     read at a glance, so present is the primary green, away is this amber and a
+     problem stays error red. A dark warm gold, chosen to clear 4.5:1 on white
+     so the status word is body-text legible. Pinned in scripts/contrast.mjs as
+     a documented departure, like the surface ramp. */
+  --warn:            #8a5000;
+
   /* Month-grid rules and the out-of-month cell fill. Neutral, to match the
      retuned surfaces rather than Stitch's slate (which read blue). */
   --grid:            #e6e6e2;
   --grid-bg:         #f4f4f2;
+
+  /* Today's cell, and the day you tap to focus. The old "today" was --low, a
+     light grey barely distinct from a normal day; the station manager asked for
+     a clearer mark. Today now takes a soft green wash keyed to the primary, with
+     a filled green day-number badge; a tapped day takes a green ring. Both read
+     as green rather than as another shade of grey. */
+  --today:           #e8f0ea;   /* soft primary wash — not on the surface ramp */
 
   /* --- Shape and depth -------------------------------------------------- */
   /* roundness: ROUND_EIGHT. Cards take 12px (Stitch's rounded-xl), controls 8. */
@@ -251,6 +266,10 @@ ul { margin: 0; padding: 0; list-style: none; }
 .modal[hidden] { display: none; }
 .modal-card {
   width: 100%; max-width: 360px; display: grid; gap: 12px;
+  /* Never taller than the viewport: a long Manage-access list (or any modal on
+     a short phone in landscape) scrolls inside the card rather than spilling off
+     the top and bottom with no way to reach either end. */
+  max-height: calc(100dvh - 48px); overflow-y: auto;
   background: var(--card); border: 1px solid var(--outline-var);
   border-radius: var(--r-card); padding: 24px; box-shadow: var(--shadow-lg);
 }
@@ -336,6 +355,33 @@ body.is-readonly .needs-edit { display: none !important; }
 }
 .search input::placeholder { color: var(--secondary); }
 .search input:focus { border-color: var(--primary); outline: var(--ring); outline-offset: var(--ring-offset); background: var(--card); }
+/* One box searches the whole year, not just the screen you happen to be on.
+   Typing opens a dropdown of matches grouped by module — events, crew, kit,
+   to-do — so a name or a piece of gear is found from anywhere. Each row jumps
+   to the thing: the calendar still fades its non-matches underneath, but the
+   answer no longer depends on being on the right page first. */
+.search-results {
+  position: absolute; top: calc(100% + 6px); left: 0; right: 0; z-index: var(--z-modal);
+  max-height: min(70vh, 480px); overflow-y: auto;
+  background: var(--card); border: 1px solid var(--outline-var);
+  border-radius: var(--r-card); box-shadow: var(--shadow-lg); padding: var(--s2);
+}
+.search-results .sr-group { font-size: 11px; font-weight: 600; letter-spacing: 0.04em;
+  text-transform: uppercase; color: var(--secondary); padding: var(--s2) var(--s2) var(--s1); }
+.search-results .sr-group:not(:first-child) { border-top: 1px solid var(--outline-var); margin-top: var(--s1); }
+.sr-row {
+  display: flex; align-items: baseline; gap: var(--s2); width: 100%;
+  padding: var(--s2); border: 0; border-radius: var(--r); background: none;
+  text-align: left; color: var(--on-surface); cursor: pointer;
+  transition: background var(--dur) var(--ease);
+}
+.sr-row:hover, .sr-row:focus-visible { background: var(--container); outline: 0; }
+.sr-row .sr-title { font-size: 14px; font-weight: 500; flex: 1;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sr-row .sr-meta { font-size: 12px; color: var(--secondary); font-variant-numeric: tabular-nums;
+  flex-shrink: 0; max-width: 45%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.search-results .sr-more { font-size: 12px; color: var(--secondary); padding: var(--s1) var(--s2) var(--s2); }
+.search-results .sr-empty { font-size: 14px; color: var(--secondary); padding: var(--s3) var(--s2); }
 .top-right { margin-left: auto; display: flex; align-items: center; gap: 4px; }
 .icon-btn {
   display: grid; place-items: center; width: 36px; height: 36px;
@@ -431,11 +477,21 @@ body.is-readonly .needs-edit { display: none !important; }
 .dot-primary { background: var(--primary); }
 .dot-secondary { background: var(--secondary); }
 .chips { display: flex; gap: 8px; flex-wrap: wrap; }
-/* The to-do area filter as a dropdown, shown only on a phone (see the narrow
-   media query). Styled like the add-a-to-do fields so the page reads as one. */
-.chips-menu { display: none; margin-bottom: var(--gutter); }
+/* The to-do controls row: the status pills on the left, the area filter on the
+   right. On a phone it stacks. */
+.tasks-bar {
+  display: flex; align-items: flex-end; justify-content: space-between;
+  gap: var(--gutter); flex-wrap: wrap; margin-bottom: var(--gutter);
+}
+/* The area filter, collapsed from a wrapping chip row into one sort/filter
+   dropdown. Styled like the add-a-to-do fields so the page reads as one. */
+.chips-menu { display: flex; flex-direction: column; gap: 4px; }
+.chips-menu-k {
+  font-size: 12px; font-weight: 700; letter-spacing: 0.05em;
+  text-transform: uppercase; color: var(--secondary);
+}
 .chips-menu select {
-  width: 100%; padding: 12px 12px;
+  min-width: 220px; padding: 12px 12px;
   border: 1px solid var(--outline); border-radius: var(--r); background: var(--card); outline: 0;
   font-size: 14px; color: var(--on-surface);
 }
@@ -469,13 +525,17 @@ body.is-readonly .needs-edit { display: none !important; }
 /* ==========================================================================
    Kit locker
    ========================================================================== */
-/* A status is a word, never a colour on its own — attention states (in repair,
-   missing) turn the word red and prefix a warning glyph. */
+/* A status is a word, never a colour on its own — every state carries its word
+   and a glyph (check / clock / warning); the colour is redundant reinforcement.
+   Three tones: present is green, away-on-a-clock (out / booked) is amber, a
+   problem (in repair / missing) is error red. */
 .kit-state {
   display: inline-flex; align-items: center; gap: var(--s1);
   font-size: 12px; font-weight: 600; letter-spacing: 0.04em;
   color: var(--on-surface-var); text-transform: uppercase;
 }
+.kit-state.is-good  { color: var(--primary); }
+.kit-state.is-out   { color: var(--warn); }
 .kit-state.is-alert { color: var(--error); }
 .kit-item { display: flex; align-items: center; gap: var(--s3); }
 .kit-thumb { width: 40px; height: 40px; flex: none; border-radius: 6px; object-fit: cover; background: var(--low); border: 1px solid var(--outline-var); }
@@ -484,6 +544,48 @@ body.is-readonly .needs-edit { display: none !important; }
 .tr-click:focus-visible { outline: 2px solid var(--primary); outline-offset: -2px; }
 .kit-photo { width: 100%; max-height: 220px; object-fit: contain; background: var(--low); border: 1px solid var(--outline-var); border-radius: var(--r); }
 .kit-photo-empty { display: grid; place-items: center; height: 120px; color: var(--on-surface-var); background: var(--low); border: 1px dashed var(--outline); border-radius: var(--r); }
+
+/* Grid view — the same rows as cards. A shoot-day glance wants the photo (so
+   the piece is recognised by sight, not by asset tag) with the status and the
+   location it lives in. Structured from the Stitch "Gear Locker (Arboreal)"
+   screen. The list view above stays denser for scanning a whole locker. */
+.kit-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(272px, 1fr)); gap: var(--s5); }
+.kit-card {
+  display: flex; flex-direction: column; overflow: hidden; cursor: pointer;
+  background: var(--card); border: 1px solid var(--outline-var);
+  border-radius: var(--r-card); box-shadow: var(--shadow-sm);
+  transition: box-shadow var(--dur) var(--ease);
+}
+.kit-card:hover { box-shadow: var(--shadow); }
+.kit-card:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+.kit-card-photo { position: relative; height: 160px; background: var(--low); }
+.kit-card-photo img { width: 100%; height: 100%; object-fit: cover; }
+.kit-card-noimg { position: absolute; inset: 0; display: grid; place-items: center; color: var(--on-surface-var); }
+/* Status badge — a word (and a glyph) over the photo, never colour on its own. */
+.kit-badge {
+  position: absolute; top: var(--s2); right: var(--s2);
+  display: inline-flex; align-items: center; gap: var(--s1);
+  padding: var(--s1) var(--s2); border-radius: 999px;
+  background: var(--card); border: 1px solid var(--outline-var);
+  box-shadow: var(--shadow-sm); color: var(--on-surface-var);
+  font-size: 12px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase;
+}
+.kit-badge.is-good  { color: var(--primary); }
+.kit-badge.is-out   { color: var(--warn); }
+.kit-badge.is-alert { color: var(--error); }
+.kit-card-body { display: flex; flex-direction: column; gap: var(--s2); flex: 1; padding: var(--s4); }
+.kit-card-tag { margin: 0; }
+.kit-card-name { font-size: 16px; font-weight: 600; line-height: 1.25; }
+.kit-card-desc {
+  font-size: 12px; color: var(--secondary); line-height: 1.4;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
+.kit-card-meta {
+  margin-top: auto; display: grid; grid-template-columns: 1fr 1fr; gap: var(--s2);
+  padding-top: var(--s3); border-top: 1px solid var(--outline-var);
+}
+.kit-card-meta > div { display: grid; gap: var(--s1); min-width: 0; }
+.kit-card-meta .kv { font-size: 14px; color: var(--on-surface); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 /* ==========================================================================
    Settings
@@ -606,6 +708,14 @@ body.is-readonly .needs-edit { display: none !important; }
   display: grid; grid-template-columns: repeat(7, minmax(0, 1fr));
   background: var(--grid); gap: 1px; border-top: 1px solid var(--grid);
 }
+/* A swipe-driven month step slides the new grid in from the side it came from —
+   ~180ms, felt not just seen. `.cal` clips the overflow, so it stays inside the
+   card. Set only on a touch step (stepMonth's second arg), so the arrow buttons
+   and every other re-render stay still; suppressed under reduced-motion below. */
+.grid.slide-from-right { animation: month-in-right 0.18s var(--ease); }
+.grid.slide-from-left  { animation: month-in-left  0.18s var(--ease); }
+@keyframes month-in-right { from { transform: translateX(14%); opacity: 0.35; } to { transform: none; opacity: 1; } }
+@keyframes month-in-left  { from { transform: translateX(-14%); opacity: 0.35; } to { transform: none; opacity: 1; } }
 .day {
   position: relative; min-height: 92px; padding: 8px;
   background: var(--card); transition: background var(--dur) var(--ease);
@@ -613,12 +723,21 @@ body.is-readonly .needs-edit { display: none !important; }
 .day:hover { background: var(--container); }
 .day.is-outside { background: var(--grid-bg); }
 .day.is-outside .daynum { color: var(--secondary); opacity: 0.65; }
-.day.is-today { background: var(--low); }
-.day.is-today .daynum { color: var(--primary); font-weight: 700; }
+/* Today: a soft green wash and a filled green day-number badge — a hue, not a
+   greyer grey, so it stands out in a busy month at a glance. The badge is the
+   familiar calendar "today" marker; it carries the state by shape and the
+   number, never by colour alone. */
+.day.is-today { background: var(--today); }
+.day.is-today .daynum {
+  display: inline-grid; place-items: center; min-width: 22px; height: 22px; padding: 0 var(--s1);
+  border-radius: var(--r-pill); background: var(--primary); color: var(--on-primary); font-weight: 700;
+}
+/* The day you tap to focus takes a green ring — distinct from today's fill, so
+   the selected day and the current day can be told apart when they differ. */
+.day.is-selected { box-shadow: inset 0 0 0 2px var(--primary); }
 .day.is-drop { background: var(--container); box-shadow: inset 0 0 0 2px var(--primary); }
 .day-head { display: flex; align-items: center; justify-content: space-between; min-height: 20px; }
 .daynum { font-size: 14px; font-weight: 500; font-variant-numeric: tabular-nums; }
-.today-dot { width: 6px; height: 6px; border-radius: var(--r-pill); background: var(--primary); }
 
 /* The badge is the miniature of the event card: same colour logic, one line. */
 .ev {
@@ -973,6 +1092,9 @@ body.is-readonly .needs-edit { display: none !important; }
 .row-l { flex: 1; min-width: 0; }
 .row-sub { display: block; margin-top: 2px; font-size: 12px; font-weight: 600; letter-spacing: 0.04em; color: var(--primary); }
 .row-d { display: block; margin-top: 4px; font-size: 12px; color: var(--secondary); }
+/* A linked-event prep step reads as a link into that event's sheet. */
+.row-link { color: var(--primary); font-weight: 600; text-decoration: underline; text-underline-offset: 2px; }
+.row-link:hover { text-decoration: none; }
 .row-due { flex: none; text-align: right; font-variant-numeric: tabular-nums; }
 .row-date { display: block; font-size: 12px; font-weight: 600; }
 .row-rel { display: block; font-size: 12px; color: var(--secondary); }
@@ -1014,6 +1136,10 @@ body.is-readonly .needs-edit { display: none !important; }
   font-size: 12px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;
 }
 .toast button:hover { background: #fff; color: var(--on-surface); }
+/* The destructive confirm reads as destructive — but the word "Delete" carries
+   the meaning, so the colour is a reinforcement, not the only signal. */
+.toast button.is-danger { background: var(--error); border-color: var(--error); color: #fff; }
+.toast button.is-danger:hover { background: #fff; color: var(--error); border-color: #fff; }
 
 :where(button, a, input, select, textarea):focus-visible {
   outline: 2px solid var(--primary); outline-offset: 2px;
@@ -1055,22 +1181,48 @@ body.is-readonly .needs-edit { display: none !important; }
   .assign { padding: 12px 8px; margin: -6px -8px -6px 0; }
   .chip { padding: 12px 16px; }
   .seg button { padding: 12px 16px; }
-  /* Swap the wrapping to-do chip row for the dropdown menu. */
-  .tasks-filter { display: none; }
-  .chips-menu { display: block; }
+  /* The to-do controls stack, and the area dropdown spans the row. */
+  .tasks-bar { align-items: stretch; }
+  .chips-menu { width: 100%; }
+  .chips-menu select { width: 100%; min-width: 0; }
   .box { width: 22px; height: 22px; }
   .timeline::before { display: none; }
   .tl-row { flex-direction: column; gap: 8px; }
   .tl-when { width: auto; padding-top: 0; text-align: left; display: flex; align-items: baseline; gap: 8px; }
   .tl-node { display: none; }
   .missing { width: 100%; }
-  .day { min-height: 74px; padding: 4px 4px; }
-  .ev { font-size: 0; padding: 0; height: 6px; margin-top: 4px; border-radius: 3px; }
+  .day { min-height: 74px; padding: 2px; }
+  /* Phones: name the event, don't reduce it to a bar. A tight filled pill that
+     truncates with an ellipsis — the move Apple and Outlook make when the column
+     is too narrow for the whole title — carries what the crew actually scans for.
+     A coloured 6px dash told you a day was busy but never with what; four or five
+     letters of the title tells you it's the board meeting and not the shoot. The
+     desktop rule already clips to one line with an ellipsis, so the win is purely
+     in reclaimed width: on a ~50px phone column the cell (2px, above) and the pill
+     (2px, here) are pared to the tightest padding the 4px grid allows, taking the
+     text box from 34px to 42px — three visible characters to five, the difference
+     between "A-l…" and "A-lev…". Font can't drop below 12px without leaving the
+     type scale, so 2px is the floor. The time is still dropped: the title comes
+     first in this little space. */
+  .ev { padding: 2px; }
   .ev-time { display: none; }
   .day-add { display: none; }
   .weekdays span { font-size: 12px; }
   .sheet { width: 100%; }
   .stats { grid-template-columns: 1fr; }
+
+  /* Pickers and text fields. A native date/time/select and a text input render
+     their value at the CSS font-size, and the desktop's 14px reads small on a
+     phone — the very controls a shoot-day edit lives in. The sharp edge is iOS:
+     it zooms the whole page whenever a control below 16px takes focus, so every
+     tap on a time field lurched the layout. Lift the three regions that hold
+     every control to 16px — the next step up the type scale, so it is a
+     mobile-only bump and not a new size. Scoping to the containers (rather than
+     bare `input`) clears `.fld input` and `.member-form input`, which set 14px
+     with a class the element selector could not out-rank. */
+  .main input, .main select, .main textarea,
+  .sheet input, .sheet select, .sheet textarea,
+  .modal input, .modal select, .modal textarea { font-size: 16px; }
 
   /* Mobile is the primary context, so nothing that carries information is
      allowed to run off the side of the screen. */
@@ -1100,7 +1252,26 @@ body.is-readonly .needs-edit { display: none !important; }
   .tbl td.td-t { display: block; text-align: left; font-size: 16px; margin-bottom: var(--s1); }
   .tbl td.td-t::before { display: none; }
   .tbl td .rel { text-align: left; }
+  /* Due and Owner each carry a secondary line — the relative day, the source.
+     In the stacked card that line is a third flex item, so it must break onto
+     its own full-width row and sit under the value, right-aligned with it,
+     rather than being squeezed against the edge and clipped. */
   .tbl td.td-due, .tbl td.dimmed { flex-wrap: wrap; }
+  .tbl td.td-due .rel, .tbl td.dimmed .rel { flex-basis: 100%; text-align: right; }
+
+  /* Settings rows are label-and-control side by side on a laptop. The export
+     card's three buttons cannot shrink, so on a phone the row wraps: the text
+     takes the first line at full width (never crushed to one word per line),
+     the controls drop to their own line beneath it. The small toggle still
+     rides alongside its label because both fit. */
+  .set-row { flex-wrap: wrap; }
+  .set-act { width: 100%; }
+
+  /* Sheet footer: keep each action's label intact and let whole buttons wrap to
+     a second row, instead of three buttons sharing one row and breaking their
+     text mid-label. */
+  .sheet-foot { flex-wrap: wrap; }
+  .sheet-foot .btn { white-space: nowrap; }
 }
 
 /* ==========================================================================
@@ -1141,7 +1312,7 @@ body.is-readonly .needs-edit { display: none !important; }
 .pr-sub { color: #666; font-size: 9pt; }
 
 @media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after { transition-duration: 1ms !important; }
+  *, *::before, *::after { transition-duration: 1ms !important; animation-duration: 1ms !important; }
   .sheet { transition: none; }
 }
 </style>
@@ -1217,7 +1388,9 @@ body.is-readonly .needs-edit { display: none !important; }
       </button>
       <div class="search">
         <svg class="icon icon-sm"><use href="#i-search"/></svg>
-        <input id="q" type="search" placeholder="Search events, crew, to-do…" aria-label="Search">
+        <input id="q" type="search" placeholder="Search events, crew, kit, to-do…" aria-label="Search"
+               role="combobox" aria-expanded="false" aria-controls="search-results" autocomplete="off">
+        <div class="search-results" id="search-results" role="listbox" hidden></div>
       </div>
       <div class="top-right">
         <button class="icon-btn" id="help" type="button" aria-label="About this prototype">
@@ -1246,7 +1419,9 @@ body.is-readonly .needs-edit { display: none !important; }
 <button class="scrim" id="scrim" type="button" aria-label="Close"></button>
 <aside class="sheet" id="sheet" aria-hidden="true"><div class="sheet-in" id="sheet-in"></div></aside>
 <div class="toast" id="toast" hidden role="status">
-  <span id="toast-t"></span><button id="toast-undo" type="button">Undo</button>
+  <span id="toast-t"></span>
+  <button id="toast-undo" type="button">Undo</button>
+  <button id="toast-cancel" type="button" hidden>Cancel</button>
 </div>
 
 <!-- The structured PDF export. Empty and hidden until Settings → Export PDF
@@ -1663,9 +1838,16 @@ const Sync = (() => {
       }
       return out;
     };
-    const prepByEvent = nest(rows.prep_items, 'event_id', (p) => ({
-      label: p.label, lead_days: p.lead_days, owner_role: p.owner_role, detail: p.detail,
-    }));
+    // Sorted by sort_order so the sheet lists prep the way it was arranged, and
+    // carrying the uuid so an edit in the sheet diffs against the right row
+    // rather than delete-and-recreating the list.
+    const prepByEvent = nest(
+      [...(rows.prep_items ?? [])].sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0)),
+      'event_id', (p) => ({
+        id: p.id, label: p.label, lead_days: p.lead_days, owner_role: p.owner_role, detail: p.detail,
+        // The FK comes back as a uuid; the document addresses events by slug.
+        event_ref: p.event_ref ? (evById.get(p.event_ref)?.slug ?? null) : undefined,
+      }));
     const delByEvent = nest(rows.deliverables, 'event_id', (d) => ({
       title: d.title, kind: d.kind, due_offset: d.due_offset ?? 1,
       nasta_category: d.nasta_category ?? undefined,
@@ -1704,6 +1886,7 @@ const Sync = (() => {
           brief: e.brief,
           society: e.society_id ? (socById.get(e.society_id)?.slug ?? null) : undefined,
           kit_needed: e.kit_needed ?? [],
+          prep_skip: e.prep_skip ?? [],
           roles: rolesByEvent.get(e.id) ?? [],
           prep: prepByEvent.get(e.id) ?? undefined,
           deliverables: delByEvent.get(e.id) ?? undefined,
@@ -1748,6 +1931,9 @@ const Sync = (() => {
     // {id, qty} against kit slugs. Small, event-scoped, and it travels with the
     // same events upsert/update the rest of the sheet already writes.
     kit_needed: e.kit_needed ?? [],
+    // Template steps this event has opted out of, by label. Rides on the event
+    // row like kit_needed.
+    prep_skip: e.prep_skip ?? [],
   });
 
   const taskRow = (t) => ({
@@ -1799,6 +1985,19 @@ const Sync = (() => {
     sort_order: i,
   });
 
+  // A per-event prep step. Keyed by uuid like a role, so adding or removing one
+  // in the sheet is an insert/delete against prep_items and not a rewrite of the
+  // whole list. The template lines the sheet also shows are the strand-wide rule
+  // in prep_templates; they are never in e.prep and so never reach this row.
+  const prepRow = (p, i) => ({
+    id: p.id,
+    label: p.label,
+    detail: nz(p.detail),
+    lead_days: p.lead_days ?? 0,
+    owner_role: nz(p.owner_role),
+    sort_order: i,
+  });
+
   // --- Pull -----------------------------------------------------------------
   // The whole year, every time, rather than rows changed since a watermark.
   //
@@ -1809,6 +2008,28 @@ const Sync = (() => {
   // to find the deletions costs a query of the same size as just fetching
   // everything, because an academic year is ~31 events and ~56 tasks. It is
   // about 60 KB. When that stops being true, this is the function to revisit.
+  // A pull is the database's whole truth — but the outbox holds writes this
+  // client has made and not yet flushed. Without this, a pull that lands between
+  // a local delete and its DELETE reaching Postgres would put the deleted row
+  // straight back on screen (and it would sit there until the delete's own
+  // Realtime echo triggered another pull). So the still-pending deletes are
+  // subtracted from the incoming document before it is shown: what you removed
+  // stays removed until the server has actually caught up.
+  function reconcilePending(doc) {
+    for (const op of readOutbox()) {
+      if (op.op !== 'delete') continue;
+      const key = op.by.match(/=eq\.(.+)$/)?.[1];
+      if (!key) continue;
+      if (op.table === 'events') doc.events = (doc.events ?? []).filter((e) => e.id !== key);
+      else if (op.table === 'tasks') doc.tasks = (doc.tasks ?? []).filter((t) => t.id !== key);
+      else if (op.table === 'event_roles')
+        for (const e of doc.events ?? []) e.roles = (e.roles ?? []).filter((r) => r.id !== key);
+      else if (op.table === 'prep_items')
+        for (const e of doc.events ?? []) if (e.prep) e.prep = e.prep.filter((p) => p.id !== key);
+    }
+    return doc;
+  }
+
   async function pull() {
     if (!enabled()) return null;
     if (pulling) { pullAgain = true; return null; }
@@ -1823,7 +2044,7 @@ const Sync = (() => {
         setStatus({ mode: 'empty', error: 'Database is reachable but empty — run npm run seed' });
         return null;
       }
-      const doc = toDocument(rows);
+      const doc = reconcilePending(toDocument(rows));
       hooks.setDoc?.(doc);
       setStatus({ mode: 'synced', error: null, at: Date.now() });
       return doc;
@@ -1905,6 +2126,33 @@ const Sync = (() => {
       if (!rB.has(id)) ops.push({ table: 'event_roles', op: 'delete', by: `id=eq.${id}` });
     }
 
+    // Prep items. Same shape as roles: keyed by uuid, resolved to their event
+    // through a slug lookup at flush time, and deletable — a prep step removed
+    // in the sheet has to be a real DELETE or it returns on the next pull.
+    const prepOf = (doc) => {
+      const m = new Map();
+      for (const e of doc.events ?? []) {
+        (e.prep ?? []).forEach((p, i) => { if (p.id) m.set(p.id, { p, i, event: e.id }); });
+      }
+      return m;
+    };
+    const pA = prepOf(before), pB = prepOf(after);
+    for (const [id, { p, i, event }] of pB) {
+      const was = pA.get(id);
+      // _event_slug is the owning event; _ref_slug is the optional event this
+      // step links to. Both are resolved to uuids at flush. The link is folded
+      // into the change comparison so re-pointing a step is seen as a change.
+      const payload = { ...prepRow(p, i), _event_slug: event, _ref_slug: p.event_ref ?? null };
+      if (!was) ops.push({ table: 'prep_items', op: 'upsert', on: 'id', row: payload });
+      else if (!same({ ...prepRow(was.p, was.i), r: was.p.event_ref ?? null },
+                     { ...prepRow(p, i), r: p.event_ref ?? null })) {
+        ops.push({ table: 'prep_items', op: 'update', by: `id=eq.${id}`, row: payload });
+      }
+    }
+    for (const id of pA.keys()) {
+      if (!pB.has(id)) ops.push({ table: 'prep_items', op: 'delete', by: `id=eq.${id}` });
+    }
+
     // Tasks
     const tA = index(before.tasks), tB = index(after.tasks);
     for (const [id, t] of tB) {
@@ -1948,6 +2196,12 @@ const Sync = (() => {
     if (row._member_slug !== undefined) {
       row.member_id = await resolve('members', row._member_slug);
       delete row._member_slug;
+    }
+    if (row._ref_slug !== undefined) {
+      // A linked event that this client cannot resolve (deleted, or never seen)
+      // lands as null — the same state the on-delete-set-null FK would produce.
+      row.event_ref = await resolve('events', row._ref_slug);
+      delete row._ref_slug;
     }
     if (row._anchor_slug !== undefined) {
       row.anchor_event_id = await resolve('events', row._anchor_slug);
@@ -1998,6 +2252,9 @@ const Sync = (() => {
         // which by returning 4xx; anything else is treated as the network.
         const fatal = /^4\d\d /.test(String(err.message));
         if (!fatal) { setStatus({ mode: 'offline', error: String(err.message) }); return; }
+        // Dropping it silently is how a delete looks like it "did not persist":
+        // gone locally, still in the database, back on the next pull. Say so.
+        setStatus({ error: `A change was rejected by the database (${ops[0].table} ${ops[0].op}) — reload to see the current state.` });
       }
       ops = ops.slice(1);
       writeOutbox(ops);
@@ -2204,11 +2461,16 @@ const persist = () => {
 // A role had no identity of its own: the interface addressed it by its position
 // in the array, which is fine until somebody else inserts one above it. Stamping
 // an id on the way past is enough to key it in the database, and costs the rest
-// of the code nothing — index-based addressing still works.
-function stampRoleIds(d) {
+// of the code nothing — index-based addressing still works. Per-event prep
+// steps get the same treatment for the same reason: they are editable on the
+// event now, so they need a stable key to diff against prep_items.
+function stampIds(d) {
   for (const ev of d.events ?? []) {
     for (const r of ev.roles ?? []) {
       if (!r.id) r.id = crypto.randomUUID();
+    }
+    for (const p of ev.prep ?? []) {
+      if (!p.id) p.id = crypto.randomUUID();
     }
   }
   return d;
@@ -2255,7 +2517,7 @@ function mutate(label, fn) {
   if (!canEdit()) { toast("You're viewing read-only — sign in to edit", () => {}); return; }
   const before = clone(DATA);
   fn(DATA);
-  stampRoleIds(DATA);
+  stampIds(DATA);
   persist();
   render();
   Sync.push(before, DATA);
@@ -2280,7 +2542,7 @@ function applyRemote(doc) {
   // Kit is absent from a pull when the database has none (toDocument omits an
   // empty kit); keep the inlined seed kit rather than blanking the locker.
   if (doc.kit === undefined) doc.kit = clone(DATA.kit || SEED.kit || []);
-  DATA = stampRoleIds(doc);
+  DATA = stampIds(doc);
   persist();
   if (sheetId && !DATA.events.some((e) => e.id === sheetId)) closeSheet();
   render();
@@ -2291,10 +2553,37 @@ function toast(text, undo) {
   const el = document.getElementById('toast');
   document.getElementById('toast-t').textContent = text;
   const btn = document.getElementById('toast-undo');
+  // The action button is shared with confirmToast, so reset it to the undo look.
+  btn.textContent = 'Undo';
+  btn.classList.remove('is-danger');
+  document.getElementById('toast-cancel').hidden = true;
   btn.onclick = () => { undo(); el.hidden = true; clearTimeout(toastTimer); };
   el.hidden = false;
   clearTimeout(toastTimer);
   toastTimer = setTimeout(() => { el.hidden = true; }, 7000);
+}
+
+// A destructive action asks first. The same toast slot, but two buttons: the
+// action confirms, Cancel (or letting it time out) backs out. Confirming runs
+// onConfirm — which for a delete is the usual mutate(), so an Undo toast still
+// follows and the delete stays reversible until it syncs.
+function confirmToast(text, actionLabel, onConfirm) {
+  const el = document.getElementById('toast');
+  document.getElementById('toast-t').textContent = text;
+  const act = document.getElementById('toast-undo');
+  const cancel = document.getElementById('toast-cancel');
+  act.textContent = actionLabel;
+  act.classList.add('is-danger');
+  cancel.hidden = false;
+  const close = () => {
+    el.hidden = true; clearTimeout(toastTimer);
+    act.classList.remove('is-danger'); act.textContent = 'Undo'; cancel.hidden = true;
+  };
+  act.onclick = () => { close(); onConfirm(); };
+  cancel.onclick = close;
+  el.hidden = false;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(close, 7000);   // no answer is a cancel, not a delete
 }
 
 const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;' }[c]));
@@ -2423,13 +2712,109 @@ function peopleOptions(ev, role) {
 }
 
 // --- Search ---------------------------------------------------------------
-// One box, filtering whatever screen you are on. On the calendar it fades the
-// events that do not match rather than removing them, because a month with
-// holes punched in it stops being a month.
+// One box, searching the whole year — not just the screen you happen to be on.
+// Each list view still filters itself (and the calendar fades its non-matches
+// rather than removing them, because a month with holes punched in it stops
+// being a month), but a query also opens a dropdown of matches drawn from every
+// module, so a crew member or a piece of kit is found from anywhere. A result
+// jumps to the thing: the month it lives in, or its detail drawer.
 let q = '';
 const hit = (...parts) => !q || parts.filter(Boolean).join(' ').toLowerCase().includes(q);
 const evHit = (e) => hit(e.title, e.venue, e.strand, e.brief,
   (e.roles || []).map((r) => `${r.label} ${MEMBERS[r.member]?.known_as ?? ''}`).join(' '));
+
+// The global results dropdown. Every group respects the same access rule as its
+// nav item: a private module you cannot view (Crew, To-do when signed out of a
+// grant) contributes no rows, so search never leaks what the screen hides.
+const SEARCH_CAP = 6;   // per group, before "+N more"
+// Open only while the box has focus and a query. Kept as a flag so a background
+// re-render (a sync pull, a mutation elsewhere) refreshes the results without
+// re-popping the dropdown over a screen you have since navigated to.
+let searchOpen = false;
+function renderSearchResults() {
+  const box = document.getElementById('search-results');
+  const input = document.getElementById('q');
+  if (!box) return;
+  if (!q || !searchOpen) {
+    box.hidden = true; box.innerHTML = '';
+    if (input) input.setAttribute('aria-expanded', 'false');
+    return;
+  }
+
+  const groups = [];
+  const addGroup = (label, mod, rows) => {
+    if (mod && !canView(mod)) return;
+    if (rows.length) groups.push({ label, rows });
+  };
+
+  addGroup('Events', 'events', DATA.events.filter(evHit)
+    .sort((a, b) => a.date.localeCompare(b.date))
+    .map((e) => ({ type: 'event', id: e.id, title: e.title,
+      meta: `${shortDate(e.date)}${e.venue ? ' · ' + e.venue : ''}` })));
+
+  addGroup('Crew', 'crew', crewList()
+    .filter((m) => m.active !== false
+      && hit(m.known_as, m.full_name, m.committee_role, (m.trained || []).join(' ')))
+    .map((m) => ({ type: 'crew', id: m.id, title: m.known_as || m.full_name || 'Crew',
+      meta: m.committee_role || 'Crew' })));
+
+  addGroup('Kit', 'kit', (DATA.kit || SEED.kit || [])
+    .filter((k) => hit(k.name, k.category, k.asset_tag, k.home, k.notes, KIT_STATE[k.state]))
+    .map((k) => ({ type: 'kit', id: k.id, title: k.name,
+      meta: KIT_STATE[k.state] || k.category || '' })));
+
+  addGroup('To do', 'tasks', (DATA.tasks || [])
+    .filter((t) => hit(t.title, t.detail, t.owner_role, AREAS[t.area]))
+    .map((t) => ({ type: 'task', id: t.id, title: t.title,
+      meta: t.done ? 'Done' : (AREAS[t.area] || '') })));
+
+  if (!groups.length) {
+    box.innerHTML = '<p class="sr-empty">Nothing matches that search.</p>';
+  } else {
+    box.innerHTML = groups.map(({ label, rows }) => {
+      const shown = rows.slice(0, SEARCH_CAP).map((r) =>
+        `<button class="sr-row" role="option" type="button"
+                 data-goto="${r.type}" data-goto-id="${esc(r.id)}">
+          <span class="sr-title">${esc(r.title)}</span>
+          ${r.meta ? `<span class="sr-meta">${esc(r.meta)}</span>` : ''}
+        </button>`).join('');
+      const more = rows.length > SEARCH_CAP
+        ? `<p class="sr-more">+${rows.length - SEARCH_CAP} more</p>` : '';
+      return `<p class="sr-group">${label}</p>${shown}${more}`;
+    }).join('');
+  }
+  box.hidden = false;
+  if (input) input.setAttribute('aria-expanded', 'true');
+}
+
+// Acting on a result: go to where the thing lives, then open it. Events jump to
+// their own month before the drawer opens, so the calendar behind it is the
+// right one. Crew and To-do have no drawer — the view they land on is already
+// filtered by the same query, so the match is at the top of the list.
+function gotoResult(type, id) {
+  closeSearch();
+  if (type === 'event') {
+    const e = DATA.events.find((x) => x.id === id);
+    if (e) { const d = parse(e.date); cur = { y: d.getFullYear(), m: d.getMonth() }; }
+    setView('calendar');
+    if (e) openSheet(id, null);
+  } else if (type === 'kit') {
+    setView('kit');
+    openKitSheet(id);
+  } else if (type === 'crew') {
+    setView('crew');
+  } else if (type === 'task') {
+    setView('tasks');
+  }
+}
+
+function closeSearch() {
+  searchOpen = false;
+  const box = document.getElementById('search-results');
+  const input = document.getElementById('q');
+  if (box) { box.hidden = true; }
+  if (input) input.setAttribute('aria-expanded', 'false');
+}
 
 // --- Preferences ----------------------------------------------------------
 // The overview page is gone; the month calendar is the home screen. Its one
@@ -2463,7 +2848,22 @@ const KIT_STATE = {
   returned: 'Returned', repair: 'In repair', missing: 'Missing',
 };
 const KIT_ATTENTION = new Set(['repair', 'missing']);
+// Which glyph rides beside the status word: a warning for the states that need
+// attention, otherwise "where is it" — checked in the hub, out on a clock.
+const KIT_STATE_ICON = {
+  in_hub: 'check', booked: 'clock', out: 'clock', returned: 'check',
+  repair: 'warning', missing: 'warning',
+};
+// The colour tone each state reads in: present (green), away on a clock (amber),
+// a problem (red). Colour reinforces the word + glyph — it never carries state
+// on its own. States absent here fall back to the neutral grey base.
+const KIT_TONE = {
+  in_hub: 'good', returned: 'good',
+  out: 'out', booked: 'out',
+  repair: 'alert', missing: 'alert',
+};
 let kitFilter = 'all';
+let kitView = 'grid';
 
 function renderKit() {
   const kit = (DATA.kit || SEED.kit || []).slice()
@@ -2485,12 +2885,12 @@ function renderKit() {
     `<button class="chip" data-kit-filter="${id}" aria-pressed="${kitFilter === id}" type="button">${
       label} <span class="num">${n}</span></button>`;
 
-  // Status is a word first: an attention state colours the text red and says
-  // "In repair" / "Missing" — never colour on its own.
+  // Status is a word first, with its glyph and colour tone as reinforcement —
+  // never colour on its own. Present is green, away amber, a problem red.
   const status = (k) => {
-    const attn = KIT_ATTENTION.has(k.state);
-    return `<span class="kit-state${attn ? ' is-alert' : ''}">${
-      attn ? svg('warning', 'icon-sm') : ''}${KIT_STATE[k.state] || k.state}</span>`;
+    const tone = KIT_TONE[k.state];
+    return `<span class="kit-state${tone ? ` is-${tone}` : ''}">${
+      svg(KIT_STATE_ICON[k.state] || 'kit', 'icon-sm')}${KIT_STATE[k.state] || k.state}</span>`;
   };
 
   // data-label carries the column name so each cell can label itself when the
@@ -2512,12 +2912,45 @@ function renderKit() {
         ? ` <span class="tag" title="Has usage notes">${svg('help', 'icon-sm')}</span>` : ''}</td>
     </tr>`).join('');
 
+  // The same pieces as cards. Badge is the status word (+ its glyph) over the
+  // photo; the footer carries category and where the piece lives.
+  const badge = (k) => {
+    const tone = KIT_TONE[k.state];
+    return `<span class="kit-badge${tone ? ` is-${tone}` : ''}">${
+      svg(KIT_STATE_ICON[k.state] || 'kit', 'icon-sm')}${KIT_STATE[k.state] || k.state}</span>`;
+  };
+  const cards = shown.map((k) => `
+    <article class="kit-card" data-kit="${k.id}" tabindex="0" role="button"
+        aria-label="Open ${esc(k.name)}">
+      <div class="kit-card-photo">
+        ${k.photo_url
+          ? `<img src="${esc(k.photo_url)}" alt="">`
+          : `<span class="kit-card-noimg">${svg('kit')}</span>`}
+        ${badge(k)}
+      </div>
+      <div class="kit-card-body">
+        ${k.asset_tag ? `<p class="kit-card-tag t-label dimmed">${esc(k.asset_tag)}</p>` : ''}
+        <h3 class="kit-card-name">${esc(k.name)}</h3>
+        ${k.notes ? `<p class="kit-card-desc">${esc(k.notes)}</p>` : ''}
+        <div class="kit-card-meta">
+          <div><span class="t-label dimmed">Category</span>
+            <span class="kv">${esc(k.category || '—')}</span></div>
+          <div><span class="t-label dimmed">Location</span>
+            <span class="kv">${esc(k.home || '—')}</span></div>
+        </div>
+      </div>
+    </article>`).join('');
+
   document.getElementById('v-kit').innerHTML = `
     <div class="page-head">
       <div>
         <h2 class="t-headline">Kit locker</h2>
       </div>
       <div class="page-tools">
+        <div class="seg" role="group" aria-label="Layout">
+          <button data-kit-view="grid" aria-pressed="${kitView === 'grid'}" type="button">Grid</button>
+          <button data-kit-view="list" aria-pressed="${kitView === 'list'}" type="button">List</button>
+        </div>
         <button class="btn btn-primary needs-edit" id="kit-add" type="button">${svg('plus')} Add kit</button>
       </div>
     </div>
@@ -2536,10 +2969,12 @@ function renderKit() {
       ${fchip('attention', 'Needs attention', attention.length)}
     </div>
 
-    ${shown.length ? `<div class="tbl-wrap"><table class="tbl">
+    ${shown.length ? (kitView === 'grid'
+      ? `<div class="kit-grid">${cards}</div>`
+      : `<div class="tbl-wrap"><table class="tbl">
       <thead><tr><th>Item</th><th>Category</th><th>Asset</th><th>Location</th><th>Status</th></tr></thead>
       <tbody>${rows}</tbody>
-    </table></div>` : '<p class="empty">No kit matches that.</p>'}`;
+    </table></div>`) : '<p class="empty">No kit matches that.</p>'}`;
 }
 
 // --- Kit detail / edit drawer ---------------------------------------------
@@ -2752,6 +3187,10 @@ let cur = (() => {
   return { y: d.getFullYear(), m: d.getMonth() };
 })();
 let calFilter = 'all';
+// The day the crew has tapped to focus. Purely a visual anchor — it does not
+// filter the month — so a phone user in a dark venue can point at a day and keep
+// their place. Cleared by tapping it again.
+let selectedDay = null;
 
 function renderCalendar() {
   // The "Needs crew" filter only exists while the flag is on; if it turned off
@@ -2780,10 +3219,9 @@ function renderCalendar() {
     const key = iso(day);
     const outside = day.getMonth() !== cur.m;
     const evs = DATA.events.filter((e) => e.date === key && pass(e));
-    cells += `<div class="day${outside ? ' is-outside' : ''}${key === TODAY ? ' is-today' : ''}" data-day="${key}">
+    cells += `<div class="day${outside ? ' is-outside' : ''}${key === TODAY ? ' is-today' : ''}${key === selectedDay ? ' is-selected' : ''}" data-day="${key}"${key === selectedDay ? ' aria-current="date"' : ''}>
       <div class="day-head">
         <span class="daynum">${day.getDate()}</span>
-        ${key === TODAY ? '<i class="today-dot"></i>' : ''}
       </div>
       ${evs.map((e) => {
         const cov = coverage(e);
@@ -2934,7 +3372,10 @@ const AREAS = {
   socials: 'Socials', team: 'Team', nasta: 'NaSTA', legacy: 'Legacy',
 };
 let areaFilter = 'all';
-let hideDone = false;
+// Which status pill is showing: the upcoming (not-done) list, or the completed
+// archive. Completed to-dos are kept, never deleted on tick — they just move
+// behind their own pill so they stop crowding the work still to do.
+let taskStatus = 'upcoming';
 // List is the default layout, not the kanban board: the station manager works
 // from the list — every to-do in one column, sortable by when it bites — and
 // reaches for the board only when they want the buckets laid out side by side.
@@ -2979,25 +3420,37 @@ const EMPTY_COL = {
 function renderTasks() {
   const tasks = withDue(DATA.tasks || []);
   const done = tasks.filter((t) => t.done).length;
+  // Two views, chosen by the status pills: the work still to do, and the
+  // completed archive. Completed to-dos are filtered out of the upcoming view
+  // entirely rather than greyed in place — that is the whole point of keeping
+  // them behind their own pill. The area filter narrows whichever view is open.
+  const showingDone = taskStatus === 'done';
   const shown = tasks.filter((t) =>
     (areaFilter === 'all' || t.area === areaFilter)
-    && !(hideDone && t.done)
+    && (showingDone ? t.done : !t.done)
     && hit(t.title, t.detail, t.owner_role, AREAS[t.area]));
 
-  const areaList = ['all', ...Object.keys(AREAS)];
-  const areaCount = (a) => tasks.filter((t) => a === 'all' || t.area === a).length;
-  const areaOpen = (a) => tasks.filter((t) => (a === 'all' || t.area === a) && !t.done).length;
-  const chips = areaList.map((a) =>
-    `<button class="chip" data-area="${a}" aria-pressed="${areaFilter === a}" type="button">${
-      a === 'all' ? 'All' : AREAS[a]} <span class="num">${areaOpen(a)}/${areaCount(a)}</span></button>`).join('');
+  const statusPills = `<div class="chips" role="group" aria-label="Show to-dos">
+    <button class="chip" data-status="upcoming" aria-pressed="${!showingDone}" type="button">
+      All upcoming <span class="num">${tasks.length - done}</span></button>
+    <button class="chip" data-status="done" aria-pressed="${showingDone}" type="button">
+      Completed <span class="num">${done}</span></button>
+  </div>`;
 
-  // On a phone the eight area chips wrap into three rows and push the list off
-  // the screen, so there they collapse into a single dropdown. CSS swaps the two
-  // at the 900px breakpoint; both are always in the DOM.
+  const areaList = ['all', ...Object.keys(AREAS)];
+  // Counts follow the open view: in the upcoming view a chip counts what is
+  // still to do in that area; in the completed view it counts what is done.
+  const areaN = (a) => tasks.filter((t) =>
+    (a === 'all' || t.area === a) && (showingDone ? t.done : !t.done)).length;
+
+  // The eight area chips were a wrapping row that pushed the list off the
+  // screen; collapsed here into a single sort/filter dropdown that carries the
+  // per-area counts for whichever view is open.
   const areaMenu = `<label class="chips-menu">
+    <span class="chips-menu-k">Filter by area</span>
     <select data-area-select aria-label="Filter to-dos by area">
       ${areaList.map((a) => `<option value="${a}"${areaFilter === a ? ' selected' : ''}>${
-        a === 'all' ? 'All areas' : AREAS[a]} · ${areaOpen(a)}/${areaCount(a)}</option>`).join('')}
+        a === 'all' ? 'All areas' : AREAS[a]} · ${areaN(a)}</option>`).join('')}
     </select></label>`;
 
   const anchorNote = (t) => t.anchor
@@ -3011,10 +3464,10 @@ function renderTasks() {
   ]);
 
   const board = `<div class="board">${groups.map(([label, isOver, group]) => `
-    <div class="col${isOver && group.some((t) => !t.done) ? ' is-over' : ''}">
+    <div class="col${!showingDone && isOver && group.length ? ' is-over' : ''}">
       <div class="col-h">
         <span class="t-label">${label}</span>
-        <span class="col-n num">${group.filter((t) => !t.done).length}</span>
+        <span class="col-n num">${group.length}</span>
       </div>
       <div class="col-body">${group.length ? group.map((t) => `
         <div class="card tcard${t.done ? ' is-done' : ''}${!t.done && t.left !== null && t.left < 0 ? ' is-over' : ''}">
@@ -3034,7 +3487,8 @@ function renderTasks() {
             <span title="${t.source === 'you' ? 'Added by you' : `Handover ${esc(t.source)}`}">${esc(t.owner_role)}</span>
           </div>
           ${t.anchor ? `<div class="tcard-d" style="margin-top:8px">${esc(anchorNote(t))}</div>` : ''}
-        </div>`).join('') : `<p class="col-empty">${EMPTY_COL[label]}</p>`}
+        </div>`).join('') : `<p class="col-empty">${
+          showingDone ? 'None completed in this range.' : EMPTY_COL[label]}</p>`}
       </div>
     </div>`).join('')}</div>`;
 
@@ -3074,10 +3528,9 @@ function renderTasks() {
     <div class="page-head">
       <div>
         <h2 class="t-headline">To do</h2>
-        <p>Everything the handover asks of a station manager, plus whatever else you add. ${done} of ${tasks.length} done.</p>
+        <p>Everything the handover asks of a station manager, plus whatever else you add. ${tasks.length - done} outstanding · ${done} of ${tasks.length} done.</p>
       </div>
       <div class="page-tools">
-        <button class="chip" id="hide-done" aria-pressed="${hideDone}" type="button">Hide done</button>
         <div class="seg" role="group" aria-label="Layout">
           <button data-task-mode="board" aria-pressed="${taskMode === 'board'}" type="button">Board</button>
           <button data-task-mode="list" aria-pressed="${taskMode === 'list'}" type="button">List</button>
@@ -3085,12 +3538,20 @@ function renderTasks() {
         <button class="btn btn-primary needs-edit" id="task-new" type="button">${svg('plus')} New to-do</button>
       </div>
     </div>
-    <div class="chips tasks-filter" style="margin-bottom:var(--gutter)">${chips}</div>
-    ${areaMenu}
+    <div class="tasks-bar">
+      ${statusPills}
+      ${areaMenu}
+    </div>
     ${addForm}
     ${shown.length ? (taskMode === 'board' ? board : list)
-      : `<p class="empty">Nothing here. Everything in ${
-        areaFilter === 'all' ? 'the handover' : AREAS[areaFilter]} is either done or filtered out.</p>`}`;
+      : `<p class="empty">${
+        showingDone
+          ? (areaFilter === 'all'
+              ? 'Nothing completed yet. Ticked-off to-dos collect here so they stop crowding the work still to do.'
+              : `Nothing completed in ${AREAS[areaFilter]} yet.`)
+          : (areaFilter === 'all'
+              ? 'Nothing upcoming — every to-do is done. The Completed pill has the rest.'
+              : `Nothing upcoming in ${AREAS[areaFilter]}. Try another area or the Completed pill.`)}</p>`}`;
 }
 
 // --- Crew -----------------------------------------------------------------
@@ -3229,6 +3690,9 @@ function renderCrew() {
 // Which role bay has its times/on-site detail open. View state, not data — it
 // deliberately survives a re-render of the sheet but nothing else.
 let bayEdit = null;
+// Whether the "add a prep step" form is open in the sheet. View state like
+// bayEdit — it survives a re-render of the sheet and nothing else.
+let addingPrep = false;
 // Which event the sheet is showing, so a mutation from anywhere — including an
 // Undo pressed on the toast, which is outside the sheet — can refresh it.
 let sheetId = null;
@@ -3249,6 +3713,7 @@ function openSheet(id, refocus) {
 function renderSheet(id) {
   const e = DATA.events.find((x) => x.id === id);
   if (!e) return false;
+  if (sheetId !== id) addingPrep = false;   // a fresh event, not a re-render
   sheetId = id;
   kitSheetId = null;
   const d = parse(e.date);
@@ -3260,14 +3725,27 @@ function renderSheet(id) {
   const opts = (list, sel) => list.map((v) =>
     `<option value="${v}"${v === sel ? ' selected' : ''}>${v[0].toUpperCase() + v.slice(1)}</option>`).join('');
 
-  // Prep: the template lines that apply to this strand, plus the event's own.
+  // Prep: the strand's template lines, plus the event's own steps. A template
+  // line is the reusable rule — it lives in prep_templates and belongs to every
+  // event of the strand — so it can't be edited from one event, but it can be
+  // dismissed for this event: its label goes in e.prep_skip and it drops out
+  // here. An own step carries a real delete, and one kind of own step is a link
+  // to another event on the calendar (event_ref), which takes its date and title
+  // from that event instead of a lead time — so it moves when that event moves.
+  const skip = new Set(e.prep_skip || []);
   const tmpl = (DATA.prep_templates || []).filter(
-    (t) => t.strand === '*' || t.strand === e.strand
+    (t) => (t.strand === '*' || t.strand === e.strand) && !skip.has(t.label)
   );
-  const prep = [...tmpl, ...(e.prep || [])].map((p) => {
-    const due = new Date(d.getFullYear(), d.getMonth(), d.getDate() - p.lead_days);
+  const prep = [
+    ...tmpl.map((p) => ({ ...p, own: false })),
+    ...(e.prep || []).map((p, i) => ({ ...p, own: true, idx: i })),
+  ].map((p) => {
+    const linked = p.event_ref ? DATA.events.find((x) => x.id === p.event_ref) : null;
+    const due = linked
+      ? parse(linked.date)
+      : new Date(d.getFullYear(), d.getMonth(), d.getDate() - (p.lead_days ?? 0));
     const left = daysBetween(TODAY, iso(due));
-    return { ...p, due, left };
+    return { ...p, linked, due, left };
   }).sort((a, b) => a.due - b.due);
 
   document.getElementById('sheet-in').innerHTML = `
@@ -3390,21 +3868,59 @@ function renderSheet(id) {
         .map((k) => `<option value="${k.id}">${esc(k.name)}${k.category ? ` — ${esc(k.category)}` : ''}</option>`).join('')}
     </select>
 
-    ${prep.length ? `<div class="rule">Prep</div>
-      <div class="rows">${prep.map((p) => {
+    <div class="rule">Prep${(e.prep || []).length
+      ? ` <span class="tag num">${(e.prep || []).length}</span>` : ''}</div>
+    ${prep.length ? `<div class="rows">${prep.map((p) => {
         const over = p.left < 0;
+        const tag = p.own ? (p.event_ref ? 'on the calendar' : null) : 'from template';
+        const sub = [p.owner_role, tag].filter(Boolean).join(' · ');
+        // A linked-event step is a link into that event's sheet; a broken link
+        // (the event was deleted) still shows, so it can be removed.
+        const label = p.event_ref
+          ? (p.linked
+              ? `<a href="#" class="row-link" data-prep-open="${esc(p.event_ref)}">${esc(p.linked.title)}</a>`
+              : `${esc(p.label || 'Linked event')} <span class="row-sub">event removed</span>`)
+          : esc(p.label);
+        const del = p.own
+          ? `<button class="icon-btn" data-prep-del="${p.idx}" type="button"
+                  aria-label="Remove prep: ${esc(p.label || p.linked?.title || 'step')}">${svg('close')}</button>`
+          : `<button class="icon-btn" data-prep-skip="${esc(p.label)}" type="button"
+                  aria-label="Hide for this event: ${esc(p.label)}">${svg('close')}</button>`;
         return `<div class="row">
           <span class="row-l">
-            ${esc(p.label)}
-            ${p.owner_role ? `<span class="row-sub">${esc(p.owner_role)}</span>` : ''}
+            ${label}
+            ${sub ? `<span class="row-sub">${esc(sub)}</span>` : ''}
             ${p.detail ? `<span class="row-d">${esc(p.detail)}</span>` : ''}
           </span>
           <span class="row-due num ${over ? 'is-over' : ''}">
             <span class="row-date">${d2(p.due.getDate())} ${MON3[p.due.getMonth()]}</span>
             <span class="row-rel">${relDay(p.left)}</span>
           </span>
+          ${del}
         </div>`;
-      }).join('')}</div>` : ''}
+      }).join('')}</div>` : `<p class="empty" style="padding:12px 0">No prep steps yet.
+        Template steps for this strand appear here automatically; add your own below.</p>`}
+    ${addingPrep ? `
+      <form class="addbar" id="prep-form" data-event="${esc(id)}">
+        <label>Prep step
+          <input name="label" autocomplete="off" placeholder="What needs doing before the event?"></label>
+        <label>Days before
+          <input type="number" name="lead" min="0" step="1" value="7"></label>
+        <label>Owner
+          <input name="owner" autocomplete="off" placeholder="e.g. Head of Tech"></label>
+        <label>Or link an event
+          <select name="ref">
+            <option value="">— free-text step —</option>
+            ${DATA.events.filter((x) => x.id !== id)
+              .sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0))
+              .map((x) => `<option value="${esc(x.id)}">${esc(x.title)} · ${shortDate(x.date)}</option>`).join('')}
+          </select></label>
+        <button class="btn btn-primary" type="submit">Add</button>
+        <button class="btn btn-ghost" type="button" id="prep-cancel">Cancel</button>
+      </form>`
+      : `<button class="btn btn-ghost bank-add" id="prep-add" type="button">
+          ${svg('plus')} Add a prep step
+        </button>`}
 
     ${soc ? `<div class="rule">${esc(soc.name)}</div>
       ${soc.standing_terms ? `<div class="note"><span class="note-k">Always</span>${esc(soc.standing_terms)}</div>` : ''}
@@ -3564,13 +4080,55 @@ function renderSheet(id) {
     };
   });
 
+  // Prep: the event's own steps are add/delete. Templates are not touched here —
+  // they are the strand-wide rule and belong to prep_templates. The submit is
+  // handled by the delegated listener that already serves the to-do add form.
+  document.getElementById('prep-add')?.addEventListener('click', () => {
+    addingPrep = true;
+    openSheet(id, null);
+    sheetIn.querySelector('#prep-form [name=label]')?.focus();
+  });
+  document.getElementById('prep-cancel')?.addEventListener('click', () => {
+    addingPrep = false;
+    openSheet(id, null);
+  });
+  sheetIn.querySelectorAll('[data-prep-del]').forEach((btn) => {
+    btn.onclick = () => {
+      const i = Number(btn.dataset.prepDel);
+      const p = e.prep?.[i];
+      const gone = p?.label || (p?.event_ref && DATA.events.find((x) => x.id === p.event_ref)?.title) || 'prep step';
+      mutate(`Removed prep: ${gone}`, (s) => {
+        s.events.find((x) => x.id === id).prep.splice(i, 1);
+      });
+      openSheet(id, null);
+    };
+  });
+  // Dismissing a template step for this event only: its label joins prep_skip,
+  // so the strand-wide rule is untouched but stops showing on this one.
+  sheetIn.querySelectorAll('[data-prep-skip]').forEach((btn) => {
+    btn.onclick = () => {
+      const lbl = btn.dataset.prepSkip;
+      mutate(`Hid "${lbl}" for ${e.title}`, (s) => {
+        const ev = s.events.find((x) => x.id === id);
+        (ev.prep_skip ??= []).push(lbl);
+      });
+      openSheet(id, null);
+    };
+  });
+  // A linked-event prep step is a jump to that event's sheet.
+  sheetIn.querySelectorAll('[data-prep-open]').forEach((a) => {
+    a.onclick = (evt) => { evt.preventDefault(); openSheet(a.dataset.prepOpen, null); };
+  });
+
   document.getElementById('sheet-x').onclick = closeSheet;
   document.getElementById('sheet-done').onclick = closeSheet;
   document.getElementById('sheet-copy').onclick = () => copyEventDetails(e);
   document.getElementById('sheet-del').onclick = () => {
-    closeSheet();
-    mutate(`Deleted ${e.title}`, (s) => {
-      s.events = s.events.filter((x) => x.id !== id);
+    confirmToast(`Delete "${e.title}"?`, 'Delete', () => {
+      closeSheet();
+      mutate(`Deleted ${e.title}`, (s) => {
+        s.events = s.events.filter((x) => x.id !== id);
+      });
     });
   };
 
@@ -3623,11 +4181,17 @@ function eventDetailsText(e) {
     }
   }
 
-  const tmpl = (DATA.prep_templates || []).filter((t) => t.strand === '*' || t.strand === e.strand);
-  const prep = [...tmpl, ...(e.prep || [])].map((p) => ({
-    label: p.label, owner: p.owner_role,
-    due: new Date(d.getFullYear(), d.getMonth(), d.getDate() - p.lead_days),
-  })).sort((a, b) => a.due - b.due);
+  const pskip = new Set(e.prep_skip || []);
+  const tmpl = (DATA.prep_templates || [])
+    .filter((t) => (t.strand === '*' || t.strand === e.strand) && !pskip.has(t.label));
+  const prep = [...tmpl, ...(e.prep || [])].map((p) => {
+    const linked = p.event_ref ? DATA.events.find((x) => x.id === p.event_ref) : null;
+    return {
+      label: linked ? linked.title : p.label, owner: p.owner_role,
+      due: linked ? parse(linked.date)
+        : new Date(d.getFullYear(), d.getMonth(), d.getDate() - (p.lead_days ?? 0)),
+    };
+  }).sort((a, b) => a.due - b.due);
   if (prep.length) {
     L.push('');
     L.push('Prep');
@@ -3670,6 +4234,7 @@ async function copyEventDetails(e) {
 
 function closeSheet() {
   bayEdit = null;
+  addingPrep = false;
   sheetId = null;
   kitSheetId = null;
   document.getElementById('sheet').classList.remove('is-open');
@@ -3696,16 +4261,20 @@ let lastPills = {};
 
 function renderNav() {
   const open = totalOpen();
-  const overdue = withDue(DATA.tasks || []).filter((t) => !t.done && t.left !== null && t.left < 0).length;
+  // Outstanding = anything not yet ticked off. A "To do" nav item badged with an
+  // overdue-only count read as "zero to do" while 56 things were still open, so
+  // the badge counts what is left to do; overdue still shows as the red status
+  // and the Overdue column on the screen itself.
+  const openTasks = (DATA.tasks || []).filter((t) => !t.done).length;
   const next = {};
   // The private modules drop out of the nav for anyone not granted them once the
   // page is connected to the live database. Offline/local, everything shows.
   document.getElementById('nav').innerHTML = VIEWS.filter(([id]) => canView(VIEW_MODULE[id])).map(([id, label, icon]) => {
     // The open-role count only rides the nav when the crew-gap flag is on — off
     // by default, so the sidebar is quiet until you ask to be shown the gaps.
-    // The overdue-tasks count is a deadline signal, not a crew one, so it stays.
+    // The tasks count is always on: it is the number of outstanding to-dos.
     const pill = flagCrew && (id === 'calendar' || id === 'schedule') ? open
-               : id === 'tasks' ? overdue : null;
+               : id === 'tasks' ? openTasks : null;
     if (pill !== null) next[id] = pill;
     const moved = pill !== null && lastPills[id] !== undefined && lastPills[id] !== pill;
     return `<button class="nav-item" data-view="${id}" aria-current="${view === id}" type="button">
@@ -3735,6 +4304,9 @@ function setView(v) {
 document.addEventListener('click', (ev) => {
   const t = ev.target;
 
+  const goto = t.closest('[data-goto]');
+  if (goto) { gotoResult(goto.dataset.goto, goto.dataset.gotoId); return; }
+
   const nav = t.closest('[data-view]');
   if (nav) { setView(nav.dataset.view); return; }
 
@@ -3760,6 +4332,16 @@ document.addEventListener('click', (ev) => {
   const cf = t.closest('[data-cal-filter]');
   if (cf) { calFilter = cf.dataset.calFilter; renderCalendar(); return; }
 
+  // Tapping a day focuses it; tapping the focused day clears it. This runs after
+  // the event and add-button checks above, so clicking a badge or the + never
+  // also toggles the day underneath it.
+  const dayCell = t.closest('.day[data-day]');
+  if (dayCell) {
+    selectedDay = selectedDay === dayCell.dataset.day ? null : dayCell.dataset.day;
+    renderCalendar();
+    return;
+  }
+
   const tm = t.closest('[data-task-mode]');
   if (tm) { taskMode = tm.dataset.taskMode; renderTasks(); return; }
 
@@ -3782,6 +4364,9 @@ document.addEventListener('click', (ev) => {
   }
   if (t.closest('[data-member-cancel]')) { editingMember = null; renderCrew(); return; }
 
+  const kv = t.closest('[data-kit-view]');
+  if (kv) { kitView = kv.dataset.kitView; renderKit(); return; }
+
   const kf = t.closest('[data-kit-filter]');
   if (kf) { kitFilter = kf.dataset.kitFilter; renderKit(); return; }
 
@@ -3800,8 +4385,12 @@ document.addEventListener('click', (ev) => {
     return;
   }
 
-  if (t.closest('#hide-done')) { hideDone = !hideDone; renderTasks(); return; }
+  const status = t.closest('[data-status]');
+  if (status) { taskStatus = status.dataset.status; renderTasks(); return; }
   if (t.closest('#task-new')) {
+    // A new to-do is by definition not done, so show the upcoming view or it
+    // would land behind the Completed pill and look like nothing happened.
+    taskStatus = 'upcoming';
     addingTask = true; renderTasks();
     document.querySelector('#task-form [name=title]')?.focus();
     return;
@@ -3815,8 +4404,8 @@ document.addEventListener('click', (ev) => {
     mutate(`Deleted: ${task.title}`, (s) => { s.tasks = s.tasks.filter((x) => x.id !== id); });
     return;
   }
-  if (t.closest('#prev')) { cur.m--; if (cur.m < 0) { cur.m = 11; cur.y--; } renderCalendar(); return; }
-  if (t.closest('#next')) { cur.m++; if (cur.m > 11) { cur.m = 0; cur.y++; } renderCalendar(); return; }
+  if (t.closest('#prev')) { stepMonth(-1); return; }
+  if (t.closest('#next')) { stepMonth(1); return; }
   if (t.closest('#today')) {
     const d = parse(TODAY); cur = { y: d.getFullYear(), m: d.getMonth() }; renderCalendar(); return;
   }
@@ -3839,16 +4428,121 @@ document.getElementById('help').onclick = () => toast(
 
 document.getElementById('scrim').onclick = closeSheet;
 document.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape') { closeSheet(); setSide(false); }
+  if (e.key === 'Escape') { closeSearch(); closeSheet(); setSide(false); }
 });
+
+// Stepping the month is the one calendar action with two triggers — the arrows
+// and a swipe — so it lives in one place. The while-loops carry a multi-month
+// jump correctly, which a single ++/-- could not, and are cheap for the ±1 the
+// UI actually asks for. On a touch step the grid slides in from the side it came
+// from, so the direction of travel is felt, not just seen.
+function stepMonth(n, animate) {
+  cur.m += n;
+  while (cur.m < 0) { cur.m += 12; cur.y--; }
+  while (cur.m > 11) { cur.m -= 12; cur.y++; }
+  renderCalendar();
+  if (animate) {
+    const weeks = document.getElementById('weeks');
+    if (weeks) { weeks.classList.add(n > 0 ? 'slide-from-right' : 'slide-from-left'); }
+  }
+}
+
+// --- Touch gestures -------------------------------------------------------
+// Half of this product's use is one-handed, on a phone, in a dark venue, so the
+// flicks a thumb reaches for are wired here: swipe the calendar to change month,
+// push the edit sheet or the open nav drawer off the side. Every gesture maps
+// onto an action a tap can already do (stepMonth, closeSheet, setSide), so a
+// swipe is never the only way to do something. Deliberately no edge-swipe to
+// *open* the drawer: it would start where a right-swipe for the previous month
+// starts, and on a phone-first calendar the month gesture wins that corner —
+// the drawer keeps its hamburger button. Guarded to touch, so desktop
+// drag-to-move an event and the mouse-driven e2e suite are both untouched.
+(function () {
+  const COMMIT = 56;   // px of horizontal travel that commits the gesture
+  const SLOPE = 1.3;   // horizontal must beat vertical by this, else it's a scroll
+  let g = null;
+
+  const onControl = (el) => !!el.closest('input, select, textarea, [contenteditable], a');
+
+  document.addEventListener('touchstart', (e) => {
+    if (e.touches.length !== 1) { g = null; return; }
+    const t = e.touches[0], x0 = t.clientX, y0 = t.clientY;
+    const sheet = document.getElementById('sheet');
+    const side = document.getElementById('side');
+    let kind = null, panel = null;
+    if (sheet.classList.contains('is-open') && e.target.closest('#sheet') && !onControl(e.target)) {
+      kind = 'sheet'; panel = sheet;
+    } else if (side.classList.contains('is-open') && e.target.closest('#side')) {
+      kind = 'side'; panel = side;
+    } else if (view === 'calendar' && e.target.closest('.cal')) {
+      kind = 'cal';
+    }
+    g = kind ? { kind, x0, y0, panel, dx: 0, decided: false, active: false } : null;
+  }, { passive: true });
+
+  document.addEventListener('touchmove', (e) => {
+    if (!g) return;
+    const t = e.touches[0], dx = t.clientX - g.x0, dy = t.clientY - g.y0;
+    g.dx = dx;
+    if (!g.decided) {
+      if (Math.abs(dx) < 10 && Math.abs(dy) < 10) return;      // too small to read intent
+      g.decided = true;
+      g.active = Math.abs(dx) > Math.abs(dy) * SLOPE;          // a swipe, not a scroll
+      if (!g.active) { g = null; return; }                     // hand the gesture back to scroll
+    }
+    // The panels already ride on a transform, so the finger drives it directly;
+    // the calendar just claims the axis so the page does not scroll under it.
+    if (g.kind === 'sheet' && dx > 0) {
+      g.panel.style.transition = 'none';
+      g.panel.style.transform = `translateX(${dx}px)`;
+      e.preventDefault();
+    } else if (g.kind === 'side' && dx < 0) {
+      g.panel.style.transition = 'none';
+      g.panel.style.transform = `translateX(${Math.max(dx, -320)}px)`;
+      e.preventDefault();
+    } else if (g.kind === 'cal') {
+      e.preventDefault();
+    }
+  }, { passive: false });
+
+  const release = () => {
+    if (!g) return;
+    const { kind, dx, active, panel } = g;
+    g = null;
+    // Clearing the inline transform hands the panel back to its CSS class, which
+    // animates it home (snap-back) or the rest of the way out (closeSheet/setSide
+    // drop .is-open); either way it moves under the stylesheet's own transition.
+    const drop = () => { if (panel) { panel.style.transition = ''; panel.style.transform = ''; } };
+    if (!active) { drop(); return; }
+    if (kind === 'sheet') { drop(); if (dx > COMMIT) closeSheet(); }
+    else if (kind === 'side') { drop(); if (dx < -COMMIT) setSide(false); }
+    else if (kind === 'cal') {
+      if (dx <= -COMMIT) stepMonth(1, true);
+      else if (dx >= COMMIT) stepMonth(-1, true);
+    }
+  };
+  document.addEventListener('touchend', release, { passive: true });
+  document.addEventListener('touchcancel', release, { passive: true });
+})();
 
 // Search re-renders every list view; the calendar fades non-matches instead of
 // removing them.
 let qTimer;
-document.getElementById('q').addEventListener('input', (e) => {
+const qInput = document.getElementById('q');
+qInput.addEventListener('input', (e) => {
   clearTimeout(qTimer);
+  searchOpen = true;
   qTimer = setTimeout(() => { q = e.target.value.trim().toLowerCase(); render(); }, 120);
 });
+// Re-focusing the box with a query still in it reopens the results you left.
+qInput.addEventListener('focus', () => {
+  if (q) { searchOpen = true; renderSearchResults(); }
+});
+// A result is a button; the delegated click below acts on it. Closing on any
+// click outside the search region keeps the dropdown from lingering.
+document.addEventListener('click', (e) => {
+  if (!e.target.closest('.search')) closeSearch();
+}, true);
 
 // A to-do you add is a to-do like any other: same store, same undo, and it
 // leaves in the export. `source: 'you'` distinguishes it from the handover's
@@ -3888,6 +4582,37 @@ document.addEventListener('submit', (ev) => {
 });
 
 document.addEventListener('submit', (ev) => {
+  if (ev.target.id === 'prep-form') {
+    ev.preventDefault();
+    const f = new FormData(ev.target);
+    const eid = ev.target.dataset.event;
+    const ref = String(f.get('ref') || '');
+    const owner = String(f.get('owner')).trim() || null;
+    let label = String(f.get('label')).trim();
+    // Two kinds of step: a linked calendar event, or a free-text step. A linked
+    // step takes its date from the event, so it needs no label and no lead time
+    // — but a typed label overrides the event's title if you want your own words.
+    if (ref) {
+      const linked = DATA.events.find((x) => x.id === ref);
+      const name = label || linked?.title || 'Linked event';
+      addingPrep = false;
+      mutate(`Linked ${linked?.title ?? 'an event'} as prep`, (s) => {
+        const ev2 = s.events.find((x) => x.id === eid);
+        (ev2.prep ??= []).push({ id: crypto.randomUUID(), label: name, event_ref: ref, owner_role: owner });
+      });
+      openSheet(eid, null);
+      return;
+    }
+    if (!label) return;
+    const lead = Math.max(0, Math.round(Number(f.get('lead')) || 0));
+    addingPrep = false;
+    mutate(`Added prep: ${label}`, (s) => {
+      const ev2 = s.events.find((x) => x.id === eid);
+      (ev2.prep ??= []).push({ id: crypto.randomUUID(), label, lead_days: lead, owner_role: owner });
+    });
+    openSheet(eid, null);
+    return;
+  }
   if (ev.target.id !== 'task-form') return;
   ev.preventDefault();
   const f = new FormData(ev.target);
@@ -4084,7 +4809,7 @@ function exportPdf() {
 // function rather than an inline handler.
 function resetYear() {
   const before = clone(DATA);
-  DATA = stampRoleIds(clone(SEED));
+  DATA = stampIds(clone(SEED));
   persist();
   render();
   // Reset predates sync and never went through mutate(), so it has to push by
@@ -4112,6 +4837,7 @@ function render() {
   renderCrew();
   renderKit();
   renderSettings();
+  renderSearchResults();
   // The sheet is part of the render, not a thing that happens to be on top of
   // it. Without this, Undo restored the data and left the sheet showing the
   // state you had just undone — and if the undone change was a deletion, the
@@ -4462,7 +5188,7 @@ function renderAccess(profiles, grants) {
 // Materialise the working copy on first load. The working copy is the truth
 // (the seed is only a fallback), so it should exist from the first visit
 // rather than springing into being on the first edit.
-stampRoleIds(DATA);
+stampIds(DATA);
 persist();
 setView('calendar');
 render();

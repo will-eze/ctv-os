@@ -13,3 +13,5 @@ supabase/.temp/
 # not ours to publish. data/year.json is the derived, shareable form.
 Handover Document - CampusTV station manager 2026.pdf
 CampusTV_Knowledge_Summary.txt
+.vercel
+.env*

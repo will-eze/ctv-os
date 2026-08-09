@@ -136,7 +136,7 @@ await check('only plans can be deleted, never records', async () => {
     `select tablename from pg_policies
       where schemaname = 'public' and cmd = 'DELETE' order by tablename`);
   eq([...new Set(rows.map((r) => r.tablename))],
-     ['access_grants', 'event_roles', 'events', 'tasks'],
+     ['access_grants', 'event_roles', 'events', 'prep_items', 'tasks'],
      'tables with a DELETE policy');
   return 'kit, ledger, deliverables and incidents stay put';
 });
