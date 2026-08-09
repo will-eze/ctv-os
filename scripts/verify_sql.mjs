@@ -395,13 +395,18 @@ await check('only plans can be deleted, never records', async () => {
   // prep_items joined it when per-event prep became editable in the sheet: a
   // prep step is a plan like a role, and removing one has to be a DELETE or it
   // returns on the next pull. The reusable rule lives in prep_templates.
+  // members and kit joined it on the station manager's instruction: crew and the
+  // locker are the *register*, not records of an event, and a new committee has
+  // to be able to clear the previous year's roster and inventory and start
+  // clean. A kit *booking* against a piece is still a record and still stays put.
   const { rows } = await db.query(
     `select tablename from pg_policies
       where schemaname = 'public' and cmd = 'DELETE' order by tablename`
   );
-  eq(rows.map((r) => r.tablename), ['access_grants', 'event_roles', 'events', 'prep_items', 'tasks'],
+  eq(rows.map((r) => r.tablename),
+     ['access_grants', 'event_roles', 'events', 'kit', 'members', 'prep_items', 'tasks'],
      'tables with a DELETE policy');
-  return 'kit, ledger, deliverables and incidents stay put';
+  return 'kit_bookings, ledger, deliverables and incidents stay put';
 });
 
 await check('writing anything requires a session', async () => {

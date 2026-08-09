@@ -424,15 +424,17 @@ const Sync = (() => {
           due: t.due_on,
           done: t.done_on !== null,
         })),
-      // Kit is editable now. It is omitted (not []) when the table is empty, so
-      // a client keeps its inlined seed locker instead of blanking it — see
-      // applyRemote. Identity is the slug, mirroring events and members.
-      kit: rows.kit?.length ? rows.kit.map((k) => ({
+      // Kit is a deletable register now, so an empty table is an empty locker,
+      // not "not seeded yet" — it is mapped verbatim like members, blanks and
+      // all. (The genuinely-unseeded project is caught upstream by pull()'s
+      // events-length guard, which bails before ever reaching here.) Identity is
+      // the slug, mirroring events and members.
+      kit: (rows.kit ?? []).map((k) => ({
         id: k.slug ?? k.asset_tag ?? k.id,
         name: k.name, category: k.category, asset_tag: k.asset_tag, owner: k.owner,
         state: k.state, home: k.home, notes: k.notes,
         usage: k.usage, tips: k.tips, photo_url: k.photo_url,
-      })) : undefined,
+      })),
     };
   }
 
@@ -544,6 +546,8 @@ const Sync = (() => {
       if (!key) continue;
       if (op.table === 'events') doc.events = (doc.events ?? []).filter((e) => e.id !== key);
       else if (op.table === 'tasks') doc.tasks = (doc.tasks ?? []).filter((t) => t.id !== key);
+      else if (op.table === 'members') doc.members = (doc.members ?? []).filter((m) => m.id !== key);
+      else if (op.table === 'kit') doc.kit = (doc.kit ?? []).filter((k) => k.id !== key);
       else if (op.table === 'event_roles')
         for (const e of doc.events ?? []) e.roles = (e.roles ?? []).filter((r) => r.id !== key);
       else if (op.table === 'prep_items')
@@ -587,10 +591,11 @@ const Sync = (() => {
     const ops = [];
     const index = (list) => new Map((list ?? []).map((x) => [x.id, x]));
 
-    // Members. The crew directory became editable — names, committee roles and
-    // what someone is trained on — so members now diff like events and tasks.
-    // No delete: members are deactivated (active=false), never removed, and the
-    // schema has no DELETE policy for them.
+    // Members. The crew directory is editable — names, committee roles and what
+    // someone is trained on — and now deletable: a new committee clears the
+    // previous year's roster and starts clean. So members diff like events and
+    // tasks, deletion included. Removing a person nulls the roles they held
+    // (member_id is ON DELETE SET NULL), which is exactly an unassigned slot.
     const mA = index(before.members), mB = index(after.members);
     for (const [id, m] of mB) {
       const was = mA.get(id);
@@ -599,9 +604,13 @@ const Sync = (() => {
         ops.push({ table: 'members', op: 'update', by: `slug=eq.${id}`, row: memberRow(m) });
       }
     }
+    for (const id of mA.keys()) {
+      if (!mB.has(id)) ops.push({ table: 'members', op: 'delete', by: `slug=eq.${id}` });
+    }
 
-    // Kit. Editable now — details, usage notes, tips, photo. No delete: kit is
-    // marked inactive, not removed, and the schema has no DELETE policy for it.
+    // Kit. Editable — details, usage notes, tips, photo — and deletable, for the
+    // same reason as crew: the locker is a register a committee resets. Deleting a
+    // piece cascades its bookings in the schema; here it is just gone from the list.
     const kA = index(before.kit), kB = index(after.kit);
     for (const [id, k] of kB) {
       const was = kA.get(id);
@@ -609,6 +618,9 @@ const Sync = (() => {
       else if (!same(kitRow(was), kitRow(k))) {
         ops.push({ table: 'kit', op: 'update', by: `slug=eq.${id}`, row: kitRow(k) });
       }
+    }
+    for (const id of kA.keys()) {
+      if (!kB.has(id)) ops.push({ table: 'kit', op: 'delete', by: `slug=eq.${id}` });
     }
 
     // Events

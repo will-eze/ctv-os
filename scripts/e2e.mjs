@@ -782,6 +782,39 @@ await check('a crew member can be renamed and retrained', async () => {
   return `nina → ${m.committee_role}, trained ${m.trained.join('/')}`;
 });
 
+await check('a crew member can be removed, and undo brings them back', async () => {
+  // Crew is the register a new committee resets, so delete is real, not a
+  // deactivate. It lives in the edit form and confirms first, like every delete.
+  await goto('crew');
+  await sheetGone();
+  const before = (await stored()).members.length;
+  await page.click('[data-member-edit="destin"]');
+  await page.click('[data-member-delete="destin"]');
+  await page.waitForFunction(() => {
+    const b = document.getElementById('toast-undo');
+    return !document.getElementById('toast').hidden && b.textContent.trim() === 'Delete';
+  });
+  await page.click('#toast-undo');   // confirm the delete
+  await page.waitForFunction((n) => {
+    const d = JSON.parse(localStorage.getItem('ctvos.year.v2'));
+    return (d.members || []).length === n - 1;
+  }, {}, before);
+  const gone = await stored();
+  if (gone.members.some((m) => m.id === 'destin')) throw new Error('destin was not removed');
+  // Removing a person must not leave a role pointing at a member who is gone —
+  // the slot reopens instead.
+  if (gone.events.some((e) => (e.roles || []).some((r) => r.member === 'destin')))
+    throw new Error('a role still references the deleted member');
+  await page.click('#toast-undo');   // undo restores the person
+  await page.waitForFunction((n) => {
+    const d = JSON.parse(localStorage.getItem('ctvos.year.v2'));
+    return (d.members || []).length === n;
+  }, {}, before);
+  if (!(await stored()).members.some((m) => m.id === 'destin'))
+    throw new Error('undo did not restore destin');
+  return `crew ${before} → ${before - 1} → ${before}, no dangling roles`;
+});
+
 await check('the crew page carries the handover job descriptions', async () => {
   await goto('crew');
   const roles = await page.$$eval('.role-def h3', (els) => els.map((e) => e.textContent.trim()));
@@ -816,6 +849,34 @@ await check('a kit item can be added', async () => {
   eq((await stored()).kit.length, before + 1, 'kit created');
   await page.evaluate(() => document.getElementById('sheet-x').click());
   return `${before} → ${before + 1} kit items`;
+});
+
+await check('a kit item can be deleted, and undo brings it back', async () => {
+  await goto('kit');
+  await sheetGone();
+  const before = (await stored()).kit.length;
+  await page.click('[data-kit="cam-a6400"]');
+  await page.waitForSelector('#sheet.is-open #kit-del');
+  await sheetSettled();
+  await page.click('#kit-del');
+  await page.waitForFunction(() => {
+    const b = document.getElementById('toast-undo');
+    return !document.getElementById('toast').hidden && b.textContent.trim() === 'Delete';
+  });
+  await page.click('#toast-undo');   // confirm the delete
+  await sheetGone();                 // deleting closes the drawer
+  await page.waitForFunction((n) => {
+    const d = JSON.parse(localStorage.getItem('ctvos.year.v2'));
+    return (d.kit || []).length === n - 1;
+  }, {}, before);
+  if ((await stored()).kit.some((k) => k.id === 'cam-a6400')) throw new Error('the a6400 was not removed');
+  await page.click('#toast-undo');   // undo restores the piece
+  await page.waitForFunction((n) => {
+    const d = JSON.parse(localStorage.getItem('ctvos.year.v2'));
+    return (d.kit || []).length === n;
+  }, {}, before);
+  if (!(await stored()).kit.some((k) => k.id === 'cam-a6400')) throw new Error('undo did not restore the a6400');
+  return `kit ${before} → ${before - 1} → ${before}`;
 });
 
 await check('a prep step can be added to an event, and removed again', async () => {

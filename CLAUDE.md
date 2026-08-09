@@ -297,13 +297,25 @@ Do not relitigate these — the user answered them directly.
   because an untimed editor role (work happens tomorrow, at a desk) otherwise
   clashed with everything that day. False clashes destroy trust in the one
   signal the product is built around.
-- **Delete is allowed on plans, never on records.** `events`, `tasks` and —
-  since the move to a shared database — `event_roles`. Kit bookings, ledger
-  lines, deliverables and incidents have no DELETE policy: a record you can
-  delete is a record you cannot rely on. Cancelling is separate and keeps the
-  row. `event_roles` joined the list because removing a role has always been an
-  offered action, and against a shared database it has to be a real DELETE or
-  the role returns on the next pull. A role is a slot in a plan.
+- **Delete is allowed on plans and on the registers, never on records.**
+  `events`, `tasks`, `event_roles`, `prep_items` — and, on the manager's
+  instruction (2026-08-09), **`members` (crew) and `kit`**. Crew and the kit
+  locker are the *register* a new committee resets: it has to be able to throw
+  away the previous year's roster and inventory and start clean, not carry a
+  growing pile of `active=false` rows forever. Deleting a person nulls the roles
+  they held (`event_roles.member_id` is ON DELETE SET NULL — the slot reopens,
+  the event survives); deleting a piece cascades its `kit_bookings`. Crew delete
+  is gated by `can_edit('crew')`, kit delete by an authenticated session (kit is
+  a public-write module). *This reverses the earlier "members are deactivated,
+  kit is marked inactive" rule — do not reinstate it.* A **kit booking**, ledger
+  line, deliverable and incident still have no DELETE policy: those are records
+  of something that happened, and a record you can delete is one you cannot rely
+  on. Cancelling an event is separate and keeps the row. `event_roles` and
+  `prep_items` are deletable because removing a role or a prep step has always
+  been an offered action, and against a shared database it has to be a real
+  DELETE or it returns on the next pull. `npm run clear:crew-kit` is the one-off
+  that wipes both tables on the live project; the seed in `data/year.json` is
+  left intact so the offline prototype and the suites still have crew and kit.
 - **`incidents` (safeguarding) requires an authenticated session.** Every other
   table is readable with the anon key. Never join it into a list view.
 

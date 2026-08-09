@@ -1,6 +1,6 @@
 -- GENERATED FILE — do not edit.
 --
--- Source: supabase/schema.sql   (sha256 723089b4673f1dc7)
+-- Source: supabase/schema.sql   (sha256 3ff7608eefe13047)
 -- Regenerate: npm run db:migration
 --
 -- schema.sql is what `npm run verify:sql` executes against real Postgres. This
@@ -899,12 +899,21 @@ end $$;
 --
 -- Everything else has no DELETE policy on purpose. A kit booking, a ledger
 -- line, a deliverable and an incident are records of something that happened,
--- and a record you can delete is a record you cannot rely on. Members are
--- deactivated, kit is marked inactive.
+-- and a record you can delete is a record you cannot rely on.
+--
+-- Crew and kit (members, kit) are the exception the station manager asked for:
+-- they are the *register*, not a record of an event, and a committee that is
+-- setting the station up for a new year needs to throw away the previous year's
+-- roster and inventory and start clean — not carry a growing pile of inactive
+-- rows forever. So both are deletable. A kit booking against a piece is still a
+-- record and still not deletable; deleting the piece cascades its bookings
+-- (kit_bookings.kit_id is ON DELETE CASCADE), and event_roles.member_id and the
+-- other member FKs are ON DELETE SET NULL, so removing a person empties the
+-- slots they held rather than deleting the events.
 do $$
 declare t text;
 begin
-  foreach t in array array['events'] loop
+  foreach t in array array['events', 'kit'] loop
     execute format('drop policy if exists %I on %I', t || '_delete', t);
     execute format('create policy %I on %I for delete using (auth.role() = ''authenticated'')',
                    t || '_delete', t);
@@ -948,6 +957,9 @@ end $$;
 create policy members_read   on members for select using (can_view('crew'));
 create policy members_write  on members for insert with check (can_edit('crew'));
 create policy members_update on members for update using (can_edit('crew')) with check (can_edit('crew'));
+-- Crew is deletable (see the deletion note above): a new committee clears the
+-- roster and starts clean, gated by the same crew edit grant as every other write.
+create policy members_delete on members for delete using (can_edit('crew'));
 
 create policy tasks_read   on tasks for select using (can_view('tasks'));
 create policy tasks_write  on tasks for insert with check (can_edit('tasks'));

@@ -132,13 +132,16 @@ await check('RLS is enabled on every table', async () => {
 await check('only plans can be deleted, never records', async () => {
   // access_grants joined the list with role-based access: revoking a grant is a
   // real DELETE the admin performs, and a grant is a decision, not a record.
+  // members and kit joined it on the station manager's instruction: the crew
+  // roster and the kit register are reset by a new committee, so both are
+  // deletable. A kit *booking* against a piece is still a record and stays put.
   const rows = await all(
     `select tablename from pg_policies
       where schemaname = 'public' and cmd = 'DELETE' order by tablename`);
   eq([...new Set(rows.map((r) => r.tablename))],
-     ['access_grants', 'event_roles', 'events', 'prep_items', 'tasks'],
+     ['access_grants', 'event_roles', 'events', 'kit', 'members', 'prep_items', 'tasks'],
      'tables with a DELETE policy');
-  return 'kit, ledger, deliverables and incidents stay put';
+  return 'kit_bookings, ledger, deliverables and incidents stay put';
 });
 
 await check('writing anything requires a session', async () => {

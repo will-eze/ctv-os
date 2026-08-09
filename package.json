@@ -15,6 +15,7 @@
     "db:migration": "python3 scripts/sync_migration.py",
     "db:push": "node scripts/push_schema.mjs",
     "seed": "node scripts/seed_supabase.mjs",
+    "clear:crew-kit": "node scripts/clear_crew_kit.mjs",
     "verify:deploy": "node scripts/verify_deploy.mjs",
     "deploy": "npm run build:prototype && vercel deploy --prod",
     "verify:remote": "node scripts/verify_remote.mjs",
