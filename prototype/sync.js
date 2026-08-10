@@ -893,6 +893,12 @@ const Sync = (() => {
 
     if (op.op === 'delete') {
       await rest(`${op.table}?${op.by}`, { method: 'DELETE' });
+      // Forget any cached slug→uuid for a deleted parent, so re-adding one with
+      // the same slug later resolves the new row and not the tombstoned uuid.
+      if (idmap[op.table]) {
+        const m = op.by.match(/slug=eq\.(.+)$/);
+        if (m) idmap[op.table].delete(m[1]);
+      }
       return;
     }
     if (op.op === 'update') {
@@ -904,12 +910,11 @@ const Sync = (() => {
       headers: { Prefer: 'resolution=merge-duplicates,return=minimal' },
       body: JSON.stringify(row),
     });
-    // A newly inserted event has a uuid this client has not seen. Drop the
-    // cached miss so the next role or task that references it resolves.
-    if (op.table === 'events') idmap.events.delete(row.slug);
-    // Same for a newly inserted board: the notes and links that follow in the
-    // same flush resolve their _board_slug against it.
-    if (op.table === 'boards') idmap.boards.delete(row.slug);
+    // A newly inserted row has a uuid this client has not seen. Drop the cached
+    // entry so the next role/task/note that references it resolves the real id.
+    // (events for roles+tasks, boards for notes+links, members for a re-added
+    // person who reuses a slug a prior delete had cached.)
+    if (idmap[op.table]) idmap[op.table].delete(row.slug);
   }
 
   // --- Outbox ---------------------------------------------------------------
@@ -924,26 +929,49 @@ const Sync = (() => {
     setStatus({ pending: ops.length });
   };
 
+  // One drain at a time, and re-read the queue around every await. Two problems
+  // this closes, both silent edit-loss under rapid use:
+  //   - Reentrancy: mutate() fires push()→drainOutbox() without awaiting, so two
+  //     quick edits used to run two drains at once — double-applying an op and
+  //     racing each other's writeOutbox(). A guard serialises them; a push that
+  //     lands mid-drain re-runs the drain once at the end.
+  //   - Stale write-back: the old loop held the queue in a local `ops` and wrote
+  //     its slice back after each apply. A push that appended while we awaited
+  //     was then overwritten and lost. Now the head is removed from the *current*
+  //     queue each iteration, so a concurrent append survives.
+  let draining = false, drainAgain = false;
   async function drainOutbox() {
     if (!enabled() || !session) return;
-    let ops = readOutbox();
-    while (ops.length) {
-      try {
-        await apply(ops[0]);
-      } catch (err) {
-        // A write that will never succeed — a deleted parent, a rejected
-        // enum — must not wedge the queue behind it forever. Postgres says
-        // which by returning 4xx; anything else is treated as the network.
-        const fatal = /^4\d\d /.test(String(err.message));
-        if (!fatal) { setStatus({ mode: 'offline', error: String(err.message) }); return; }
-        // Dropping it silently is how a delete looks like it "did not persist":
-        // gone locally, still in the database, back on the next pull. Say so.
-        setStatus({ error: `A change was rejected by the database (${ops[0].table} ${ops[0].op}) — reload to see the current state.` });
+    if (draining) { drainAgain = true; return; }
+    draining = true;
+    try {
+      while (true) {
+        const ops = readOutbox();
+        if (!ops.length) break;
+        try {
+          await apply(ops[0]);
+        } catch (err) {
+          // A write that will never succeed — a deleted parent, a rejected
+          // enum — must not wedge the queue behind it forever. Postgres says
+          // which by returning 4xx; anything else is treated as the network.
+          const fatal = /^4\d\d /.test(String(err.message));
+          if (!fatal) { setStatus({ mode: 'offline', error: String(err.message) }); return; }
+          // Dropping it silently is how a delete looks like it "did not persist":
+          // gone locally, still in the database, back on the next pull. Say so.
+          setStatus({ error: `A change was rejected by the database (${ops[0].table} ${ops[0].op}) — reload to see the current state.` });
+        }
+        // Re-read before removing the head — a push may have appended while we
+        // awaited apply(), and writing back a stale slice would drop it. Pushes
+        // only ever append, so ops[0] is still the row we just handled.
+        const cur = readOutbox();
+        cur.shift();
+        writeOutbox(cur);
       }
-      ops = ops.slice(1);
-      writeOutbox(ops);
+      setStatus({ pending: 0 });
+    } finally {
+      draining = false;
+      if (drainAgain) { drainAgain = false; drainOutbox(); }
     }
-    setStatus({ pending: 0 });
   }
 
   async function push(before, after) {
@@ -1005,11 +1033,23 @@ const Sync = (() => {
         payload: {
           config: {
             broadcast: { self: false },
+            // Any change on a watched table pokes a re-pull (schedulePull); the
+            // pull itself reads everything, so this list only has to name the
+            // tables edited collaboratively, not every table. kit and the board
+            // were missing, so a piece of kit or a note added by someone else sat
+            // unseen until the 20s poll — on a shoot day that is too slow. The
+            // board tables fire only once they are in the supabase_realtime
+            // publication (schema.sql adds them; needs a db:push); subscribing
+            // before that is accepted and simply silent, so this is safe to ship.
             postgres_changes: [
               { event: '*', schema: 'public', table: 'events' },
               { event: '*', schema: 'public', table: 'event_roles' },
               { event: '*', schema: 'public', table: 'tasks' },
               { event: '*', schema: 'public', table: 'members' },
+              { event: '*', schema: 'public', table: 'kit' },
+              { event: '*', schema: 'public', table: 'board_nodes' },
+              { event: '*', schema: 'public', table: 'board_edges' },
+              { event: '*', schema: 'public', table: 'boards' },
             ],
           },
           // RLS is evaluated against this, not against the apikey.
@@ -1084,7 +1124,11 @@ const Sync = (() => {
     document.addEventListener('visibilitychange', () => {
       if (!document.hidden) pull();
     });
-    window.addEventListener('online', () => { pull(); drainOutbox(); });
+    // Reconnecting: flush what was queued offline *before* pulling, so the pull
+    // returns the server already carrying those edits. The old order pulled
+    // first, which momentarily reverted your own offline changes on screen until
+    // the writes echoed back.
+    window.addEventListener('online', async () => { await drainOutbox(); pull(); });
   }
 
   return {

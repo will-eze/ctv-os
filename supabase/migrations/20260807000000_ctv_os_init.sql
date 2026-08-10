@@ -1,6 +1,6 @@
 -- GENERATED FILE — do not edit.
 --
--- Source: supabase/schema.sql   (sha256 21e6eac546d785a8)
+-- Source: supabase/schema.sql   (sha256 473043a15c5ca5bd)
 -- Regenerate: npm run db:migration
 --
 -- schema.sql is what `npm run verify:sql` executes against real Postgres. This
@@ -772,7 +772,12 @@ do $$
 declare t text;
 begin
   foreach t in array array[
-    'members','societies','events','event_roles','tasks','prep_templates','kit'
+    'members','societies','events','event_roles','tasks','prep_templates','kit',
+    -- The board is collaborative too: a note or link someone else adds should
+    -- appear without waiting for the poll. These tables are created earlier in
+    -- this file, so they exist by the time the loop runs; the pg_publication_tables
+    -- check below still skips any already published.
+    'boards','board_nodes','board_edges'
   ] loop
     if not exists (
       select 1 from pg_publication_tables

@@ -4367,20 +4367,31 @@ function exportPdf() {
 // Reset is offered in two places — the sidebar and Settings — so it is a named
 // function rather than an inline handler.
 function resetYear() {
-  const before = clone(DATA);
-  DATA = stampIds(clone(SEED));
-  persist();
-  render();
-  // Reset predates sync and never went through mutate(), so it has to push by
-  // hand. Against a shared database this is not a local undo any more: it puts
-  // the seed year back for everyone, which is the honest meaning of the button.
-  Sync.push(before, DATA);
-  toast('Reset to the seed year', () => {
-    const undone = clone(DATA);
-    DATA = before;
+  // Against a shared database this is not a local "discard my edits" — it puts
+  // the seed year back for EVERYONE, so it asks first rather than firing on a
+  // stray click from the sidebar.
+  confirmToast('Reset the whole year to the seed — for everyone? Your crew and kit stay.', 'Reset', () => {
+    const before = clone(DATA);
+    const seed = stampIds(clone(SEED));
+    // Crew and kit are the station's own registers now: the server seed no
+    // longer populates them, and the crew/kit inlined here are last year's
+    // placeholders. Restoring the reference *year* (events, tasks, prep, the
+    // board) must not drag those placeholders back into a database the manager
+    // has deliberately cleared — so keep whatever crew and kit are current.
+    seed.members = clone(DATA.members || []);
+    seed.kit = clone(DATA.kit || []);
+    DATA = seed;
     persist();
     render();
-    Sync.push(undone, DATA);
+    // Reset predates sync and never went through mutate(), so it pushes by hand.
+    Sync.push(before, DATA);
+    toast('Reset to the seed year', () => {
+      const undone = clone(DATA);
+      DATA = before;
+      persist();
+      render();
+      Sync.push(undone, DATA);
+    });
   });
 }
 document.getElementById('reset').onclick = resetYear;
@@ -4404,14 +4415,16 @@ function render() {
   // it. Without this, Undo restored the data and left the sheet showing the
   // state you had just undone — and if the undone change was a deletion, the
   // sheet stayed open over an event that no longer existed.
+  // Never rebuild an open drawer while someone is typing into it: a background
+  // pull (someone else's edit, the 20s poll) would wipe the field they are on —
+  // and, for an unsaved kit draft, the details not committed yet. A local edit
+  // commits on blur, so by then focus has left and the refresh runs. Undo is
+  // driven from the toast, which is outside the drawer, so it still refreshes.
+  const typing = document.activeElement
+    && document.getElementById('sheet-in')?.contains(document.activeElement);
   if (sheetId) {
-    if (!renderSheet(sheetId)) closeSheet();
+    if (!typing && !renderSheet(sheetId)) closeSheet();
   } else if (kitSheetId) {
-    // Never rebuild the kit drawer while someone is typing into it: a background
-    // pull would wipe the field they are on — and, for an unsaved draft, the
-    // details they have not committed yet. Refresh once focus leaves.
-    const typing = document.activeElement
-      && document.getElementById('sheet-in')?.contains(document.activeElement);
     if (!typing && !renderKitSheet(kitSheetId)) closeSheet();
   }
 }

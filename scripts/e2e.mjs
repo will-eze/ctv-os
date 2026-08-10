@@ -696,6 +696,16 @@ await check('edits survive a reload', async () => {
 
 await check('reset restores the seed year', async () => {
   await page.click('#reset');
+  // Reset is a shared, destructive action now, so it asks first — confirm it.
+  await page.waitForFunction(() => {
+    const b = document.getElementById('toast-undo');
+    return !document.getElementById('toast').hidden && b.textContent.trim() === 'Reset';
+  });
+  await page.click('#toast-undo');   // confirm the reset
+  await page.waitForFunction(() => {
+    const b = document.getElementById('toast-undo');
+    return !document.getElementById('toast').hidden && b.textContent.trim() === 'Undo';
+  });
   const ev = await eventById('ntd');
   eq(ev.venue, undefined, 'venue');
   const n = (await stored()).events.length;
@@ -704,7 +714,7 @@ await check('reset restores the seed year', async () => {
 });
 
 await check('reset is undoable too', async () => {
-  await page.click('#toast-undo');
+  await page.click('#toast-undo');   // the undo toast that followed the reset
   const ev = await eventById('ntd');
   eq(ev.venue, 'Studio', 'venue');
   return 'the edit came back';
