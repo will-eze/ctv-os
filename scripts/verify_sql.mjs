@@ -399,12 +399,17 @@ await check('only plans can be deleted, never records', async () => {
   // locker are the *register*, not records of an event, and a new committee has
   // to be able to clear the previous year's roster and inventory and start
   // clean. A kit *booking* against a piece is still a record and still stays put.
+  // The board tables joined it with the brainstorming canvas: a note or a link
+  // removed on the canvas has to be a real DELETE or it returns on the next pull,
+  // and a whole board is a scratchpad the manager clears — the same plan/register
+  // reasoning, not a record of anything that happened.
   const { rows } = await db.query(
     `select tablename from pg_policies
       where schemaname = 'public' and cmd = 'DELETE' order by tablename`
   );
   eq(rows.map((r) => r.tablename),
-     ['access_grants', 'event_roles', 'events', 'kit', 'members', 'prep_items', 'tasks'],
+     ['access_grants', 'board_edges', 'board_nodes', 'boards',
+      'event_roles', 'events', 'kit', 'members', 'prep_items', 'tasks'],
      'tables with a DELETE policy');
   return 'kit_bookings, ledger, deliverables and incidents stay put';
 });
@@ -428,9 +433,10 @@ await check('writing anything requires a session', async () => {
 await check('the public calendar stays readable without a session', async () => {
   // Shutting anon out of writes must not shut the station out of looking at the
   // year. The public tables — events and everything the calendar hangs off —
-  // read with the publishable key. The private modules (crew, tasks), the
+  // read with the publishable key. The private modules (crew, tasks, board), the
   // account tables and incidents are the deliberate exceptions.
   const gated = new Set(['incidents', 'members', 'tasks',
+    'boards', 'board_nodes', 'board_edges',
     'profiles', 'access_grants', 'invites', 'admins']);
   const { rows } = await db.query(
     `select tablename, qual from pg_policies
@@ -441,20 +447,23 @@ await check('the public calendar stays readable without a session', async () => 
   return `${rows.filter((r) => !gated.has(r.tablename)).length} public tables readable with the key`;
 });
 
-await check('crew and the to-do list are private, gated by a grant', async () => {
-  // The two modules the station manager marked private. Their read policies are
-  // not open: they resolve through can_view(), so only the admin or a granted
-  // account sees crew details or the to-do list.
+await check('crew, the to-do list and the board are private, gated by a grant', async () => {
+  // The private modules the station manager marked. Their read policies are not
+  // open: they resolve through can_view(), so only the admin or a granted account
+  // sees crew details, the to-do list, or the brainstorming canvas.
   const { rows } = await db.query(
     `select tablename, qual from pg_policies
       where schemaname = 'public' and cmd = 'SELECT'
-        and tablename in ('members', 'tasks') order by tablename`
+        and tablename in ('members', 'tasks', 'boards', 'board_nodes', 'board_edges')
+      order by tablename`
   );
-  eq(rows.map((r) => r.tablename), ['members', 'tasks'], 'both have a SELECT policy');
+  eq(rows.map((r) => r.tablename),
+     ['board_edges', 'board_nodes', 'boards', 'members', 'tasks'],
+     'all five have a SELECT policy');
   for (const r of rows) {
     if (!/can_view/.test(r.qual ?? '')) throw new Error(`${r.tablename} read is not grant-gated`);
   }
-  return 'members and tasks resolve through can_view()';
+  return 'members, tasks and the board tables resolve through can_view()';
 });
 
 await check('incidents is not readable with the anon role', async () => {

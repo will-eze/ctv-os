@@ -149,6 +149,16 @@ await check('the to-do list is not readable without a grant', async () => {
   return 'tasks hidden from anon and ungranted accounts';
 });
 
+await check('the board is not readable without a grant', async () => {
+  // The brainstorming canvas is the third private module. Anon sees nothing, and
+  // neither does a signed-in account that has not been granted the board.
+  const anon = (await api('boards?select=slug')).json;
+  const mine = (await api('boards?select=slug', { token: TOKEN })).json;
+  eq(Array.isArray(anon) ? anon.length : -1, 0, 'boards visible to anon');
+  eq(Array.isArray(mine) ? mine.length : -1, 0, 'boards visible to an ungranted account');
+  return 'boards hidden from anon and ungranted accounts';
+});
+
 // --- Writing ----------------------------------------------------------------
 console.log('\n  BUT NOT WRITE\n  ' + '-'.repeat(70));
 
@@ -214,9 +224,18 @@ await check('an UPDATE with a session actually lands', async () => {
 await check('filling an open role is what the session is for', async () => {
   const open = (await api('event_roles?member_id=is.null&select=id,label&limit=1')).json[0];
   if (!open) throw new Error('no open role to fill');
-  // Crew is private now, so read a member with the secret key (bypasses RLS)
-  // rather than the anon key, which sees no members at all.
-  const me = (await api('members?select=id,known_as&limit=1', { key: SEC })).json[0];
+  // Crew is private and no longer seeded (the manager fills it in-app), so read a
+  // member with the secret key, and if the roster is empty plant a throwaway one
+  // to assign — cleaned up at the end, so the live roster is left untouched.
+  let me = (await api('members?select=id,known_as&limit=1', { key: SEC })).json[0];
+  let planted = null;
+  if (!me) {
+    planted = (await api('members', {
+      key: SEC, method: 'POST', prefer: 'return=representation',
+      body: { slug: `__verify_${Date.now().toString(36)}__`, full_name: '__ctvos verify__', known_as: '__verify__' },
+    })).json[0];
+    me = planted;
+  }
   const r = await api(`event_roles?id=eq.${open.id}`, {
     token: TOKEN, method: 'PATCH', body: { member_id: me.id }, prefer: 'return=representation',
   });
@@ -226,6 +245,7 @@ await check('filling an open role is what the session is for', async () => {
   });
   const back = (await api(`event_roles?id=eq.${open.id}&select=member_id`)).json[0];
   eq(back.member_id, null, 'role reopened');
+  if (planted) await api(`members?id=eq.${planted.id}`, { key: SEC, method: 'DELETE' });
   return `${open.label} filled by ${me.known_as}, then reopened`;
 });
 

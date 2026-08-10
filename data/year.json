@@ -2365,6 +2365,22 @@
    "done": false
   }
  ],
+ "boards": [
+  {
+   "id": "season-2026",
+   "name": "Season ideas",
+   "nodes": [
+    { "id": "bn-freshers", "x": 80, "y": 80, "body": "Freshers welcome show — plan the cold open", "color": "green" },
+    { "id": "bn-ntvd", "x": 380, "y": 80, "body": "National TV Day, 21 Nov — station showcase", "color": "amber" },
+    { "id": "bn-rec", "x": 80, "y": 300, "body": "Rugby at the Rec (Oct) — outside-broadcast test run", "color": "grey" },
+    { "id": "bn-nasta", "x": 380, "y": 300, "body": "NaSTA — pick three packages to enter early", "color": "blue" }
+   ],
+   "edges": [
+    { "id": "be-freshers-ntvd", "from": "bn-freshers", "to": "bn-ntvd" },
+    { "id": "be-rec-nasta", "from": "bn-rec", "to": "bn-nasta" }
+   ]
+  }
+ ],
  "role_descriptions": {
   "committee": [
    {

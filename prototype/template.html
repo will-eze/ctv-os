@@ -229,7 +229,7 @@ ul { margin: 0; padding: 0; list-style: none; }
 .side-link {
   display: flex; align-items: center; gap: 12px; width: 100%;
   padding: 8px; border: 0; background: none; border-radius: var(--r);
-  color: var(--secondary); font-size: 14px; text-align: left;
+  color: var(--secondary); font-size: 14px; text-align: left; text-decoration: none;
   transition: background var(--dur) var(--ease), color var(--dur) var(--ease);
 }
 .side-link:hover { background: var(--container); color: var(--on-surface); }
@@ -295,6 +295,9 @@ ul { margin: 0; padding: 0; list-style: none; }
 .link-btn:hover { text-decoration: underline; }
 .link-btn[hidden] { display: none; }
 .modal-wide { max-width: 560px; }
+.cam-card { max-width: 420px; }
+.cam-stage { border-radius: var(--r); overflow: hidden; background: #000; }
+.cam-stage video { display: block; width: 100%; max-height: 60dvh; object-fit: contain; background: #000; }
 
 /* Account control and its dropdown menu. */
 .acct-wrap { position: relative; }
@@ -1182,6 +1185,16 @@ body.is-readonly .needs-edit { display: none !important; }
    the meaning, so the colour is a reinforcement, not the only signal. */
 .toast button.is-danger { background: var(--error); border-color: var(--error); color: #fff; }
 .toast button.is-danger:hover { background: #fff; color: var(--error); border-color: #fff; }
+/* The dismiss control: a quiet × so any toast — a plain notice, an Undo, a
+   confirm — can be closed by hand instead of waiting out the timer. Borderless
+   and uncaptioned so it never competes with the action button beside it. */
+.toast button.toast-x {
+  padding: 0; width: 24px; height: 24px; flex: none;
+  border: none; border-radius: 6px;
+  font-size: 16px; line-height: 1; font-weight: 400; letter-spacing: 0; text-transform: none;
+  color: rgba(255, 255, 255, 0.7);
+}
+.toast button.toast-x:hover { background: rgba(255, 255, 255, 0.15); color: #fff; }
 
 :where(button, a, input, select, textarea):focus-visible {
   outline: 2px solid var(--primary); outline-offset: 2px;
@@ -1358,6 +1371,141 @@ body.is-readonly .needs-edit { display: none !important; }
   *, *::before, *::after { transition-duration: 1ms !important; animation-duration: 1ms !important; }
   .sheet { transition: none; }
 }
+
+/* ==========================================================================
+   Board — a private, local-only brainstorming canvas
+   --------------------------------------------------------------------------
+   Lucidchart-lite: notes you drag around and link with lines, for thinking a
+   season out loud. Deliberately NOT wired into the year document or the sync
+   layer — its whole state lives in its own localStorage key, so nothing here
+   is shared with the crew, exported, or gated yet. That is the point of this
+   pass: prove the shape earns its place before deciding who may see it. When
+   it does, it becomes a private module (can_view('board')) like Crew and To-do.
+   ========================================================================== */
+.board-view { display: flex; flex-direction: column; gap: var(--s4); }
+
+.board-tabs { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.board-tab {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 8px 12px; border-radius: var(--r-pill);
+  background: var(--card); border: 1px solid var(--outline-var);
+  color: var(--secondary); font-size: 12px; font-weight: 600;
+  transition: background var(--dur) var(--ease), color var(--dur) var(--ease);
+}
+.board-tab:hover { background: var(--container); color: var(--on-surface); }
+.board-tab[aria-current='true'] { background: var(--primary); border-color: var(--primary); color: var(--on-primary); }
+.board-tab-name { outline: none; white-space: nowrap; }
+.board-tab-name[contenteditable='true'] { min-width: 24px; cursor: text; }
+.board-tab-x { display: inline-flex; border: 0; background: none; color: inherit; opacity: 0.65; padding: 0; }
+.board-tab-x:hover { opacity: 1; }
+.board-newtab {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 8px 12px; border-radius: var(--r-pill);
+  background: none; border: 1px dashed var(--outline);
+  color: var(--secondary); font-size: 12px; font-weight: 600;
+}
+.board-newtab:hover { color: var(--on-surface); border-color: var(--on-surface); }
+
+.board-stage {
+  position: relative; height: calc(100vh - 260px); min-height: 420px;
+  border: 1px solid var(--outline-var); border-radius: var(--r-card);
+  overflow: hidden;
+}
+.board-canvas {
+  position: absolute; inset: 0; overflow: hidden; touch-action: none;
+  cursor: grab;
+  background-color: var(--bg);
+  background-image: radial-gradient(var(--grid) 1.2px, transparent 1.2px);
+  background-size: 24px 24px;
+}
+.board-canvas.is-panning { cursor: grabbing; }
+/* No will-change: transform here. Promoting the world to its own GPU layer
+   rasterises it to a bitmap once and then scales that texture, so text and
+   borders blur at any zoom other than 1 (and at 1 with a fractional pan left
+   over from a zoom). Without it, Chrome re-renders the vector text crisply at
+   every zoom level — the node count here is far too small for that to cost. */
+.board-world { position: absolute; top: 0; left: 0; transform-origin: 0 0; }
+/* A large real viewport centred on the world origin, rather than a 0×0 svg
+   leaning on overflow:visible — which Chrome clips anyway. Links are drawn in
+   svg coordinates offset by BOARD_OFF (see drawEdges), so world (0,0) lands at
+   the svg's middle and the canvas's own overflow does the visible clipping. */
+.board-edges { position: absolute; left: -10000px; top: -10000px; width: 20000px; height: 20000px; pointer-events: none; }
+.board-edge { fill: none; stroke: var(--outline); stroke-width: 2; }
+.board-edge.is-sel { stroke: var(--primary); stroke-width: 3; }
+.board-edge-hit { fill: none; stroke: transparent; stroke-width: 18; pointer-events: stroke; cursor: pointer; }
+.board-edge-temp { fill: none; stroke: var(--primary); stroke-width: 2; stroke-dasharray: 5 5; }
+.board-edge-x { cursor: pointer; pointer-events: auto; }
+
+.board-nodes { position: absolute; top: 0; left: 0; }
+.board-node {
+  position: absolute; top: 0; left: 0; width: 180px;
+  background: var(--card);
+  border: 1px solid var(--outline-var); border-left: 4px solid var(--node-accent, var(--outline));
+  border-radius: var(--r); box-shadow: var(--shadow);
+  display: flex; flex-direction: column;
+  touch-action: none;
+}
+.board-node.is-sel { border-color: var(--primary); box-shadow: var(--shadow-lg); }
+.board-node-bar {
+  display: none; align-items: center; gap: 8px;
+  padding: 4px 8px; border-bottom: 1px solid var(--outline-var);
+}
+.board-node.is-sel .board-node-bar { display: flex; }
+.board-swatch {
+  width: 16px; height: 16px; border-radius: var(--r-pill);
+  border: 1px solid rgba(0, 0, 0, 0.15); padding: 0;
+}
+.board-swatch.is-on { outline: 2px solid var(--on-surface); outline-offset: 1px; }
+.board-node-del {
+  margin-left: auto; display: inline-flex; border: 0; background: none;
+  color: var(--secondary); padding: 0;
+}
+.board-node-del:hover { color: var(--error); }
+.board-node-text {
+  width: 100%; min-height: 48px; padding: 12px;
+  border: 0; background: none; resize: none; overflow: hidden;
+  font-size: 14px; line-height: 1.4; color: var(--on-surface);
+  pointer-events: none;
+}
+.board-node.is-editing .board-node-text { pointer-events: auto; cursor: text; }
+.board-node-text:focus { outline: none; }
+.board-node-text::placeholder { color: var(--outline); }
+.board-node-handle {
+  position: absolute; right: -8px; bottom: -8px; width: 16px; height: 16px;
+  border-radius: var(--r-pill); background: var(--primary); border: 2px solid var(--card);
+  padding: 0; cursor: crosshair; opacity: 0;
+  transition: opacity var(--dur) var(--ease);
+}
+.board-node:hover .board-node-handle,
+.board-node.is-sel .board-node-handle { opacity: 1; }
+
+.board-tools {
+  position: absolute; right: 16px; bottom: 16px; z-index: 2;
+  display: flex; align-items: center; gap: 4px;
+  padding: 4px; border-radius: var(--r-pill);
+  background: var(--card); border: 1px solid var(--outline-var); box-shadow: var(--shadow);
+}
+.board-tool {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 32px; height: 32px; border-radius: var(--r-pill);
+  background: none; border: 0; color: var(--on-surface-var);
+}
+.board-tool:hover { background: var(--container); color: var(--on-surface); }
+.board-zoom { min-width: 48px; text-align: center; font-size: 12px; font-weight: 600; color: var(--secondary); }
+
+.board-empty {
+  position: absolute; inset: 0; z-index: 1;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 8px; padding: 24px; text-align: center;
+  color: var(--secondary); pointer-events: none;
+}
+.board-empty[hidden] { display: none; }
+.board-empty h3 { font-size: 16px; font-weight: 600; color: var(--on-surface-var); }
+.board-empty p { font-size: 14px; max-width: 40ch; }
+
+@media (max-width: 900px) {
+  .board-stage { height: calc(100vh - 220px); }
+}
 </style>
 
 <!-- Material Symbols are blocked by the CSP, so the icon set is redrawn here
@@ -1393,6 +1541,9 @@ body.is-readonly .needs-edit { display: none !important; }
   <symbol id="i-settings" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2.5v2.5M12 19v2.5M4.6 4.6l1.8 1.8M17.6 17.6l1.8 1.8M2.5 12h2.5M19 12h2.5M4.6 19.4l1.8-1.8M17.6 6.4l1.8-1.8"/></symbol>
   <symbol id="i-sport" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><path d="M12 3.5c2.6 2.1 2.6 14.9 0 17M12 3.5c-2.6 2.1-2.6 14.9 0 17M3.8 9.5c3 1.6 13.4 1.6 16.4 0M3.8 14.5c3-1.6 13.4-1.6 16.4 0"/></symbol>
   <symbol id="i-award" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="9" r="5.5"/><path d="M8.5 13.5L7 21l5-2.5L17 21l-1.5-7.5"/></symbol>
+  <symbol id="i-board" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="6" r="2.6"/><circle cx="18" cy="8" r="2.6"/><circle cx="9" cy="18" r="2.6"/><path d="M8.4 6.7l7 1M7.6 8.4l1.2 7.1"/></symbol>
+  <symbol id="i-minus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M5 12h14"/></symbol>
+  <symbol id="i-fit" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9V5a1 1 0 0 1 1-1h4M20 9V5a1 1 0 0 0-1-1h-4M4 15v4a1 1 0 0 0 1 1h4M20 15v4a1 1 0 0 0-1 1h-4"/></symbol>
 </defs></svg>
 
 <div class="app">
@@ -1416,6 +1567,12 @@ body.is-readonly .needs-edit { display: none !important; }
         <p class="sync-note" id="sync-note" hidden></p>
         <button class="side-link" id="sign" type="button" hidden></button>
       </div>
+      <!-- Prism is the sibling project — basic camera training. A new tab so the
+           year on this screen is not lost when someone goes to learn a camera. -->
+      <a class="side-link" href="https://prism-ctv.vercel.app" target="_blank" rel="noopener noreferrer"
+         title="Prism — basic camera training (opens in a new tab)">
+        <svg class="icon icon-sm"><use href="#i-video"/></svg> Prism — camera training
+      </a>
       <button class="side-link" id="export" type="button" title="Download your corrected year.json">
         <svg class="icon icon-sm"><use href="#i-download"/></svg> Export year.json
       </button>
@@ -1456,6 +1613,7 @@ body.is-readonly .needs-edit { display: none !important; }
       <section class="view" id="v-tasks" hidden></section>
       <section class="view" id="v-crew" hidden></section>
       <section class="view" id="v-kit" hidden></section>
+      <section class="view board-view" id="v-board" hidden></section>
       <section class="view" id="v-settings" hidden></section>
     </div>
   </div>
@@ -1468,6 +1626,26 @@ body.is-readonly .needs-edit { display: none !important; }
   <span id="toast-t"></span>
   <button id="toast-undo" type="button">Undo</button>
   <button id="toast-cancel" type="button" hidden>Cancel</button>
+  <button class="toast-x" id="toast-x" type="button" aria-label="Dismiss">&times;</button>
+</div>
+
+<!-- Take a kit photo with the device camera, so a stock-take on a phone does not
+     mean fishing through the camera roll. getUserMedia needs HTTPS (prod is) and
+     permission; anything it cannot do falls back to the file picker, which on a
+     phone still offers the camera. -->
+<div class="modal" id="camera" hidden role="dialog" aria-modal="true" aria-label="Take a photo">
+  <div class="modal-card cam-card">
+    <div class="cam-stage">
+      <video id="cam-video" playsinline autoplay muted></video>
+      <canvas id="cam-canvas" hidden></canvas>
+    </div>
+    <p class="modal-err" id="cam-err" hidden role="alert"></p>
+    <div class="modal-act">
+      <button class="btn" type="button" id="cam-x">Cancel</button>
+      <button class="btn" type="button" id="cam-flip">Flip camera</button>
+      <button class="btn btn-primary" type="button" id="cam-shoot">Capture</button>
+    </div>
+  </div>
 </div>
 
 <!-- The structured PDF export. Empty and hidden until Settings → Export PDF
@@ -1603,10 +1781,10 @@ function stampIds(d) {
 // to-do) are hidden unless the account has been granted them. The server's RLS
 // is the real enforcement; these gates are the honest interface over it.
 let SYNC = {};
-const PRIVATE_MODULES = new Set(['crew', 'tasks']);
+const PRIVATE_MODULES = new Set(['crew', 'tasks', 'board']);
 const VIEW_MODULE = {
   calendar: 'events', schedule: 'events', tasks: 'tasks',
-  crew: 'crew', kit: 'kit', settings: 'settings',
+  crew: 'crew', kit: 'kit', board: 'board', settings: 'settings',
 };
 const connectedOnline = () => Sync.enabled() && SYNC.mode === 'synced';
 
@@ -1669,6 +1847,8 @@ function toast(text, undo) {
   btn.classList.remove('is-danger');
   document.getElementById('toast-cancel').hidden = true;
   btn.onclick = () => { undo(); el.hidden = true; clearTimeout(toastTimer); };
+  // The × dismisses the notice without taking the undo — the change stands.
+  document.getElementById('toast-x').onclick = () => { el.hidden = true; clearTimeout(toastTimer); };
   el.hidden = false;
   clearTimeout(toastTimer);
   toastTimer = setTimeout(() => { el.hidden = true; }, 7000);
@@ -1692,6 +1872,8 @@ function confirmToast(text, actionLabel, onConfirm) {
   };
   act.onclick = () => { close(); onConfirm(); };
   cancel.onclick = close;
+  // The × is a safe dismiss: on a confirm, closing without answering is a cancel.
+  document.getElementById('toast-x').onclick = close;
   el.hidden = false;
   clearTimeout(toastTimer);
   toastTimer = setTimeout(close, 7000);   // no answer is a cancel, not a delete
@@ -2125,6 +2307,7 @@ function renderKitSheet(id) {
     <div class="member-act" style="margin-top:8px">
       <label class="btn btn-ghost" for="kit-photo-input">${svg('plus')} ${k.photo_url ? 'Replace photo' : 'Add photo'}</label>
       <input id="kit-photo-input" type="file" accept="image/*" hidden>
+      <button class="btn btn-ghost" id="kit-photo-cam" type="button">${svg('video')} Take photo</button>
       ${k.photo_url ? '<button class="btn btn-ghost" data-kit-photo-clear type="button">Remove photo</button>' : ''}
     </div>
 
@@ -2173,6 +2356,7 @@ function renderKitSheet(id) {
     const file = evt.target.files?.[0];
     if (file) setKitPhoto(id, file);
   };
+  document.getElementById('kit-photo-cam').onclick = () => Camera.open(id);
   sheetIn.querySelector('[data-kit-photo-clear]')?.addEventListener('click', () => {
     mutate(`Removed ${k.name} photo`, (s) => { s.kit.find((x) => x.id === id).photo_url = null; });
     openKitSheet(id);
@@ -2226,6 +2410,68 @@ async function setKitPhoto(id, file) {
   mutate(`${k?.name ?? 'Kit'} photo updated`, (s) => { s.kit.find((x) => x.id === id).photo_url = url; });
   openKitSheet(id);
 }
+
+// --- Camera capture (kit photos) ------------------------------------------
+// A live viewfinder so a stock-take on a phone does not mean digging through the
+// camera roll. getUserMedia needs HTTPS (production is) and permission; if it
+// cannot open — denied, no camera, or a file:// prototype — it falls back to the
+// capture-enabled file picker, which on a phone still offers the camera. The
+// captured frame goes through the same setKitPhoto() as a picked file: Storage
+// upload when signed in, inline data URI otherwise.
+const Camera = (() => {
+  let stream = null, kitId = null, facing = 'environment';
+  const modal = () => document.getElementById('camera');
+  const video = () => document.getElementById('cam-video');
+  const errEl = () => document.getElementById('cam-err');
+
+  function stop() {
+    if (stream) { for (const t of stream.getTracks()) t.stop(); stream = null; }
+    if (video()) video().srcObject = null;
+  }
+  function close() { stop(); modal().hidden = true; }
+  function fallbackPick() { if (kitId) document.getElementById('kit-photo-input')?.click(); }
+
+  async function start() {
+    stop();
+    errEl().hidden = true;
+    try {
+      stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: facing }, audio: false });
+      video().srcObject = stream;
+    } catch {
+      errEl().textContent = 'Could not open the camera — opening the photo picker instead.';
+      errEl().hidden = false;
+      setTimeout(() => { close(); fallbackPick(); }, 900);
+    }
+  }
+
+  async function open(id) {
+    kitId = id;
+    if (!navigator.mediaDevices?.getUserMedia) { fallbackPick(); return; }
+    modal().hidden = false;
+    await start();
+  }
+
+  function shoot() {
+    const v = video();
+    if (!stream || !v.videoWidth) return;
+    const canvas = document.getElementById('cam-canvas');
+    canvas.width = v.videoWidth; canvas.height = v.videoHeight;
+    canvas.getContext('2d').drawImage(v, 0, 0);
+    const id = kitId;
+    canvas.toBlob((blob) => {
+      if (!blob) { close(); return; }
+      close();
+      setKitPhoto(id, new File([blob], `kit-${Date.now()}.jpg`, { type: 'image/jpeg' }));
+    }, 'image/jpeg', 0.9);
+  }
+
+  function flip() { facing = facing === 'environment' ? 'user' : 'environment'; start(); }
+
+  document.getElementById('cam-x').onclick = close;
+  document.getElementById('cam-shoot').onclick = shoot;
+  document.getElementById('cam-flip').onclick = flip;
+  return { open };
+})();
 
 // --- Settings -------------------------------------------------------------
 function renderSettings() {
@@ -3456,6 +3702,7 @@ const VIEWS = [
   ['tasks',    'To do',    'checklist'],
   ['crew',     'Crew',     'group'],
   ['kit',      'Kit',      'kit'],
+  ['board',    'Board',    'board'],
   ['settings', 'Settings', 'settings'],
 ];
 // The month calendar is the home screen now — the overview page was removed and
@@ -3498,6 +3745,9 @@ function setView(v) {
   if (!canView(VIEW_MODULE[v])) v = 'calendar';
   view = v;
   for (const [id] of VIEWS) document.getElementById(`v-${id}`).hidden = id !== v;
+  // The board measures node geometry to route its links, and a hidden section
+  // measures as zero — so it repaints the moment it is actually on screen.
+  if (v === 'board') Board.onShow();
   renderNav();
   // Leaving for another screen closes the sheet. Otherwise the drawer sits
   // over a screen it has nothing to do with, and the scrim swallows the first
@@ -4099,6 +4349,9 @@ function render() {
   renderKit();
   renderSettings();
   renderSearchResults();
+  // The board keeps itself in step with the document too — a local edit, an
+  // undo, or a change pulled from someone else all reach it through here.
+  Board.reflect();
   // The sheet is part of the render, not a thing that happens to be on top of
   // it. Without this, Undo restored the data and left the sheet showing the
   // state you had just undone — and if the undone change was a deletion, the
@@ -4355,7 +4608,7 @@ document.getElementById('recover-form').onsubmit = async (ev) => {
 };
 
 // --- Manage access (admin) -------------------------------------------------
-const GRANTABLE = [['crew', 'Crew'], ['tasks', 'To-do'], ['kit', 'Kit'], ['money', 'Money']];
+const GRANTABLE = [['crew', 'Crew'], ['tasks', 'To-do'], ['board', 'Board'], ['kit', 'Kit'], ['money', 'Money']];
 const accessEl = document.getElementById('access');
 
 function closeAccess() { accessEl.hidden = true; }
@@ -4446,11 +4699,605 @@ function renderAccess(profiles, grants) {
   };
 }
 
+// ==========================================================================
+// Board — the private brainstorming canvas
+// --------------------------------------------------------------------------
+// A pan/zoom surface of idea notes you can drag and link. It is now a real,
+// shared, access-controlled module like Crew and the to-do list:
+//
+//   * The CONTENT — boards, notes, links — lives in DATA.boards, so every
+//     change goes through mutate(): it is undoable, it persists, and it syncs
+//     to the database through the same diff the rest of the year uses. The
+//     schema gates all of it behind can_view('board') / can_edit('board').
+//   * The VIEWPORT — which board is open, and each board's pan/zoom — is a
+//     per-person preference, so it stays in the browser (ctvos.board.ui.v1) and
+//     never travels to the database. Two people can look at different corners
+//     of the same board at once.
+//
+// A drag or a pan updates the DOM live and commits once on release; typing
+// updates the DOM and commits on blur — so a mutate() (which repaints the graph
+// from DATA) never fires mid-gesture and eats the caret. reflect() is the hook
+// render() calls to repaint the board whenever DATA changes, including a change
+// that arrived from someone else.
+// ==========================================================================
+const Board = (() => {
+  const UIKEY = 'ctvos.board.ui.v1';
+  const SVGNS = 'http://www.w3.org/2000/svg';
+  const NODE_W = 180;
+  // Links are painted into a 20000px svg centred on the world origin; this is
+  // the offset from world coordinates into that svg's own coordinates.
+  const BOARD_OFF = 10000;
+  // Accent colours are the existing palette tokens, so the board never invents
+  // a colour the design system has nothing to say about. They tag a note by
+  // theme; the note's meaning is always its words, never the colour alone.
+  const ACCENTS = [
+    ['grey',  'var(--outline)'],
+    ['green', 'var(--primary)'],
+    ['amber', 'var(--warn)'],
+    ['red',   'var(--error)'],
+    ['blue',  'var(--tertiary)'],
+  ];
+  const uid = () => (crypto.randomUUID ? crypto.randomUUID()
+    : 'b' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8));
+  const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+
+  let sel = null;       // { kind: 'node' | 'edge', id }
+  let editing = null;   // id of the note whose textarea is focused
+  let livePos = null;   // { id, x, y } — a note mid-drag, before it commits
+  // True for the length of any pointer gesture — pan, node move, connect. A
+  // pull from someone else that lands mid-gesture must not renderShell() and
+  // rip the DOM (and the temporary connector) out from under the drag, which is
+  // why connections were impossible to draw against the live database. reflect()
+  // holds off exactly like it does while a note is being typed into.
+  let dragging = false;
+  let root, canvas, world, edgesSvg, nodesEl, zoomEl, emptyEl;
+
+  // --- Per-client viewport state (never synced) ----------------------------
+  let ui = loadUI();
+  function loadUI() {
+    try {
+      const u = JSON.parse(localStorage.getItem(UIKEY));
+      if (u && typeof u === 'object') return { activeId: u.activeId ?? null, cams: u.cams ?? {} };
+    } catch { /* fall through */ }
+    return { activeId: null, cams: {} };
+  }
+  const saveUI = () => { try { localStorage.setItem(UIKEY, JSON.stringify(ui)); } catch { /* private mode */ } };
+  let uiT;
+  const saveUISoon = () => { clearTimeout(uiT); uiT = setTimeout(saveUI, 300); };
+
+  // --- Content (the synced document) ---------------------------------------
+  const content = () => (DATA.boards ??= []);
+  function active() {
+    const list = content();
+    if (!list.length) return null;
+    let b = list.find((x) => x.id === ui.activeId);
+    if (!b) { b = list[0]; ui.activeId = b.id; saveUI(); }
+    return b;
+  }
+  const camOf = (id) => (ui.cams[id] ??= { x: 40, y: 40, scale: 1 });
+  // The active board within a mutate()'s working copy, addressed by the same id.
+  const boardIn = (s) => (s.boards ?? []).find((b) => b.id === ui.activeId) || (s.boards ?? [])[0];
+  const nodeEl = (id) => nodesEl.querySelector(`.board-node[data-id="${id}"]`);
+  const hasEdge = (b, id) => (b.edges ?? []).some((e) => e.from === id || e.to === id);
+
+  // --- Geometry ------------------------------------------------------------
+  function toWorld(clientX, clientY) {
+    const r = canvas.getBoundingClientRect();
+    const cam = camOf(active()?.id);
+    return { x: (clientX - r.left - cam.x) / cam.scale, y: (clientY - r.top - cam.y) / cam.scale };
+  }
+  const posOf = (n) => (livePos && livePos.id === n.id ? { x: livePos.x, y: livePos.y } : { x: n.x, y: n.y });
+  function nodeCenter(id) {
+    const b = active();
+    const n = b && b.nodes.find((x) => x.id === id);
+    if (!n) return null;
+    const el = nodeEl(id);
+    const w = el ? el.offsetWidth : NODE_W;
+    const h = el ? el.offsetHeight : 60;
+    const p = posOf(n);
+    return { x: p.x + w / 2, y: p.y + h / 2 };
+  }
+  // A direct link between the two note centres. The old version forced both
+  // bezier handles horizontal, so every link left its note sideways and two
+  // notes stacked vertically were joined by a flat, horizontal-looking swoop.
+  // A straight segment reads at whatever angle the notes actually sit —
+  // horizontal, vertical or diagonal — and the part under each box is hidden by
+  // the box, so only the span between them shows.
+  function curve(a, b) {
+    const ax = a.x + BOARD_OFF, ay = a.y + BOARD_OFF, bx = b.x + BOARD_OFF, by = b.y + BOARD_OFF;
+    return `M ${ax} ${ay} L ${bx} ${by}`;
+  }
+  function applyCam() {
+    const b = active();
+    if (!b || !world) return;
+    const cam = camOf(b.id);
+    world.style.transform = `translate(${cam.x}px, ${cam.y}px) scale(${cam.scale})`;
+    if (zoomEl) zoomEl.textContent = Math.round(cam.scale * 100) + '%';
+  }
+
+  // --- Painting ------------------------------------------------------------
+  function nodeHTML(n) {
+    const accent = (ACCENTS.find(([k]) => k === n.color) || ACCENTS[0])[1];
+    const selCls = sel && sel.kind === 'node' && sel.id === n.id ? ' is-sel' : '';
+    const swatches = ACCENTS.map(([k, c]) =>
+      `<button class="board-swatch${(n.color || 'grey') === k ? ' is-on' : ''}" data-color="${k}" style="background:${c}" title="${k}" type="button"></button>`).join('');
+    return `<div class="board-node${selCls}" data-id="${n.id}" style="transform:translate(${n.x}px, ${n.y}px); --node-accent:${accent};">
+      <div class="board-node-bar">
+        ${swatches}
+        <button class="board-node-del" data-del title="Delete note" type="button">${svg('trash')}</button>
+      </div>
+      <textarea class="board-node-text" rows="1" placeholder="Type an idea…" readonly>${esc(n.body || '')}</textarea>
+      <button class="board-node-handle" data-handle title="Drag to connect" type="button" aria-label="Drag to connect"></button>
+    </div>`;
+  }
+  function autoSize(el) {
+    const ta = el && el.querySelector('.board-node-text');
+    if (!ta) return;
+    ta.style.height = 'auto';
+    ta.style.height = ta.scrollHeight + 'px';
+  }
+  function drawEdges() {
+    const b = active();
+    if (!edgesSvg) return;
+    let html = '';
+    for (const eg of b?.edges ?? []) {
+      const a = nodeCenter(eg.from), c = nodeCenter(eg.to);
+      if (!a || !c) continue;
+      const d = curve(a, c);
+      const on = sel && sel.kind === 'edge' && sel.id === eg.id;
+      html += `<path class="board-edge-hit" data-id="${eg.id}" d="${d}"></path>`;
+      html += `<path class="board-edge${on ? ' is-sel' : ''}" d="${d}"></path>`;
+      if (on) {
+        const mx = (a.x + c.x) / 2 + BOARD_OFF, my = (a.y + c.y) / 2 + BOARD_OFF;
+        html += `<g class="board-edge-x" data-edge-x="${eg.id}" transform="translate(${mx} ${my})">`
+          + `<circle r="10" fill="var(--card)" stroke="var(--outline-var)"></circle>`
+          + `<path d="M-4 -4 L4 4 M4 -4 L-4 4" stroke="var(--error)" stroke-width="2" stroke-linecap="round"></path></g>`;
+      }
+    }
+    edgesSvg.innerHTML = html;
+  }
+  function paintGraph() {
+    const b = active();
+    if (!b) { nodesEl.innerHTML = ''; edgesSvg.innerHTML = ''; emptyEl.hidden = false; return; }
+    nodesEl.innerHTML = b.nodes.map(nodeHTML).join('');
+    for (const n of b.nodes) autoSize(nodeEl(n.id));
+    drawEdges();
+    emptyEl.hidden = b.nodes.length > 0;
+  }
+  function markSel() {
+    for (const el of nodesEl.querySelectorAll('.board-node')) {
+      el.classList.toggle('is-sel', !!(sel && sel.kind === 'node' && el.dataset.id === sel.id));
+    }
+    drawEdges();
+  }
+
+  // --- Selection -----------------------------------------------------------
+  const selectNode = (id) => { sel = { kind: 'node', id }; markSel(); };
+  const selectEdge = (id) => { sel = { kind: 'edge', id }; markSel(); };
+  const selectNone = () => { if (sel) { sel = null; markSel(); } };
+
+  // --- Graph edits (all through mutate: undoable, synced, read-only-gated) --
+  // A board must exist before a note can land on it; a first note on a blank
+  // canvas quietly makes one. Returns the id to add onto, or null if refused.
+  function ensureBoard() {
+    if (active()) return active().id;
+    if (!canEdit()) return null;
+    const id = uid();
+    ui.activeId = id; saveUI();
+    mutate('Added a board', (s) => { (s.boards ??= []).push({ id, name: 'Ideas', nodes: [], edges: [] }); });
+    return active() ? id : null;
+  }
+  function addNode(x, y) {
+    if (!canEdit()) { mutate('', () => {}); return; }   // mutate() shows the read-only toast
+    if (!ensureBoard()) return;
+    const id = uid();
+    mutate('Added a note', (s) => { const b = boardIn(s); if (b) b.nodes.push({ id, x, y, body: '', color: 'grey' }); });
+    enterEdit(id);
+  }
+  function removeNode(id) {
+    mutate('Deleted a note', (s) => {
+      const b = boardIn(s);
+      if (!b) return;
+      b.nodes = b.nodes.filter((n) => n.id !== id);
+      b.edges = b.edges.filter((e) => e.from !== id && e.to !== id);
+    });
+    if (sel && sel.id === id) sel = null;
+  }
+  function removeEdge(id) {
+    mutate('Removed a link', (s) => { const b = boardIn(s); if (b) b.edges = b.edges.filter((e) => e.id !== id); });
+    if (sel && sel.kind === 'edge' && sel.id === id) sel = null;
+  }
+  function setColor(id, color) {
+    mutate('Recoloured a note', (s) => { const n = boardIn(s)?.nodes.find((x) => x.id === id); if (n) n.color = color; });
+  }
+  function addEdge(from, to) {
+    const b = active();
+    if (!b || b.edges.some((e) => (e.from === from && e.to === to) || (e.from === to && e.to === from))) return;
+    mutate('Linked two notes', (s) => { const bb = boardIn(s); if (bb) bb.edges.push({ id: uid(), from, to }); });
+  }
+  function commitPos(id, x, y) {
+    mutate('Moved a note', (s) => { const n = boardIn(s)?.nodes.find((z) => z.id === id); if (n) { n.x = x; n.y = y; } });
+  }
+  // On blur: an empty, unconnected note was a mis-click, so it is dropped; a
+  // note whose text actually changed commits; anything else is left alone.
+  function commitText(id, body) {
+    const b = active();
+    const n = b && b.nodes.find((x) => x.id === id);
+    if (!n) return;
+    if (body.trim() === '' && !hasEdge(b, id)) { removeNode(id); return; }
+    if (n.body === body) return;
+    mutate('Edited a note', (s) => { const m = boardIn(s)?.nodes.find((x) => x.id === id); if (m) m.body = body; });
+  }
+  function enterEdit(id) {
+    if (!canEdit()) return;
+    selectNode(id);
+    const el = nodeEl(id);
+    if (!el) return;
+    editing = id;
+    el.classList.add('is-editing');
+    const ta = el.querySelector('.board-node-text');
+    ta.readOnly = false;
+    ta.focus();
+    const v = ta.value; ta.value = ''; ta.value = v;   // caret to the end
+  }
+
+  // --- Dragging: pan (viewport), move, connect -----------------------------
+  const on = (move, up) => { window.addEventListener('pointermove', move); window.addEventListener('pointerup', up); };
+  const off = (move, up) => { window.removeEventListener('pointermove', move); window.removeEventListener('pointerup', up); };
+
+  function startPan(e) {
+    const b = active();
+    if (!b) return;
+    canvas.classList.add('is-panning');
+    dragging = true;
+    const cam = camOf(b.id);
+    const sx = e.clientX, sy = e.clientY, cx = cam.x, cy = cam.y;
+    const move = (ev) => { cam.x = cx + (ev.clientX - sx); cam.y = cy + (ev.clientY - sy); applyCam(); };
+    const up = () => { dragging = false; canvas.classList.remove('is-panning'); off(move, up); saveUI(); };
+    on(move, up);
+  }
+  function startNodeDrag(e, id) {
+    const b = active();
+    const n = b && b.nodes.find((x) => x.id === id);
+    if (!n) return;
+    const scale = camOf(b.id).scale;
+    const sx = e.clientX, sy = e.clientY, nx = n.x, ny = n.y;
+    let moved = false;
+    livePos = { id, x: nx, y: ny };
+    dragging = true;
+    const move = (ev) => {
+      const dx = (ev.clientX - sx) / scale, dy = (ev.clientY - sy) / scale;
+      if (Math.abs(dx) > 1 || Math.abs(dy) > 1) moved = true;
+      livePos.x = nx + dx; livePos.y = ny + dy;
+      const el = nodeEl(id);
+      if (el) el.style.transform = `translate(${livePos.x}px, ${livePos.y}px)`;
+      drawEdges();
+    };
+    const up = () => {
+      off(move, up);
+      const fx = livePos.x, fy = livePos.y;
+      livePos = null;
+      dragging = false;
+      if (moved) commitPos(id, fx, fy); else paintGraph();
+    };
+    on(move, up);
+  }
+  function startConnect(e, id) {
+    dragging = true;
+    const temp = document.createElementNS(SVGNS, 'path');
+    temp.setAttribute('class', 'board-edge-temp');
+    edgesSvg.appendChild(temp);
+    const a = nodeCenter(id);
+    const move = (ev) => { if (a) temp.setAttribute('d', curve(a, toWorld(ev.clientX, ev.clientY))); };
+    const up = (ev) => {
+      off(move, up);
+      temp.remove();
+      dragging = false;
+      const el = document.elementFromPoint(ev.clientX, ev.clientY);
+      const target = el && el.closest('.board-node');
+      if (target && target.dataset.id !== id) addEdge(id, target.dataset.id);
+    };
+    on(move, up);
+  }
+
+  // --- Zoom & fit (viewport) -----------------------------------------------
+  function centreWorld() {
+    const r = canvas.getBoundingClientRect();
+    return toWorld(r.left + r.width / 2, r.top + r.height / 2);
+  }
+  function zoomAt(px, py, factor) {
+    const b = active();
+    if (!b) return;
+    const cam = camOf(b.id);
+    const ns = clamp(cam.scale * factor, 0.3, 2.5);
+    cam.x = px - (px - cam.x) * (ns / cam.scale);
+    cam.y = py - (py - cam.y) * (ns / cam.scale);
+    cam.scale = ns;
+    applyCam();
+  }
+  function zoomButton(factor) {
+    const r = canvas.getBoundingClientRect();
+    zoomAt(r.width / 2, r.height / 2, factor);
+    saveUI();
+  }
+  function fit() {
+    const b = active();
+    if (!b) return;
+    const cam = camOf(b.id);
+    if (!b.nodes.length) { cam.x = 40; cam.y = 40; cam.scale = 1; applyCam(); saveUI(); return; }
+    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+    for (const n of b.nodes) {
+      const el = nodeEl(n.id);
+      const w = el ? el.offsetWidth : NODE_W, h = el ? el.offsetHeight : 60;
+      minX = Math.min(minX, n.x); minY = Math.min(minY, n.y);
+      maxX = Math.max(maxX, n.x + w); maxY = Math.max(maxY, n.y + h);
+    }
+    const pad = 48;
+    const r = canvas.getBoundingClientRect();
+    const bw = maxX - minX + pad * 2, bh = maxY - minY + pad * 2;
+    const scale = clamp(Math.min(r.width / bw, r.height / bh), 0.3, 1.5);
+    cam.scale = scale;
+    cam.x = (r.width - (minX + maxX) * scale) / 2;
+    cam.y = (r.height - (minY + maxY) * scale) / 2;
+    applyCam(); saveUI();
+  }
+  function onTool(t) {
+    if (t === 'add') { const p = centreWorld(); addNode(p.x - NODE_W / 2, p.y - 24); }
+    else if (t === 'in') zoomButton(1.2);
+    else if (t === 'out') zoomButton(1 / 1.2);
+    else if (t === 'fit') fit();
+  }
+
+  // --- Boards (switch is viewport; add/remove/rename are content) -----------
+  function switchBoard(id) { ui.activeId = id; saveUI(); sel = null; renderShell(); }
+  function newBoard() {
+    if (!canEdit()) { mutate('', () => {}); return; }
+    const id = uid();
+    const name = 'Board ' + (content().length + 1);
+    ui.activeId = id; saveUI(); sel = null;
+    mutate('Added a board', (s) => { (s.boards ??= []).push({ id, name, nodes: [], edges: [] }); });
+    renderShell();
+  }
+  function removeBoard(id) {
+    const b = content().find((x) => x.id === id);
+    confirmToast(`Delete "${b ? b.name : 'this board'}" and everything on it?`, 'Delete', () => {
+      mutate('Deleted a board', (s) => { s.boards = (s.boards ?? []).filter((x) => x.id !== id); });
+      delete ui.cams[id];
+      if (ui.activeId === id) ui.activeId = content()[0]?.id ?? null;
+      saveUI(); sel = null; renderShell();
+    });
+  }
+  function startRename(name) {
+    if (!canEdit()) return;
+    name.contentEditable = 'true';
+    name.focus();
+    const range = document.createRange();
+    range.selectNodeContents(name);
+    const s = window.getSelection();
+    s.removeAllRanges(); s.addRange(range);
+  }
+  function commitRename(id, name) {
+    const b = content().find((x) => x.id === id);
+    if (!b || b.name === name) return;
+    mutate('Renamed a board', (s) => { const bb = (s.boards ?? []).find((x) => x.id === id); if (bb) bb.name = name; });
+  }
+
+  // --- Shell ---------------------------------------------------------------
+  function shellHTML() {
+    const list = content();
+    const tabs = list.map((b) => {
+      const on = b.id === ui.activeId;
+      const x = list.length > 1
+        ? `<button class="board-tab-x" data-board-x="${b.id}" title="Delete board" type="button">${svg('close')}</button>` : '';
+      return `<div class="board-tab" data-board="${b.id}" role="button" tabindex="0" aria-current="${on}" title="Double-click the name to rename">
+        <span class="board-tab-name">${esc(b.name)}</span>${x}
+      </div>`;
+    }).join('');
+    return `
+      <div class="page-head">
+        <div>
+          <h2 class="t-headline">Board</h2>
+          <p>A private space to sketch ideas and how they connect — season plans, show concepts, who does what. Shared with whoever you grant the board to, and saved as you go.</p>
+        </div>
+      </div>
+      <div class="board-tabs">
+        ${tabs}
+        <button class="board-newtab needs-edit" data-newboard type="button">${svg('plus')} New board</button>
+      </div>
+      <div class="board-stage">
+        <div class="board-canvas">
+          <div class="board-world"><svg class="board-edges"></svg><div class="board-nodes"></div></div>
+        </div>
+        <div class="board-empty">
+          <h3>Nothing here yet</h3>
+          <p>Double-click anywhere to add an idea. Drag the green dot on a note to link it to another. Drag the background to move around, scroll to zoom.</p>
+        </div>
+        <div class="board-tools needs-edit">
+          <button class="board-tool" data-tool="add" title="Add note" type="button">${svg('plus')}</button>
+          <button class="board-tool" data-tool="out" title="Zoom out" type="button">${svg('minus')}</button>
+          <span class="board-zoom num">100%</span>
+          <button class="board-tool" data-tool="in" title="Zoom in" type="button">${svg('plus')}</button>
+          <button class="board-tool" data-tool="fit" title="Fit to content" type="button">${svg('fit')}</button>
+        </div>
+      </div>`;
+  }
+  function renderShell() {
+    if (!root) return;
+    root.innerHTML = shellHTML();
+    canvas = root.querySelector('.board-canvas');
+    world = root.querySelector('.board-world');
+    edgesSvg = root.querySelector('.board-edges');
+    nodesEl = root.querySelector('.board-nodes');
+    zoomEl = root.querySelector('.board-zoom');
+    emptyEl = root.querySelector('.board-empty');
+    applyCam();
+    paintGraph();
+  }
+
+  // --- Wiring (delegated on the persistent root, attached once) -------------
+  function wire() {
+    root.addEventListener('pointerdown', (e) => {
+      if (e.button !== 0 || !e.target.closest('.board-canvas')) return;
+      const edgeX = e.target.closest('[data-edge-x]');
+      if (edgeX) { removeEdge(edgeX.dataset.edgeX); return; }
+      const node = e.target.closest('.board-node');
+      if (e.target.closest('[data-handle]') && node) {
+        if (canEdit()) { e.preventDefault(); startConnect(e, node.dataset.id); }
+        return;
+      }
+      if (e.target.closest('button')) return;   // bar buttons act on click, no drag
+      if (node) {
+        if (node.classList.contains('is-editing')) return;   // let the textarea take it
+        selectNode(node.dataset.id);
+        if (canEdit()) startNodeDrag(e, node.dataset.id);
+        return;
+      }
+      const hit = e.target.closest('.board-edge-hit');
+      if (hit) { selectEdge(hit.dataset.id); return; }
+      selectNone();
+      startPan(e);
+    });
+
+    root.addEventListener('click', (e) => {
+      const bx = e.target.closest('[data-board-x]');
+      if (bx) { removeBoard(bx.dataset.boardX); return; }
+      if (e.target.closest('[data-newboard]')) { newBoard(); return; }
+      const tab = e.target.closest('[data-board]');
+      if (tab) {
+        const nm = e.target.closest('.board-tab-name');
+        if (nm && nm.isContentEditable) return;
+        switchBoard(tab.dataset.board); return;
+      }
+      const sw = e.target.closest('[data-color]');
+      if (sw) { setColor(sw.closest('.board-node').dataset.id, sw.dataset.color); return; }
+      if (e.target.closest('[data-del]')) { removeNode(e.target.closest('.board-node').dataset.id); return; }
+      const tool = e.target.closest('[data-tool]');
+      if (tool) { onTool(tool.dataset.tool); return; }
+    });
+
+    root.addEventListener('dblclick', (e) => {
+      const name = e.target.closest('.board-tab-name');
+      if (name) { startRename(name); return; }
+      const node = e.target.closest('.board-node');
+      if (node) { enterEdit(node.dataset.id); return; }
+      if (e.target.closest('.board-canvas') && !e.target.closest('.board-tools')) {
+        const p = toWorld(e.clientX, e.clientY);
+        addNode(p.x - NODE_W / 2, p.y - 24);
+      }
+    });
+
+    // Typing updates the DOM only — the note grows and its links re-route — and
+    // does not touch DATA. The change is committed once, on blur, so a mutate()
+    // repaint never fires mid-keystroke and moves the caret.
+    root.addEventListener('input', (e) => {
+      const node = e.target.closest('.board-node');
+      if (!node) return;
+      autoSize(node);
+      drawEdges();
+    });
+
+    root.addEventListener('focusout', (e) => {
+      const name = e.target.closest('.board-tab-name');
+      if (name && name.isContentEditable) {
+        name.contentEditable = 'false';
+        commitRename(name.closest('[data-board]').dataset.board, name.textContent.trim() || 'Board');
+        return;
+      }
+      const node = e.target.closest('.board-node');
+      if (node) {
+        const id = node.dataset.id;
+        const ta = node.querySelector('.board-node-text');
+        node.classList.remove('is-editing');
+        if (ta) ta.readOnly = true;
+        editing = null;
+        if (ta) commitText(id, ta.value);
+      }
+    });
+
+    root.addEventListener('keydown', (e) => {
+      const name = e.target.closest('.board-tab-name');
+      if (name && name.isContentEditable && e.key === 'Enter') { e.preventDefault(); name.blur(); }
+    });
+
+    // Scrolling zooms about the cursor — the point under the pointer stays put,
+    // so you zoom into the note you are pointing at. A trackpad pinch arrives as
+    // a ctrl+wheel and lands here too. Panning is dragging the background.
+    root.addEventListener('wheel', (e) => {
+      if (!e.target.closest('.board-canvas')) return;
+      e.preventDefault();
+      const r = canvas.getBoundingClientRect();
+      zoomAt(e.clientX - r.left, e.clientY - r.top, Math.exp(-e.deltaY * 0.0015));
+      saveUISoon();
+    }, { passive: false });
+
+    // Delete / Escape act on the board only when it is the screen you are on and
+    // you are not typing into a note or a board name.
+    document.addEventListener('keydown', (e) => {
+      if (view !== 'board') return;
+      const a = document.activeElement;
+      const typing = a && (a.tagName === 'TEXTAREA' || a.tagName === 'INPUT' || a.isContentEditable);
+      if ((e.key === 'Delete' || e.key === 'Backspace') && sel && !typing && canEdit()) {
+        e.preventDefault();
+        if (sel.kind === 'node') removeNode(sel.id); else removeEdge(sel.id);
+      } else if (e.key === 'Escape' && sel && !typing) {
+        selectNone();
+      }
+    });
+  }
+
+  // A one-time import of the prototype-phase canvas (its own localStorage key)
+  // into the shared document, the first time this document has no boards of its
+  // own. node.text becomes node.body; the camera moves to the per-client store.
+  function importLegacy() {
+    let legacy;
+    try { legacy = JSON.parse(localStorage.getItem('ctvos.board.v1')); } catch { return false; }
+    if (!legacy || !Array.isArray(legacy.boards) || !legacy.boards.length) return false;
+    DATA.boards = legacy.boards.map((b) => ({
+      id: b.id, name: b.name,
+      nodes: (b.nodes ?? []).map((n) => ({ id: n.id, x: n.x, y: n.y, body: n.text ?? n.body ?? '', color: n.color || 'grey' })),
+      edges: (b.edges ?? []).map((e) => ({ id: e.id, from: e.from, to: e.to })),
+    }));
+    for (const b of legacy.boards) if (b.cam) ui.cams[b.id] = b.cam;
+    ui.activeId = legacy.activeId ?? DATA.boards[0]?.id ?? null;
+    persist(); saveUI();
+    try { localStorage.removeItem('ctvos.board.v1'); } catch { /* ignore */ }
+    return true;
+  }
+
+  return {
+    init() {
+      root = document.getElementById('v-board');
+      if (!root) return;
+      // Precedence when this document has never carried a board: import the
+      // prototype-phase canvas if one exists, else fall back to the seed's
+      // example board. An *empty* boards array (everything deleted) is left
+      // alone — it must not silently re-seed, like crew and the locker.
+      if (!Array.isArray(DATA.boards)) {
+        if (!importLegacy()) { DATA.boards = clone(SEED.boards ?? []); persist(); }
+      }
+      wire();
+      renderShell();
+    },
+    // render() calls this whenever DATA changed — a local edit or a pull from
+    // someone else. It repaints from the document, but not while a note is being
+    // typed into (that would eat the caret) and not for the hidden view (onShow
+    // repaints on entry), so unrelated edits elsewhere stay cheap.
+    reflect() {
+      if (!root || editing || dragging) return;
+      if (view === 'board') renderShell();
+    },
+    // setView calls this when the board becomes visible: only now does the stage
+    // have real dimensions, so re-place the camera and re-route the links.
+    onShow() { renderShell(); },
+  };
+})();
+
 // Materialise the working copy on first load. The working copy is the truth
 // (the seed is only a fallback), so it should exist from the first visit
 // rather than springing into being on the first edit.
 stampIds(DATA);
 persist();
+Board.init();
 setView('calendar');
 render();
 

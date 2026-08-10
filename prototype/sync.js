@@ -56,7 +56,15 @@ const Sync = (() => {
   const PULL = [
     'societies', 'members', 'prep_templates',
     'events', 'event_roles', 'prep_items', 'deliverables', 'tasks', 'kit',
+    'boards', 'board_nodes', 'board_edges',
   ];
+
+  // The board is a later addition, so a live project that has not had the new
+  // migration pushed yet does not have these three tables. Their absence must
+  // not take the whole app offline — the calendar is public and has to keep
+  // working — so a pull tolerates them 404ing and treats the canvas as empty
+  // until the migration lands. Every other table is load-bearing and still throws.
+  const OPTIONAL_TABLES = new Set(['boards', 'board_nodes', 'board_edges']);
 
   let session = null;      // { access_token, refresh_token, expires_at, user }
   let hooks = {};          // { getDoc, setDoc, onStatus }
@@ -435,6 +443,23 @@ const Sync = (() => {
         state: k.state, home: k.home, notes: k.notes,
         usage: k.usage, tips: k.tips, photo_url: k.photo_url,
       })),
+      // The board, nested back into the shape the canvas renders: each board
+      // carries its own notes and links. Notes come out in sort_order; a link
+      // names its endpoints by note slug, the same id the canvas uses.
+      boards: (() => {
+        const nodesBy = new Map(), edgesBy = new Map();
+        for (const n of [...(rows.board_nodes ?? [])].sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0))) {
+          (nodesBy.get(n.board_id) ?? nodesBy.set(n.board_id, []).get(n.board_id))
+            .push({ id: n.slug, x: n.x, y: n.y, body: n.body, color: n.color });
+        }
+        for (const e of rows.board_edges ?? []) {
+          (edgesBy.get(e.board_id) ?? edgesBy.set(e.board_id, []).get(e.board_id))
+            .push({ id: e.slug, from: e.from_node, to: e.to_node });
+        }
+        return [...(rows.boards ?? [])]
+          .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0))
+          .map((b) => ({ id: b.slug, name: b.name, nodes: nodesBy.get(b.id) ?? [], edges: edgesBy.get(b.id) ?? [] }));
+      })(),
     };
   }
 
@@ -522,6 +547,16 @@ const Sync = (() => {
     sort_order: i,
   });
 
+  // Board rows. A board is keyed by slug like an event; a note and a link are
+  // keyed by their own slug and resolved to the owning board at flush, exactly
+  // like a role or a prep step resolves to its event.
+  const boardRow = (b, i) => ({ slug: b.id, name: b.name, sort_order: i });
+  const boardNodeRow = (n, i) => ({
+    slug: n.id, x: n.x ?? 0, y: n.y ?? 0,
+    body: n.body ?? '', color: n.color || 'grey', sort_order: i,
+  });
+  const boardEdgeRow = (e) => ({ slug: e.id, from_node: e.from, to_node: e.to });
+
   // --- Pull -----------------------------------------------------------------
   // The whole year, every time, rather than rows changed since a watermark.
   //
@@ -539,6 +574,39 @@ const Sync = (() => {
   // Realtime echo triggered another pull). So the still-pending deletes are
   // subtracted from the incoming document before it is shown: what you removed
   // stays removed until the server has actually caught up.
+  // The mirror of the delete case: a register item this client just *added*
+  // (kit or crew) lives in the outbox until its insert reaches Postgres. A pull
+  // that lands in that window — a realtime reconnect, a poll — carries the
+  // database's truth, which does not yet include the new row, so applyRemote
+  // would drop it and the open sheet would slam shut a second after you clicked
+  // Add. Re-inject any still-pending insert the incoming document is missing, so
+  // what you added stays until the server has actually caught up.
+  function reinjectPending(doc) {
+    for (const op of readOutbox()) {
+      if (op.op !== 'upsert') continue;
+      const r = op.row;
+      if (op.table === 'kit') {
+        doc.kit ??= [];
+        if (!doc.kit.some((k) => k.id === r.slug)) {
+          doc.kit.push({
+            id: r.slug, name: r.name, category: r.category, asset_tag: r.asset_tag,
+            owner: r.owner, state: r.state, home: r.home, notes: r.notes,
+            usage: r.usage, tips: r.tips, photo_url: r.photo_url,
+          });
+        }
+      } else if (op.table === 'members') {
+        doc.members ??= [];
+        if (!doc.members.some((m) => m.id === r.slug)) {
+          doc.members.push({
+            id: r.slug, known_as: r.known_as, full_name: r.full_name,
+            committee_role: r.committee_role, trained: r.trained ?? [], active: r.active !== false,
+          });
+        }
+      }
+    }
+    return doc;
+  }
+
   function reconcilePending(doc) {
     for (const op of readOutbox()) {
       if (op.op !== 'delete') continue;
@@ -552,6 +620,11 @@ const Sync = (() => {
         for (const e of doc.events ?? []) e.roles = (e.roles ?? []).filter((r) => r.id !== key);
       else if (op.table === 'prep_items')
         for (const e of doc.events ?? []) if (e.prep) e.prep = e.prep.filter((p) => p.id !== key);
+      else if (op.table === 'boards') doc.boards = (doc.boards ?? []).filter((b) => b.id !== key);
+      else if (op.table === 'board_nodes')
+        for (const b of doc.boards ?? []) b.nodes = (b.nodes ?? []).filter((n) => n.id !== key);
+      else if (op.table === 'board_edges')
+        for (const b of doc.boards ?? []) b.edges = (b.edges ?? []).filter((e) => e.id !== key);
     }
     return doc;
   }
@@ -562,7 +635,10 @@ const Sync = (() => {
     pulling = true;
     try {
       const rows = {};
-      await Promise.all(PULL.map(async (t) => { rows[t] = await rest(`${t}?select=*`); }));
+      await Promise.all(PULL.map(async (t) => {
+        try { rows[t] = await rest(`${t}?select=*`); }
+        catch (err) { if (OPTIONAL_TABLES.has(t)) rows[t] = []; else throw err; }
+      }));
       if (!rows.events.length) {
         // An empty database is not an empty year. Refusing to overwrite the
         // seed here is what makes it safe to point the page at a project
@@ -570,7 +646,7 @@ const Sync = (() => {
         setStatus({ mode: 'empty', error: 'Database is reachable but empty — run npm run seed' });
         return null;
       }
-      const doc = reconcilePending(toDocument(rows));
+      const doc = reinjectPending(reconcilePending(toDocument(rows)));
       hooks.setDoc?.(doc);
       setStatus({ mode: 'synced', error: null, at: Date.now() });
       return doc;
@@ -703,16 +779,73 @@ const Sync = (() => {
       if (!tB.has(id)) ops.push({ table: 'tasks', op: 'delete', by: `slug=eq.${id}` });
     }
 
+    // Board. Boards diff by slug like events; a rename is the only field-change
+    // worth a write, so the change test compares the name and lets sort_order
+    // ride along in the payload. Notes and links are keyed by their own slug and
+    // carry the owning board's slug, resolved to a uuid at flush. All deletable.
+    const boardsA = index(before.boards), boardsB = index(after.boards);
+    let bi = 0;
+    for (const [id, b] of boardsB) {
+      const was = boardsA.get(id);
+      if (!was) ops.push({ table: 'boards', op: 'upsert', on: 'slug', row: boardRow(b, bi) });
+      else if (was.name !== b.name) ops.push({ table: 'boards', op: 'update', by: `slug=eq.${id}`, row: boardRow(b, bi) });
+      bi++;
+    }
+    for (const id of boardsA.keys()) {
+      if (!boardsB.has(id)) ops.push({ table: 'boards', op: 'delete', by: `slug=eq.${id}` });
+    }
+
+    const nodesOf = (doc) => {
+      const m = new Map();
+      for (const b of doc.boards ?? []) (b.nodes ?? []).forEach((n, i) => { if (n.id) m.set(n.id, { n, i, board: b.id }); });
+      return m;
+    };
+    const nA = nodesOf(before), nB = nodesOf(after);
+    for (const [id, { n, i, board }] of nB) {
+      const was = nA.get(id);
+      const payload = { ...boardNodeRow(n, i), _board_slug: board };
+      if (!was) ops.push({ table: 'board_nodes', op: 'upsert', on: 'slug', row: payload });
+      else if (!same(boardNodeRow(was.n, was.i), boardNodeRow(n, i))) {
+        ops.push({ table: 'board_nodes', op: 'update', by: `slug=eq.${id}`, row: payload });
+      }
+    }
+    for (const id of nA.keys()) {
+      if (!nB.has(id)) ops.push({ table: 'board_nodes', op: 'delete', by: `slug=eq.${id}` });
+    }
+
+    const edgesOf = (doc) => {
+      const m = new Map();
+      for (const b of doc.boards ?? []) (b.edges ?? []).forEach((e) => { if (e.id) m.set(e.id, { e, board: b.id }); });
+      return m;
+    };
+    const egA = edgesOf(before), egB = edgesOf(after);
+    for (const [id, { e, board }] of egB) {
+      const was = egA.get(id);
+      const payload = { ...boardEdgeRow(e), _board_slug: board };
+      if (!was) ops.push({ table: 'board_edges', op: 'upsert', on: 'slug', row: payload });
+      else if (!same(boardEdgeRow(was.e), boardEdgeRow(e))) {
+        ops.push({ table: 'board_edges', op: 'update', by: `slug=eq.${id}`, row: payload });
+      }
+    }
+    for (const id of egA.keys()) {
+      if (!egB.has(id)) ops.push({ table: 'board_edges', op: 'delete', by: `slug=eq.${id}` });
+    }
+
     return ops;
   }
 
   // Slug -> uuid, for the three foreign keys the document carries as names.
   // Cached from the last pull and refreshed on a miss, because a role can be
   // assigned to a member this client has never seen before.
-  let idmap = { events: new Map(), members: new Map() };
+  let idmap = { events: new Map(), members: new Map(), boards: new Map() };
 
   async function resolve(kind, slug) {
     if (slug == null) return null;
+    // A missing bucket must never throw here: a TypeError is not a 4xx, so it is
+    // treated as "the network" and wedges the whole outbox behind it forever —
+    // which is exactly how one queued board edit silently stopped every other
+    // change from persisting. Materialise the bucket instead of trusting init().
+    if (!idmap[kind]) idmap[kind] = new Map();
     if (idmap[kind].has(slug)) return idmap[kind].get(slug);
     const rows = await rest(`${kind}?slug=eq.${encodeURIComponent(slug)}&select=id`);
     const id = rows[0]?.id ?? null;
@@ -737,6 +870,11 @@ const Sync = (() => {
       row.event_ref = await resolve('events', row._ref_slug);
       delete row._ref_slug;
     }
+    if (row._board_slug !== undefined) {
+      row.board_id = await resolve('boards', row._board_slug);
+      delete row._board_slug;
+      if (!row.board_id) return;   // its board was deleted; the cascade got it
+    }
     if (row._anchor_slug !== undefined) {
       row.anchor_event_id = await resolve('events', row._anchor_slug);
       delete row._anchor_slug;
@@ -760,6 +898,9 @@ const Sync = (() => {
     // A newly inserted event has a uuid this client has not seen. Drop the
     // cached miss so the next role or task that references it resolves.
     if (op.table === 'events') idmap.events.delete(row.slug);
+    // Same for a newly inserted board: the notes and links that follow in the
+    // same flush resolve their _board_slug against it.
+    if (op.table === 'boards') idmap.boards.delete(row.slug);
   }
 
   // --- Outbox ---------------------------------------------------------------
@@ -924,7 +1065,7 @@ const Sync = (() => {
     await pull();
     if (session) await loadAccess();
     if (status.mode === 'synced') {
-      idmap = { events: new Map(), members: new Map() };
+      idmap = { events: new Map(), members: new Map(), boards: new Map() };
       await drainOutbox();
     }
     connect();

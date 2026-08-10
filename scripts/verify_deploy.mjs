@@ -148,7 +148,7 @@ const shell = await page.evaluate(() => ({
   nav: document.querySelectorAll('.nav-item').length,
   days: document.querySelectorAll('.day[data-day]').length,
 }));
-check('the app rendered', shell.views === 6 && shell.nav === 6,
+check('the app rendered', shell.views === 7 && shell.nav === 7,
   `${shell.views} views, ${shell.nav} nav items`);
 
 // Inline handlers are the other common CSP casualty: the page looks perfect and

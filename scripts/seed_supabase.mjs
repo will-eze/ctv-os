@@ -114,19 +114,21 @@ const socs = await upsert('societies', year.societies.map((s) => ({
   charge_policy: nz(s.charge_policy),
 })), 'slug');
 const socId = new Map(socs.map((s) => [s.slug, s.id]));
-step('1/8', `${socs.length} societies`);
+step('1/9', `${socs.length} societies`);
 
 // members --------------------------------------------------------------------
-const mems = await upsert('members', year.members.map((m) => ({
-  slug: m.id,
-  full_name: m.full_name,
-  known_as: nz(m.known_as),
-  committee_role: nz(m.committee_role),
-  su_member: Boolean(m.su_member),
-  trained: m.trained ?? [],
-})), 'slug');
-const memId = new Map(mems.map((m) => [m.slug, m.id]));
-step('2/8', `${mems.length} members`);
+// Deliberately NOT seeded. On the manager's instruction the deployed app starts
+// with an empty crew roster (and an empty kit locker below): a new committee is
+// never handed last year's people or gear, and adds both in-app instead. The
+// seed in data/year.json is left intact — the offline prototype and the test
+// suites still exercise crew and kit from it — but it is not pushed here. This
+// seed is purely additive for crew/kit: it never creates them and never deletes
+// what the manager has entered live, so re-running it is safe. An existing live
+// roster from an earlier seed is removed once with `npm run clear:crew-kit`.
+// Roles carry member_id NULL anyway (nobody is assigned by default), so no
+// member lookup is needed to seed them.
+const memId = new Map();
+step('2/9', '0 members — crew is added in-app, not seeded');
 
 // prep templates -------------------------------------------------------------
 // Replaced outright rather than upserted. Their uniqueness is enforced by two
@@ -150,7 +152,7 @@ const tpl = await rest('prep_templates', {
   }))),
 });
 const universal = tpl.filter((t) => t.strand === null).length;
-step('3/8', `${tpl.length} prep templates — ${universal} apply to every strand`);
+step('3/9', `${tpl.length} prep templates — ${universal} apply to every strand`);
 
 // events ---------------------------------------------------------------------
 const evs = await upsert('events', year.events.map((e) => ({
@@ -171,7 +173,7 @@ const evs = await upsert('events', year.events.map((e) => ({
   kit_needed: e.kit_needed ?? [],
 })), 'slug');
 const evId = new Map(evs.map((e) => [e.slug, e.id]));
-step('4/8', `${evs.length} events`);
+step('4/9', `${evs.length} events`);
 
 // event roles ----------------------------------------------------------------
 // THE primary object. An `event_roles` row with member_id NULL is the thing
@@ -196,7 +198,7 @@ for (const e of year.events) {
 }
 await upsert('event_roles', roles, 'id');
 const open = roles.filter((r) => !r.member_id).length;
-step('5/8', `${roles.length} roles — ${open} of them open`);
+step('5/9', `${roles.length} roles — ${open} of them open`);
 
 // prep items and deliverables ------------------------------------------------
 const prep = [];
@@ -221,7 +223,7 @@ for (const e of year.events) {
 }
 await upsert('prep_items', prep, 'id');
 await upsert('deliverables', delivs, 'id');
-step('6/8', `${prep.length} prep items, ${delivs.length} deliverables`);
+step('6/9', `${prep.length} prep items, ${delivs.length} deliverables`);
 
 // tasks ----------------------------------------------------------------------
 const tasks = await upsert('tasks', year.tasks.map((t, i) => ({
@@ -239,25 +241,39 @@ const tasks = await upsert('tasks', year.tasks.map((t, i) => ({
   academic_year: year.academic_year,
   sort_order: i,
 })), 'slug');
-step('7/8', `${tasks.length} tasks`);
+step('7/9', `${tasks.length} tasks`);
 
 // kit ------------------------------------------------------------------------
-// The locker. Editable from the interface now, so it is seeded like the rest,
-// keyed by slug (the id from data/year.json).
-const kit = await upsert('kit', (year.kit ?? []).map((k) => ({
-  slug: k.id,
-  name: k.name,
-  category: nz(k.category),
-  asset_tag: nz(k.asset_tag),
-  owner: k.owner ?? 'ctv',
-  state: k.state ?? 'in_hub',
-  home: nz(k.home),
-  notes: nz(k.notes),
-  usage: nz(k.usage),
-  tips: nz(k.tips),
-  photo_url: nz(k.photo_url),
+// Not seeded either — same reason as crew above. The locker starts empty on the
+// live project and the manager fills it in-app. events.kit_needed in the seed
+// points at kit slugs that will not exist until entered; that is harmless (it is
+// jsonb with no foreign key) and simply shows as unresolved until the kit is
+// added. Additive like crew: never created here, never deleted here.
+step('8/9', '0 kit items — the locker is filled in-app, not seeded');
+
+// board -----------------------------------------------------------------------
+// The private brainstorming canvas. Keyed by slug (the client id in
+// data/year.json), like the rest. Notes and links resolve to their board's
+// uuid, so the boards are seeded first and their ids looked up for the children.
+const boards = await upsert('boards', (year.boards ?? []).map((b, i) => ({
+  slug: b.id, name: b.name, sort_order: i,
 })), 'slug');
-step('8/8', `${kit.length} kit items`);
+const boardIdBySlug = Object.fromEntries(
+  (await rest('boards?select=id,slug')).map((b) => [b.slug, b.id])
+);
+const nodes = [], edges = [];
+for (const b of year.boards ?? []) {
+  (b.nodes ?? []).forEach((n, i) => nodes.push({
+    slug: n.id, board_id: boardIdBySlug[b.id],
+    x: n.x ?? 0, y: n.y ?? 0, body: n.body ?? '', color: n.color ?? 'grey', sort_order: i,
+  }));
+  (b.edges ?? []).forEach((e) => edges.push({
+    slug: e.id, board_id: boardIdBySlug[b.id], from_node: e.from, to_node: e.to,
+  }));
+}
+await upsert('board_nodes', nodes, 'slug');
+await upsert('board_edges', edges, 'slug');
+step('9/9', `${boards.length} boards, ${nodes.length} notes, ${edges.length} links`);
 
 // --- What the database now says --------------------------------------------
 // Read it back through the view the interface reads, rather than trusting the

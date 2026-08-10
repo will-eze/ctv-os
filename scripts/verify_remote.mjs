@@ -101,8 +101,8 @@ const server = await one('select version() as v, current_database() as db');
 
 // --- Shape ----------------------------------------------------------------
 const TABLES = ['members', 'societies', 'events', 'event_roles', 'prep_items', 'prep_templates',
-  'kit', 'kit_bookings', 'deliverables', 'tasks', 'playbook', 'contacts', 'ledger',
-  'funding_windows', 'incidents'];
+  'kit', 'kit_bookings', 'deliverables', 'tasks', 'boards', 'board_nodes', 'board_edges',
+  'playbook', 'contacts', 'ledger', 'funding_windows', 'incidents'];
 const VIEWS = ['prep_due', 'event_coverage', 'crew_clashes', 'kit_outstanding',
   'post_outstanding', 'task_due'];
 
@@ -135,11 +135,14 @@ await check('only plans can be deleted, never records', async () => {
   // members and kit joined it on the station manager's instruction: the crew
   // roster and the kit register are reset by a new committee, so both are
   // deletable. A kit *booking* against a piece is still a record and stays put.
+  // The board tables joined it with the brainstorming canvas: a note, a link or
+  // a whole board is a plan the manager clears, not a record of what happened.
   const rows = await all(
     `select tablename from pg_policies
       where schemaname = 'public' and cmd = 'DELETE' order by tablename`);
   eq([...new Set(rows.map((r) => r.tablename))],
-     ['access_grants', 'event_roles', 'events', 'kit', 'members', 'prep_items', 'tasks'],
+     ['access_grants', 'board_edges', 'board_nodes', 'boards',
+      'event_roles', 'events', 'kit', 'members', 'prep_items', 'tasks'],
      'tables with a DELETE policy');
   return 'kit_bookings, ledger, deliverables and incidents stay put';
 });

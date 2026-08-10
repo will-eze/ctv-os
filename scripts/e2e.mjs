@@ -1145,6 +1145,66 @@ await check('a to-do can be deleted, and that is undoable', async () => {
   return 'deleted, then undone';
 });
 
+console.log('\n  BOARD\n  ' + '-'.repeat(70));
+
+// The board is now part of the document: notes and links live in DATA.boards and
+// go through mutate() like everything else, so they persist, undo and sync. The
+// viewport (which board is open, and its pan/zoom) is a per-client preference and
+// stays in its own localStorage key, out of the shared document.
+const boardBox = () => page.$eval('.board-canvas',
+  (el) => { const r = el.getBoundingClientRect(); return { x: r.x, y: r.y, w: r.width, h: r.height }; });
+
+await check('the board seeds a canvas and a new note persists to the document', async () => {
+  await goto('board');
+  const seed = (await stored()).boards;
+  if (!seed.length) throw new Error('no seed board in the document');
+  if (!seed[0].nodes.length) throw new Error('the seed board has no notes');
+  const box = await boardBox();
+  // Double-click an empty patch, clear of the seed notes and the zoom toolbar.
+  await page.mouse.click(box.x + box.w * 0.2, box.y + box.h * 0.8, { clickCount: 2 });
+  await page.waitForFunction(() => document.querySelector('.board-node.is-editing'));
+  await page.keyboard.type('E2E idea');
+  await page.evaluate(() => document.activeElement.blur());
+  await page.waitForFunction(() =>
+    JSON.parse(localStorage.getItem('ctvos.year.v2')).boards[0].nodes.some((n) => n.body === 'E2E idea'));
+  const note = (await stored()).boards[0].nodes.find((n) => n.body === 'E2E idea');
+  if ('text' in note) throw new Error('the note kept the prototype-era text field instead of body');
+  // It survives a reload — it is in the document, not a transient bit of the view.
+  await page.reload({ waitUntil: 'load' });
+  await goto('board');
+  if (!(await stored()).boards[0].nodes.some((n) => n.body === 'E2E idea'))
+    throw new Error('the note did not persist across a reload');
+  return `seed ${seed[0].nodes.length} notes; added one, body-keyed, survives reload`;
+});
+
+await check('a note is undoable, like every other edit', async () => {
+  await goto('board');
+  const before = (await stored()).boards[0].nodes.length;
+  const box = await boardBox();
+  await page.mouse.click(box.x + box.w * 0.4, box.y + box.h * 0.8, { clickCount: 2 });
+  await page.waitForFunction(() => document.querySelector('.board-node.is-editing'));
+  await page.keyboard.type('scratch note');
+  await page.evaluate(() => document.activeElement.blur());
+  await page.waitForFunction((n) =>
+    JSON.parse(localStorage.getItem('ctvos.year.v2')).boards[0].nodes.length === n + 1, {}, before);
+  await page.click('#toast-undo');   // undo the text, then undo the add
+  await page.click('#toast-undo').catch(() => {});
+  await page.waitForFunction((n) =>
+    !JSON.parse(localStorage.getItem('ctvos.year.v2')).boards[0].nodes.some((x) => x.body === 'scratch note'),
+    {}, before);
+  return 'added a note, undo removed it';
+});
+
+await check('the board viewport is a per-client preference, not shared data', async () => {
+  await goto('board');
+  const doc = (await stored()).boards[0];
+  if ('cam' in doc) throw new Error('a camera leaked into the shared document');
+  if (doc.nodes.some((n) => 'text' in n)) throw new Error('a note leaked the prototype text field');
+  const ui = JSON.parse(await page.evaluate(() => localStorage.getItem('ctvos.board.ui.v1')) || 'null');
+  if (!ui || !ui.activeId) throw new Error('the per-client board UI store is missing or empty');
+  return 'boards/notes in the document; camera + active board in ctvos.board.ui.v1';
+});
+
 console.log('\n  ACCOUNTS\n  ' + '-'.repeat(70));
 
 await check('the account control opens a menu and the sign-in dialog', async () => {

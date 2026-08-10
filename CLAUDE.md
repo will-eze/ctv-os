@@ -102,6 +102,55 @@ private-module RLS and the `kit-photos` bucket), `npm run seed -- --force` to
 load the new kit/`kit_needed` columns. `verify:api` and `verify:sql` were
 updated to the new model; `verify:remote` too.
 
+### 0.2 The Board — a private brainstorming canvas — APPLIED (2026-08-09)
+
+Built in two passes. First a **local-only prototype** (its own `localStorage`
+key, unsynced, ungated) so the manager could judge the fit; then, on their
+go-ahead, **fully wired into the database and the access model**. Do not revert
+without asking.
+
+- **What it is.** A Lucidchart-lite pan/zoom canvas of idea notes you drag and
+  link, one of several **named boards** (tabs; double-click to rename). Nav item
+  **Board**, between Kit and Settings. Notes carry a colour tag (existing palette
+  tokens only), auto-size to their text, and connect by dragging the green
+  handle onto another note. Delete/Backspace removes the selection; **scrolling
+  zooms about the cursor** (a trackpad pinch too); the background pans.
+- **Content is in the document; the viewport is not.** Boards, notes and links
+  live in `DATA.boards` and every change goes through `mutate()` — so it is
+  undoable, it persists, and it **syncs** through the same diff as the rest of
+  the year. Which board is open and each board's pan/zoom are a *per-person*
+  preference and stay in `localStorage` key `ctvos.board.ui.v1`, never in the
+  document, never synced. Typing commits on blur and a drag commits on release,
+  so a `mutate()` repaint never fires mid-gesture and eats the caret.
+  `render()` calls `Board.reflect()` to repaint from the document, including a
+  change pulled from someone else.
+- **Access: the third private module.** `board` joined `crew` and `tasks` in
+  `PRIVATE_MODULES`, `VIEW_MODULE`, `GRANTABLE` and the Manage-access modal.
+  Three tables — `boards`, `board_nodes`, `board_edges` — with RLS gated by
+  `can_view('board')` / `can_edit('board')`, so the canvas is **admin-only by
+  default** and grantable per account like the others. All three are deletable
+  (a note/link/board is a plan the manager clears, not a record); deleting a
+  board cascades its notes and links. Node identity is a slug (client id), edges
+  name their endpoints by note slug; a board resolves at flush like an event.
+- **Resilience.** The three board tables are **optional in `PULL`**: a live
+  project that has not had this migration pushed yet 404s on them, and that must
+  not take the public calendar offline, so those 404s degrade to an empty canvas
+  rather than throwing. `data/year.json` seeds one example board (`boards`);
+  `build_prototype.py` inlines it; `seed_supabase.mjs` loads all three tables.
+  The prototype-phase local canvas (old `ctvos.board.v1`) is imported once into
+  the document the first time it has no boards of its own.
+- **Tests.** `verify:sql`/`verify:remote` DELETE-policy and gated-read lists and
+  the private-module check gained the board tables; `verify_api.mjs` asserts the
+  board is unreadable without a grant; `e2e` has a **BOARD** section (seed loads,
+  a note persists and undoes, the viewport stays out of the document);
+  `verify:deploy` expects **7 views / 7 nav items**.
+
+**Live steps the user runs (needs their token; not done here):** `npm run
+db:push` (adds `boards`/`board_nodes`/`board_edges` and their RLS), then
+`npm run seed -- --force` (loads the seed board). Until then the live app shows
+an empty canvas for granted users — correct, not broken. `verify:api` and
+`e2e:sync` are theirs to run against the live project.
+
 ### 1. The Stitch redesign — APPLIED
 
 The user rejected the original visual design ("I don't like the design, use
@@ -287,10 +336,10 @@ Do not relitigate these — the user answered them directly.
   account — and, for the private modules, a grant.** *Superseded twice: first
   "Station Manager only in v1", then "reads open, writes authenticated", now
   role-based access (see §0.1).* The publishable key ships in the page, so the
-  URL is not access control. Anyone reads the **calendar**; **Crew and To-do are
-  private** (RLS via `can_view`/`can_edit`); writes to the public modules need a
-  session; the admin grants the rest. Members are still names that hold roles —
-  holding a role and having an account remain separate things.
+  URL is not access control. Anyone reads the **calendar**; **Crew, To-do and the
+  Board are private** (RLS via `can_view`/`can_edit`); writes to the public
+  modules need a session; the admin grants the rest. Members are still names that
+  hold roles — holding a role and having an account remain separate things.
 - **All four modules in v1** — crew, kit, societies, post-production — hanging
   off the event, not as four separate navigations.
 - **A clash is a conflict of physical presence.** `event_roles.on_site` exists
@@ -343,14 +392,18 @@ Designed into the schema, absent from every interface: kit check in/out
 (`kit_bookings`), the post-production board (`deliverables`), money (`ledger`,
 `funding_windows`), playbook and handover export, safeguarding log
 (`incidents`). The **Kit locker is built and editable** now (details, usage
-notes, photos) — what is not built is the check-out log against events. There is
-still **no Next.js app**: the page is one self-contained file. Export gives back
-a corrected `year.json`; **Export PDF** gives a structured brief.
+notes, photos) — what is not built is the check-out log against events. The
+**Board (private brainstorming canvas) is built, synced and grant-gated** now
+(see §0.2). There is still **no Next.js app**: the page is one self-contained
+file. Export gives back a corrected `year.json`; **Export PDF** gives a
+structured brief.
 
 **The database is live.** Project `uciyizhmuiopetrdpovy` (eu-west-1) has the
 schema pushed and the year seeded: 31 events, 78 roles (44 open), 56 tasks.
-`npm run verify:api` asserts the deployed API enforces the rules, and
-`npm run e2e:sync` drives two real browsers against it.
+*The board migration (§0.2) is on disk but not yet pushed — run `npm run db:push`
+then `npm run seed -- --force` to add the `boards`/`board_nodes`/`board_edges`
+tables and the seed board.* `npm run verify:api` asserts the deployed API
+enforces the rules, and `npm run e2e:sync` drives two real browsers against it.
 
 **Offline is tested by blocking DNS, not by hoping.** `e2e` and `verify:deploy`
 launch Chrome with `--host-resolver-rules=MAP <db-host> ~NOTFOUND`. Both suites

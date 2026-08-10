@@ -96,6 +96,10 @@ def main() -> None:
         # The Kit locker renders the inventory. It is read-only in the prototype,
         # so it travels as reference data alongside societies and prep templates.
         "kit": data.get("kit", []),
+        # The private brainstorming canvas: one seed board of season ideas. Edited
+        # from the Board page and synced like the rest of the document, so it
+        # travels as the starting point a fresh browser opens onto.
+        "boards": data.get("boards", []),
     }
 
     cfg = supabase_config()

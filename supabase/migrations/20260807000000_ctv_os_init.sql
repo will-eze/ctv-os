@@ -1,6 +1,6 @@
 -- GENERATED FILE — do not edit.
 --
--- Source: supabase/schema.sql   (sha256 3ff7608eefe13047)
+-- Source: supabase/schema.sql   (sha256 21e6eac546d785a8)
 -- Regenerate: npm run db:migration
 --
 -- schema.sql is what `npm run verify:sql` executes against real Postgres. This
@@ -423,6 +423,62 @@ $$ language plpgsql;
 drop trigger if exists tasks_clear_lead on tasks;
 create trigger tasks_clear_lead before update on tasks
   for each row execute function tasks_clear_orphan_lead();
+
+-- ---------------------------------------------------------------------------
+-- board — the private brainstorming canvas
+-- ---------------------------------------------------------------------------
+-- A whiteboard the station manager thinks the year out on: notes you drag
+-- around and link. It is a private module like crew and the to-do list — every
+-- read and write resolves through can_view('board') / can_edit('board'), so it
+-- never appears on the public calendar URL. Three tables: a board, its notes,
+-- and the links between them.
+--
+-- Notes and links are deletable for the same reason a role or a prep step is:
+-- removing one is an edit the canvas offers, and against a shared database that
+-- removal has to be a real DELETE or it returns on the next pull. A board is
+-- deletable too — it is a scratchpad the manager clears, the same register
+-- reasoning as crew and the locker — and deleting one cascades its notes and
+-- links. Identity is a slug (the client-minted id, like events and members), so
+-- a client that has never reached the network still queues edits that land on
+-- the right rows instead of duplicating them. The camera (pan/zoom) is a
+-- per-person viewport preference and lives in the browser, never here.
+create table if not exists boards (
+  id            uuid primary key default gen_random_uuid(),
+  slug          text unique,
+  name          text not null,
+  sort_order    int not null default 0,
+  academic_year text not null default '2026/27',
+  updated_at    timestamptz not null default now()
+);
+
+create table if not exists board_nodes (
+  id          uuid primary key default gen_random_uuid(),
+  slug        text unique,
+  board_id    uuid not null references boards(id) on delete cascade,
+  x           double precision not null default 0,
+  y           double precision not null default 0,
+  body        text not null default '',
+  color       text not null default 'grey',
+  sort_order  int not null default 0,
+  updated_at  timestamptz not null default now()
+);
+create index if not exists board_nodes_board_idx on board_nodes (board_id);
+
+-- A link between two notes. The endpoints are the notes' slugs, not foreign
+-- keys: the canvas addresses a note by the same client id everywhere, the link
+-- travels with it, and a dangling endpoint (a note deleted out from under a
+-- link) is simply not drawn. The client deletes a note's links along with it, so
+-- that does not normally arise; board_id still cascades, so clearing a board
+-- takes its links with it.
+create table if not exists board_edges (
+  id          uuid primary key default gen_random_uuid(),
+  slug        text unique,
+  board_id    uuid not null references boards(id) on delete cascade,
+  from_node   text not null,
+  to_node     text not null,
+  updated_at  timestamptz not null default now()
+);
+create index if not exists board_edges_board_idx on board_edges (board_id);
 
 -- ---------------------------------------------------------------------------
 -- Multi-client sync — columns
@@ -862,6 +918,9 @@ alter table kit             enable row level security;
 alter table kit_bookings    enable row level security;
 alter table deliverables    enable row level security;
 alter table tasks           enable row level security;
+alter table boards          enable row level security;
+alter table board_nodes     enable row level security;
+alter table board_edges     enable row level security;
 alter table playbook        enable row level security;
 alter table contacts        enable row level security;
 alter table ledger          enable row level security;
@@ -965,6 +1024,28 @@ create policy tasks_read   on tasks for select using (can_view('tasks'));
 create policy tasks_write  on tasks for insert with check (can_edit('tasks'));
 create policy tasks_update on tasks for update using (can_edit('tasks')) with check (can_edit('tasks'));
 create policy tasks_delete on tasks for delete using (can_edit('tasks'));
+
+-- board is the third private module — the manager's brainstorming canvas. All
+-- three tables read and write through the board grant, exactly like crew and the
+-- to-do list, so the canvas stays off the public calendar URL. Every one is
+-- deletable: a note or a link removed on the canvas has to be a real DELETE or
+-- it comes back on the next pull, and a whole board is a scratchpad the manager
+-- clears (the register reasoning that already applies to crew and kit).
+do $$
+declare t text;
+begin
+  foreach t in array array['boards', 'board_nodes', 'board_edges'] loop
+    execute format('drop policy if exists %I on %I', t || '_read',   t);
+    execute format('drop policy if exists %I on %I', t || '_write',  t);
+    execute format('drop policy if exists %I on %I', t || '_update', t);
+    execute format('drop policy if exists %I on %I', t || '_delete', t);
+    execute format('create policy %I on %I for select using (can_view(''board''))', t || '_read', t);
+    execute format('create policy %I on %I for insert with check (can_edit(''board''))', t || '_write', t);
+    execute format('create policy %I on %I for update using (can_edit(''board'')) '
+                   'with check (can_edit(''board''))', t || '_update', t);
+    execute format('create policy %I on %I for delete using (can_edit(''board''))', t || '_delete', t);
+  end loop;
+end $$;
 
 -- The accounts tables. A user reads their own profile and grants so the client
 -- knows what to show; the admin reads and writes everyone's, and issues invites.

@@ -17,7 +17,7 @@
     "seed": "node scripts/seed_supabase.mjs",
     "clear:crew-kit": "node scripts/clear_crew_kit.mjs",
     "verify:deploy": "node scripts/verify_deploy.mjs",
-    "deploy": "npm run build:prototype && vercel deploy --prod",
+    "deploy": "npm run build:prototype && npx --yes vercel deploy --prod",
     "verify:remote": "node scripts/verify_remote.mjs",
     "verify:api": "node scripts/verify_api.mjs",
     "db:provision": "bash scripts/provision_supabase.sh"
