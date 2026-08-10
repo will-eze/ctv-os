@@ -840,15 +840,30 @@ await check('a kit item opens and its usage notes save', async () => {
   return 'usage note saved on the FX3';
 });
 
-await check('a kit item can be added', async () => {
+await check('a kit item is written only on Save, not on Add', async () => {
   await goto('kit');
   await sheetGone();
   const before = (await stored()).kit.length;
   await page.click('#kit-add');
-  await page.waitForSelector('#sheet.is-open');
-  eq((await stored()).kit.length, before + 1, 'kit created');
-  await page.evaluate(() => document.getElementById('sheet-x').click());
-  return `${before} → ${before + 1} kit items`;
+  await page.waitForSelector('#sheet.is-open #kit-save');
+  await sheetSettled();
+  // Opening the draft must NOT create a row — the whole point of the change.
+  eq((await stored()).kit.length, before, 'no row created on Add');
+  // A blank Save is refused, so an empty draft never becomes a row either.
+  await page.click('#kit-save');
+  eq((await stored()).kit.length, before, 'blank Save refused');
+  // Name it, then Save — now, and only now, it lands.
+  await page.type('[data-kf="name"]', 'Aputure 600d');
+  await page.click('#kit-save');
+  await page.waitForFunction((n) => {
+    const d = JSON.parse(localStorage.getItem('ctvos.year.v2'));
+    return (d.kit || []).length === n + 1;
+  }, {}, before);
+  if (!(await stored()).kit.some((k) => k.name === 'Aputure 600d')) {
+    throw new Error('the saved kit was not written');
+  }
+  await sheetGone();   // Save closes the drawer
+  return `Add opened a draft; Save wrote it — ${before} → ${before + 1}`;
 });
 
 await check('a kit item can be deleted, and undo brings it back', async () => {

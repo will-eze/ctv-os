@@ -3372,6 +3372,13 @@ function renderKit() {
 // sheetId. Click a piece to open it: change its details, write down how to use
 // it, and attach a photo. Edits apply on change, undo covers the mistakes.
 let kitSheetId = null;
+// A new piece of kit is a *draft* until Save: clicking Add opens the drawer on an
+// in-memory object that is not in DATA and has not been written anywhere, so
+// nothing is added (and no "Kit added" toast fires) until you have typed the
+// details and pressed Save — matching how Add crew already works. Closing the
+// drawer, or pressing Cancel, throws the draft away. An *existing* piece still
+// edits live, field by field, like the rest of the app.
+let kitDraft = null;
 const KIT_CATEGORIES = ['camera', 'lens', 'audio', 'lighting', 'cable', 'media', 'tripod', 'mixer', 'monitor', 'comms', 'other'];
 
 function openKitSheet(id) {
@@ -3384,7 +3391,8 @@ function openKitSheet(id) {
 }
 
 function renderKitSheet(id) {
-  const k = (DATA.kit || []).find((x) => x.id === id);
+  const draft = Boolean(kitDraft && kitDraft.id === id);
+  const k = draft ? kitDraft : (DATA.kit || []).find((x) => x.id === id);
   if (!k) return false;
   kitSheetId = id; sheetId = null;
   const stateOpts = Object.entries(KIT_STATE)
@@ -3393,8 +3401,8 @@ function renderKitSheet(id) {
   document.getElementById('sheet-in').innerHTML = `
     <div class="sheet-head">
       <div style="flex:1;min-width:0">
-        <h2>${esc(k.name)}</h2>
-        <p class="sheet-when">${esc(k.category || 'kit')}${k.asset_tag ? ` · ${esc(k.asset_tag)}` : ''}</p>
+        <h2>${draft ? 'New kit' : esc(k.name)}</h2>
+        <p class="sheet-when">${draft ? 'Fill in the details, then Save' : `${esc(k.category || 'kit')}${k.asset_tag ? ` · ${esc(k.asset_tag)}` : ''}`}</p>
       </div>
       <button class="icon-btn" id="sheet-x" type="button" aria-label="Close">${svg('close', 'icon')}</button>
     </div>
@@ -3409,7 +3417,7 @@ function renderKitSheet(id) {
     </div>
 
     <label class="field"><span class="field-k">Name</span>
-      <input type="text" data-kf="name" value="${esc(k.name)}"></label>
+      <input type="text" data-kf="name" value="${esc(k.name)}" placeholder="e.g. Sony FX3"></label>
     <div class="field-row">
       <label class="field"><span class="field-k">Category</span>
         <input type="text" data-kf="category" value="${esc(k.category || '')}" list="kit-cats"></label>
@@ -3432,9 +3440,13 @@ function renderKitSheet(id) {
     <textarea data-kf="tips" placeholder="Gotchas, quirks, things to check before a shoot">${esc(k.tips || '')}</textarea>
 
     <div class="sheet-foot">
-      <button class="btn btn-primary" id="sheet-done" type="button">Done</button>
-      <span class="spacer"></span>
-      <button class="btn btn-danger" id="kit-del" type="button">Delete kit</button>
+      ${draft
+        ? `<button class="btn btn-primary" id="kit-save" type="button">Save kit</button>
+           <span class="spacer"></span>
+           <button class="btn" id="kit-cancel" type="button">Cancel</button>`
+        : `<button class="btn btn-primary" id="sheet-done" type="button">Done</button>
+           <span class="spacer"></span>
+           <button class="btn btn-danger" id="kit-del" type="button">Delete kit</button>`}
     </div>`;
 
   const sheetIn = document.getElementById('sheet-in');
@@ -3443,7 +3455,15 @@ function renderKitSheet(id) {
       const field = input.dataset.kf;
       let value = input.value;
       value = value.trim() === '' ? null : value.trim();
-      if (field === 'name' && !value) return;   // a kit item must keep a name
+      if (draft) {
+        // No write: a draft lives only in memory until Save. Keep the header name
+        // in step, but never re-render the whole drawer — that would drop focus
+        // and interrupt moving to the next field.
+        kitDraft[field] = value;
+        if (field === 'name') sheetIn.querySelector('.sheet-head h2').textContent = value || 'New kit';
+        return;
+      }
+      if (field === 'name' && !value) return;   // a saved kit item must keep a name
       mutate(`${k.name} updated`, (s) => { s.kit.find((x) => x.id === id)[field] = value; });
       openKitSheet(id);
       document.querySelector(`[data-kf="${field}"]`)?.focus();
@@ -3455,33 +3475,52 @@ function renderKitSheet(id) {
   };
   document.getElementById('kit-photo-cam').onclick = () => Camera.open(id);
   sheetIn.querySelector('[data-kit-photo-clear]')?.addEventListener('click', () => {
+    if (draft) { kitDraft.photo_url = null; openKitSheet(id); return; }
     mutate(`Removed ${k.name} photo`, (s) => { s.kit.find((x) => x.id === id).photo_url = null; });
     openKitSheet(id);
   });
-  document.getElementById('sheet-x').onclick = closeSheet;
-  document.getElementById('sheet-done').onclick = closeSheet;
-  document.getElementById('kit-del').onclick = () => {
-    confirmToast(`Delete "${k.name}"?`, 'Delete', () => {
-      closeSheet();
-      mutate(`Deleted ${k.name}`, (s) => { s.kit = (s.kit || []).filter((x) => x.id !== id); });
-    });
-  };
+  document.getElementById('sheet-x').onclick = closeSheet;   // closing discards a draft
+  if (draft) {
+    document.getElementById('kit-save').onclick = saveKitDraft;
+    document.getElementById('kit-cancel').onclick = closeSheet;
+  } else {
+    document.getElementById('sheet-done').onclick = closeSheet;
+    document.getElementById('kit-del').onclick = () => {
+      confirmToast(`Delete "${k.name}"?`, 'Delete', () => {
+        closeSheet();
+        mutate(`Deleted ${k.name}`, (s) => { s.kit = (s.kit || []).filter((x) => x.id !== id); });
+      });
+    };
+  }
   return true;
 }
 
+// Add opens a blank draft — no row, no write, no toast — until Save.
 function addKit() {
-  const id = `kit-${Date.now().toString(36)}`;
-  mutate('Kit added', (s) => {
-    (s.kit ??= []).push({
-      id, name: 'New kit', category: null, asset_tag: null, owner: 'ctv',
-      state: 'in_hub', home: null, notes: null,
-      usage: null, tips: null, photo_url: null,
-    });
-  });
-  openKitSheet(id);
-  const nm = document.querySelector('[data-kf="name"]');
-  nm?.focus();
-  nm?.select();
+  kitDraft = {
+    id: `kit-${Date.now().toString(36)}`, name: '', category: null, asset_tag: null,
+    owner: 'ctv', state: 'in_hub', home: null, notes: null,
+    usage: null, tips: null, photo_url: null,
+  };
+  openKitSheet(kitDraft.id);
+  document.querySelector('[data-kf="name"]')?.focus();
+}
+
+// Save is the only place a new piece of kit is written: one mutate → one row →
+// one undoable "Kit added" toast. A name is required; everything else can be
+// filled in later by editing the saved item.
+function saveKitDraft() {
+  if (!kitDraft) return;
+  const name = (document.querySelector('[data-kf="name"]')?.value || kitDraft.name || '').trim();
+  if (!name) {
+    toast('Give the kit a name before saving', () => {});
+    document.querySelector('[data-kf="name"]')?.focus();
+    return;
+  }
+  const row = { ...kitDraft, name };
+  kitDraft = null;
+  closeSheet();
+  mutate('Kit added', (s) => { (s.kit ??= []).push(row); });
 }
 
 const fileToDataUrl = (file) => new Promise((res, rej) => {
@@ -3495,7 +3534,8 @@ const fileToDataUrl = (file) => new Promise((res, rej) => {
 // station sees it. Otherwise it is kept inline as a data URI — the feature works
 // from a file:// prototype and the export round-trips it.
 async function setKitPhoto(id, file) {
-  const k = (DATA.kit || []).find((x) => x.id === id);
+  const draft = Boolean(kitDraft && kitDraft.id === id);
+  const k = draft ? kitDraft : (DATA.kit || []).find((x) => x.id === id);
   let url;
   if (Sync.enabled() && Sync.status().signedIn && Sync.uploadKitPhoto) {
     try { url = await Sync.uploadKitPhoto(file, id); }
@@ -3503,6 +3543,13 @@ async function setKitPhoto(id, file) {
   } else {
     try { url = await fileToDataUrl(file); }
     catch { toast('Could not read that image', () => {}); return; }
+  }
+  if (draft) {
+    // Still a draft — hold the photo on it (already uploaded to Storage, so it
+    // persists), and write nothing until Save.
+    kitDraft.photo_url = url;
+    openKitSheet(id);
+    return;
   }
   mutate(`${k?.name ?? 'Kit'} photo updated`, (s) => { s.kit.find((x) => x.id === id).photo_url = url; });
   openKitSheet(id);
@@ -4787,6 +4834,7 @@ function closeSheet() {
   addingPrep = false;
   sheetId = null;
   kitSheetId = null;
+  kitDraft = null;   // a draft not yet saved is thrown away on close/cancel
   document.getElementById('sheet').classList.remove('is-open');
   document.getElementById('sheet').setAttribute('aria-hidden', 'true');
   document.getElementById('scrim').classList.remove('is-open');
@@ -5456,7 +5504,12 @@ function render() {
   if (sheetId) {
     if (!renderSheet(sheetId)) closeSheet();
   } else if (kitSheetId) {
-    if (!renderKitSheet(kitSheetId)) closeSheet();
+    // Never rebuild the kit drawer while someone is typing into it: a background
+    // pull would wipe the field they are on — and, for an unsaved draft, the
+    // details they have not committed yet. Refresh once focus leaves.
+    const typing = document.activeElement
+      && document.getElementById('sheet-in')?.contains(document.activeElement);
+    if (!typing && !renderKitSheet(kitSheetId)) closeSheet();
   }
 }
 
