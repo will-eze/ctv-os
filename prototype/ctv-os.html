@@ -1504,7 +1504,17 @@ body.is-readonly .needs-edit { display: none !important; }
 .board-empty p { font-size: 14px; max-width: 40ch; }
 
 @media (max-width: 900px) {
-  .board-stage { height: calc(100vh - 220px); }
+  /* dvh, not vh: a phone's address bar overlaps a vh-sized box, and on a canvas
+     that means its floating controls sit under the chrome, off the screen. */
+  .board-stage { height: calc(100dvh - 200px); min-height: 360px; }
+  /* On a phone the toolbar is the whole interface — there is no hover to reveal
+     a handle, no wheel to zoom, no reliable double-tap to add — so its buttons
+     are real 44px targets and it hugs the corner a little tighter. */
+  .board-tools { right: 12px; bottom: 12px; }
+  .board-tool { width: 44px; height: 44px; }
+  /* A selected note shows its connect dot; make it a thumb-sized target rather
+     than the 16px corner pip the mouse gets. */
+  .board-node-handle { width: 24px; height: 24px; right: -12px; bottom: -12px; }
 }
 </style>
 
@@ -5957,6 +5967,7 @@ const Board = (() => {
   // why connections were impossible to draw against the live database. reflect()
   // holds off exactly like it does while a note is being typed into.
   let dragging = false;
+  let endPan = null;    // a one-finger pan's cleanup, so a second finger (pinch) can stand it down
   let root, canvas, world, edgesSvg, nodesEl, zoomEl, emptyEl;
 
   // --- Per-client viewport state (never synced) ----------------------------
@@ -6159,11 +6170,12 @@ const Board = (() => {
     dragging = true;
     const cam = camOf(b.id);
     const sx = e.clientX, sy = e.clientY, cx = cam.x, cy = cam.y;
-    const move = (ev) => { cam.x = cx + (ev.clientX - sx); cam.y = cy + (ev.clientY - sy); applyCam(); };
-    const up = () => { dragging = false; canvas.classList.remove('is-panning'); off(move, up); saveUI(); };
+    const move = (ev) => { if (pinch) return; cam.x = cx + (ev.clientX - sx); cam.y = cy + (ev.clientY - sy); applyCam(); };
+    const up = () => { dragging = false; endPan = null; canvas.classList.remove('is-panning'); off(move, up); saveUI(); };
+    endPan = up;
     on(move, up);
   }
-  function startNodeDrag(e, id) {
+  function startNodeDrag(e, id, wasSel) {
     const b = active();
     const n = b && b.nodes.find((x) => x.id === id);
     if (!n) return;
@@ -6173,6 +6185,7 @@ const Board = (() => {
     livePos = { id, x: nx, y: ny };
     dragging = true;
     const move = (ev) => {
+      if (pinch) return;
       const dx = (ev.clientX - sx) / scale, dy = (ev.clientY - sy) / scale;
       if (Math.abs(dx) > 1 || Math.abs(dy) > 1) moved = true;
       livePos.x = nx + dx; livePos.y = ny + dy;
@@ -6185,7 +6198,12 @@ const Board = (() => {
       const fx = livePos.x, fy = livePos.y;
       livePos = null;
       dragging = false;
-      if (moved) commitPos(id, fx, fy); else paintGraph();
+      // A tap that didn't move: if the note was already selected, this second
+      // tap opens it for editing — the touch-screen substitute for the
+      // double-click, which is otherwise the only way to reach a note's text.
+      if (moved) commitPos(id, fx, fy);
+      else if (wasSel && canEdit()) enterEdit(id);
+      else paintGraph();
     };
     on(move, up);
   }
@@ -6195,7 +6213,7 @@ const Board = (() => {
     temp.setAttribute('class', 'board-edge-temp');
     edgesSvg.appendChild(temp);
     const a = nodeCenter(id);
-    const move = (ev) => { if (a) temp.setAttribute('d', curve(a, toWorld(ev.clientX, ev.clientY))); };
+    const move = (ev) => { if (pinch) return; if (a) temp.setAttribute('d', curve(a, toWorld(ev.clientX, ev.clientY))); };
     const up = (ev) => {
       off(move, up);
       temp.remove();
@@ -6206,6 +6224,39 @@ const Board = (() => {
     };
     on(move, up);
   }
+
+  // --- Pinch zoom (two fingers, touch) -------------------------------------
+  // A phone has no wheel and no trackpad, so the canvas learns the one gesture
+  // every touch surface uses to zoom. Two live touch pointers pin the world
+  // point under their midpoint and scale about it as they spread or close — the
+  // same "zoom about the cursor" the wheel does, driven by the pinch centre.
+  const tpts = new Map();
+  let pinch = null;
+  function pinchGeom() {
+    const [p, q] = [...tpts.values()];
+    const r = canvas.getBoundingClientRect();
+    return { d: Math.hypot(p.x - q.x, p.y - q.y) || 1,
+             mx: (p.x + q.x) / 2 - r.left, my: (p.y + q.y) / 2 - r.top };
+  }
+  function startPinch() {
+    const b = active();
+    if (!b) return;
+    if (endPan) endPan();            // a one-finger pan was under way; stand it down cleanly
+    const cam = camOf(b.id), g = pinchGeom();
+    pinch = { d0: g.d, s0: cam.scale, wx: (g.mx - cam.x) / cam.scale, wy: (g.my - cam.y) / cam.scale };
+    dragging = true;
+    canvas.classList.remove('is-panning');
+  }
+  function movePinch() {
+    const b = active();
+    if (!b || !pinch) return;
+    const cam = camOf(b.id), g = pinchGeom();
+    cam.scale = clamp(pinch.s0 * (g.d / pinch.d0), 0.3, 2.5);
+    cam.x = g.mx - pinch.wx * cam.scale;
+    cam.y = g.my - pinch.wy * cam.scale;
+    applyCam();
+  }
+  function endPinch() { pinch = null; dragging = false; saveUI(); }
 
   // --- Zoom & fit (viewport) -----------------------------------------------
   function centreWorld() {
@@ -6317,7 +6368,7 @@ const Board = (() => {
         </div>
         <div class="board-empty">
           <h3>Nothing here yet</h3>
-          <p>Double-click anywhere to add an idea. Drag the green dot on a note to link it to another. Drag the background to move around, scroll to zoom.</p>
+          <p>Tap the + button (or double-click the canvas) to add an idea. Drag a note's green dot onto another to link them. Drag the background to move around; pinch or scroll to zoom.</p>
         </div>
         <div class="board-tools needs-edit">
           <button class="board-tool" data-tool="add" title="Add note" type="button">${svg('plus')}</button>
@@ -6344,7 +6395,15 @@ const Board = (() => {
   // --- Wiring (delegated on the persistent root, attached once) -------------
   function wire() {
     root.addEventListener('pointerdown', (e) => {
-      if (e.button !== 0 || !e.target.closest('.board-canvas')) return;
+      if (!e.target.closest('.board-canvas')) return;
+      // Track touch pointers for pinch; a second finger promotes the gesture to
+      // a zoom and the single-pointer logic below stands down.
+      if (e.pointerType === 'touch') {
+        tpts.set(e.pointerId, { x: e.clientX, y: e.clientY });
+        if (tpts.size === 2) { startPinch(); return; }
+        if (tpts.size > 2) return;
+      }
+      if (pinch || e.button !== 0) return;
       const edgeX = e.target.closest('[data-edge-x]');
       if (edgeX) { removeEdge(edgeX.dataset.edgeX); return; }
       const node = e.target.closest('.board-node');
@@ -6355,8 +6414,9 @@ const Board = (() => {
       if (e.target.closest('button')) return;   // bar buttons act on click, no drag
       if (node) {
         if (node.classList.contains('is-editing')) return;   // let the textarea take it
+        const wasSel = !!(sel && sel.kind === 'node' && sel.id === node.dataset.id);
         selectNode(node.dataset.id);
-        if (canEdit()) startNodeDrag(e, node.dataset.id);
+        if (canEdit()) startNodeDrag(e, node.dataset.id, wasSel);
         return;
       }
       const hit = e.target.closest('.board-edge-hit');
@@ -6364,6 +6424,21 @@ const Board = (() => {
       selectNone();
       startPan(e);
     });
+
+    // Pinch tracking lives on the window so a finger that drifts off the canvas
+    // mid-gesture is still followed, and a release anywhere ends it.
+    window.addEventListener('pointermove', (e) => {
+      if (e.pointerType !== 'touch' || !tpts.has(e.pointerId)) return;
+      tpts.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      if (pinch) { e.preventDefault(); movePinch(); }
+    }, { passive: false });
+    const dropTouch = (e) => {
+      if (!tpts.has(e.pointerId)) return;
+      tpts.delete(e.pointerId);
+      if (pinch && tpts.size < 2) endPinch();
+    };
+    window.addEventListener('pointerup', dropTouch);
+    window.addEventListener('pointercancel', dropTouch);
 
     root.addEventListener('click', (e) => {
       const bx = e.target.closest('[data-board-x]');
