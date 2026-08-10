@@ -109,7 +109,16 @@ const Sync = (() => {
       const body = await res.text();
       throw new Error(`${res.status} ${path.split('?')[0]}: ${body.slice(0, 200)}`);
     }
-    return res.status === 204 ? null : res.json();
+    // Parse by what is actually there, not by status code. A PostgREST write with
+    // Prefer: return=minimal answers 201 (insert) or 200 (upsert) with an EMPTY
+    // body — not 204 — so the old `status === 204 ? null : res.json()` called
+    // res.json() on nothing and threw "Unexpected end of JSON input". That throw
+    // is not a 4xx, so drainOutbox treated it as the network dropping and stalled
+    // the whole queue behind it: every add (event, task, kit, crew, board note)
+    // wedged sync and nothing after it persisted. Reading the body first and only
+    // parsing when there is one makes an empty success an empty success.
+    const text = await res.text();
+    return text ? JSON.parse(text) : null;
   }
 
   // --- Auth (GoTrue) --------------------------------------------------------
