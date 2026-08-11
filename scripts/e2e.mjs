@@ -12,7 +12,9 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
-const url = pathToFileURL(join(root, 'prototype/ctv-os.html')).href;
+// The page's "now" is the real local date; the suite pins it to a fixed day so
+// the assertions against data/year.json's dates stay deterministic year-round.
+const url = `${pathToFileURL(join(root, 'prototype/ctv-os.html')).href}?today=2026-08-07`;
 
 // The database host is made unresolvable, so this suite is genuinely offline.
 //

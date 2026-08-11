@@ -288,8 +288,13 @@ margin's used value, so `margin: 0 auto` would fail honest code.
 Chrome path is hardcoded in `scripts/e2e.mjs` and `scripts/shots.mjs`:
 `/Applications/Google Chrome.app/Contents/MacOS/Google Chrome`.
 
-The prototype's "now" is the hardcoded constant `TODAY = '2026-08-07'` in
-`template.html`. Several e2e assertions depend on it.
+The prototype's "now" is the real local date: `TODAY` in `template.html` is
+computed from `new Date()`, so deadlines, Next Up, the today marker and the
+to-do lead times all track the actual day the crew opens the tool. A
+`?today=YYYY-MM-DD` query param pins it — `scripts/e2e.mjs` and `scripts/shots.mjs`
+both append `?today=2026-08-07` to their `file://` URL, because their assertions
+run against the fixed dates in `data/year.json` and would flap on a live "now".
+Nothing else reads that param.
 
 ## How sync works
 

@@ -1714,7 +1714,17 @@ body.is-readonly .needs-edit { display: none !important; }
 
 <script>
 const SEED = __DATA__;
-const TODAY = '2026-08-07';   // the prototype's "now"
+// "Now" is the real local date, so deadlines, Next Up, the today marker and the
+// to-do lead times all track the actual day the crew opens the tool. A
+// ?today=YYYY-MM-DD query param pins it for the deterministic test suites, which
+// assert against fixed dates in data/year.json; nothing else reads that param.
+const TODAY = (() => {
+  const p = new URLSearchParams(location.search).get('today');
+  if (p && /^\d{4}-\d{2}-\d{2}$/.test(p)) return p;
+  const n = new Date();
+  const pad = (x) => String(x).padStart(2, '0');
+  return `${n.getFullYear()}-${pad(n.getMonth() + 1)}-${pad(n.getDate())}`;
+})();
 // Bumped when the stored shape changes — v1 predates tasks, and a stale v1
 // blob would leave DATA.tasks undefined on the one screen that needs it.
 const STORE = 'ctvos.year.v2';

@@ -35,7 +35,9 @@ const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const out = join(root, 'prototype/shots');
 mkdirSync(out, { recursive: true });
 
-const url = pathToFileURL(join(root, 'prototype/ctv-os.html')).href;
+// Pin "now" to a fixed day (the page otherwise uses the real local date) so the
+// screenshots and the design audit are reproducible whenever they are run.
+const url = `${pathToFileURL(join(root, 'prototype/ctv-os.html')).href}?today=2026-08-07`;
 
 // Photograph the design, not whatever is in the live database today. The
 // project is reachable and seeded, so without this the page would pull the
