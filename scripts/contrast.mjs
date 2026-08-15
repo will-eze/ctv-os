@@ -107,6 +107,7 @@ const EXCEPTIONS = {
   grid:      ['#e6e6e2', 'neutral month-grid rule'],
   'grid-bg': ['#f4f4f2', 'neutral out-of-month cell fill'],
   warn:      ['#8a5000', 'kit away-on-a-clock amber — palette ships only error red'],
+  info:      ['#00629a', 'coverage-tag blue ink — palette ships only error red + the kit amber'],
 };
 
 // The export writes namedColors with underscores (surface_container_low) while
@@ -153,7 +154,7 @@ const PAIRS = [
   ['secondary',       'container', 4.5, '.seg unselected'],
   ['primary',         'card',      4.5, 'links, Today, .person-role'],
   ['primary',         'high',      4.5, 'active nav item'],
-  ['primary',         'container', 4.5, '.ev badge, crewed'],
+  ['on-surface',      'container', 4.5, '.ev badge default title'],
   ['primary',         'low',       4.5, '.assign inside a hover'],
   ['on-primary',      'primary',   4.5, 'primary button, selected date card'],
   ['on-primary-c',    'primary-c', 4.5, '.tag-primary'],
@@ -162,6 +163,16 @@ const PAIRS = [
   ['error',           'bg',        4.5, 'overdue in the table'],
   ['warn',            'card',      4.5, 'kit "Out" / "Booked" status word and badge'],
   ['warn',            'bg',        4.5, 'kit "Out" / "Booked" status on the canvas'],
+
+  // The three coverage colour tags: each dark ink measured on its own light
+  // fill (the badge tint and the worded chip), and blue also on white and on the
+  // canvas because it is used as tag text on the legend and schedule. Green
+  // reuses the primary and yellow the kit amber, so only their fills are new.
+  ['primary',         'cov-green-bg',  4.5, 'coverage green tag ink on its fill'],
+  ['warn',            'cov-yellow-bg', 4.5, 'coverage yellow tag ink on its fill'],
+  ['info',            'cov-blue-bg',   4.5, 'coverage blue tag ink on its fill'],
+  ['info',            'card',          4.5, 'coverage blue tag on white'],
+  ['info',            'bg',            4.5, 'coverage blue tag on the canvas'],
   ['white',           'on-surface', 4.5, 'toast'],
   // Large text only: the four overview numbers are 32px/700.
   ['error',           'card',      3.0, 'stat value, 32px bold'],

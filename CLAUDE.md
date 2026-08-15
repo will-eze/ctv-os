@@ -151,6 +151,296 @@ db:push` (adds `boards`/`board_nodes`/`board_edges` and their RLS), then
 an empty canvas for granted users — correct, not broken. `verify:api` and
 `e2e:sync` are theirs to run against the live project.
 
+### 0.3 Freshers programme + coverage tags — APPLIED (2026-08-14)
+
+Built to answer a new question the manager put to the SU: *which freshers events
+is CTV covering, and which aren't?* The public calendar is the shared surface —
+the SU manager opens the link, no account, and reads the colours. Do not revert
+without asking.
+
+- **The official Freshers' Week 2026 programme is in the calendar.** The 83
+  events from `thesubath.com` (extracted to `data/freshers-2026-events.csv`, the
+  raw store) were injected into `data/year.json` by `scripts/inject_freshers.mjs`,
+  replacing the **12 estimated September placeholders** (the manager said those
+  were guesses). They come in `confidence:"fixed"` (official), `roles:[]` (nobody
+  by default). The 30 freshers-prep to-dos that hung off the `ww-fri` placeholder
+  were **re-pointed to their official successors** (the Arrivals Party is the new
+  freshers kickoff), not nulled — the lead-time engine stays intact. Event count
+  went 31 → **102**; the two `eq(…, 102)` assertions in `e2e` track it.
+- **Coverage colour tags.** Each event carries a `cover` field — `green` /
+  `yellow` / `blue` / null. **The colours are arbitrary: they carry no fixed
+  meaning** (the manager's explicit call). It syncs on the event row like
+  `kit_needed` (new nullable `events.cover` column, in `eventRow`/`toDocument`),
+  are **public-readable** (the shared link needs no account) and **writable only
+  with a session**. Never carried by hue alone — the badge names its tag in the
+  title, the schedule shows a worded chip, and the legend spells the three out —
+  so `shots.mjs`'s four colour-only assertions still hold. Palette: green reuses
+  `--primary`, yellow the kit `--warn` amber, blue is one new `--info` accent
+  (pinned in `contrast.mjs` like `--warn`, with its fills). The manager can
+  **name** what each colour means for themselves in Settings; those labels are a
+  personal note in `localStorage` (`ctvos.prefs.v1`), never synced or exported.
+- **Split view + multi-select + bulk actions**, all on the calendar (no new nav
+  view, so still **7 views / 7 nav items**). **Split** lays the schedule beside
+  the month (desktop ≥1000px). **Select** turns both surfaces into one shared
+  pick-list; a floating **bulk bar** then applies a coverage colour, a strand, a
+  status or a delete to everything picked, in one undoable `mutate()`. Both are
+  per-person view state (`splitOn`/`selecting`/`picked`), never in the document.
+- **Tests.** `e2e` gained a **COVERAGE TAGS + BULK** section (tag from the sheet
+  shows and names on the badge; the bulk bar tags several at once and undoes; the
+  legend names its colours and filters; split shows the pane). `openSheet` in
+  `e2e` now taps the day first, because a busy freshers day caps its badges.
+  `verify` is clean: 0 drift, **38 contrast pairs**, 30 schema, 11 deploy; `shots`
+  audit passes; **69 e2e checks**.
+
+**Live steps — already done; the live DB is now the source of truth (see §0.9).**
+The freshers programme, the coverage column and the placeholder removal are all
+in the live project. Note for the record: `seed` only ever **upserts**, it never
+deletes, so it could not have "dropped" the old September placeholders on its own
+— those were removed separately with `npm run clear:placeholders`. Do **not**
+re-seed to reproduce this; the database already holds the correct 102 events.
+
+### 0.4 Calendar refinements from the manager — APPLIED (2026-08-15)
+
+Three small changes on the manager's instruction. Do not revert without asking.
+
+- **A coverage tag fills the whole badge in its light wash, no left accent.** The
+  earlier 4px inset ink bar is gone; the tag now colours the badge background
+  (`.ev.cov-*:not(.is-open):not(.is-cancelled)`), overriding the neutral and the
+  bare (no-roles) fills — because in the SU manager's shared view every event is
+  bare and the colour is the whole point. The crew-gap red (`is-open`, flag-only)
+  and the cancelled strike still win, so a live gap is never painted over. Still
+  never hue alone: the badge title names the tag.
+- **Multiple days expand at once, each collapsible.** The single `selectedDay`
+  became a `expandedDays` **Set**. A busy freshers day still caps at three badges
+  behind **"+N more"**; expanding lifts the cap for that day, "+N more" becomes
+  **"Show less"**, and several days stay open independently (tapping a day toggles
+  it; `data-expand`/`data-collapse` on the buttons). Still per-person view state,
+  never in the document.
+- **Cmd+Z / Ctrl+Z undoes the last change.** `mutate()` now stashes its undo in
+  `pendingUndo`; a global keydown fires it (the same action as the toast's Undo).
+  The model stays single-level (each mutation replaces it, taking it clears it, no
+  redo). Ignored inside a text field / contenteditable so native text undo wins.
+- **The split pane keeps its scroll.** Selecting a card in the split schedule
+  opens the sheet, which rebuilds the calendar and used to snap the pane back to
+  the top. `renderCalendar()` now saves `.split-pane .timeline`'s `scrollTop`
+  before the repaint and restores it after — a transient DOM position, not state.
+- **Tests.** `e2e` gained three checks (busy-day expand with several open at once;
+  keyboard undo reverts a tag; split-pane scroll held through a sheet open) →
+  **70 checks**. `shots` and `verify:contrast` unaffected (title words unchanged,
+  tokens untouched).
+
+### 0.5 Curated view links + access hardening — APPLIED (2026-08-15)
+
+On the manager's ask for a link that shares *only chosen pages*, and to make
+access "robust against attackers". Enforcement was already server-side (RLS); the
+frontend admin UI was never the vulnerability. This pass closed the real gaps.
+Do not revert without asking.
+
+**First pass built scoped share links on Supabase Anonymous sign-ins; the manager
+rejected that** — the dashboard warns anonymous sign-ins let anyone with the
+publishable key mint throwaway users (DB/MAU bloat, needs a captcha). So it was
+pulled. The insight: the **calendar is already public**, so "share only the
+calendar" needs no auth at all — just a curated presentation. Access control is
+kept for the genuinely private modules.
+
+- **Curated view link (the #2 ask), client-side.** `?view=calendar,kit` narrows
+  the nav to the named **public** pages — for sending the SU manager the calendar
+  and nothing else. It is presentation over already-public data, **not** access
+  control: `viewScope` (a Set of VIEW ids, parsed at boot) gates `renderNav`,
+  `setView` and `firstAllowedView` via `inScope(id)`, but the **private** modules
+  (crew/tasks/board) still resolve through `can_view()`/grants — so a tampered
+  `?view=crew` shows nothing to someone without a grant. No backend, no token, no
+  anonymous users. **Settings → Share a view link** builds and copies it
+  (`SHAREABLE_VIEWS` = calendar/schedule/kit only; `copyViewLink()`).
+- **Writes are now per-module, not "any login" (real hardening, kept).** The
+  public tables' write policies moved from `auth.role() = 'authenticated'` (any
+  account could edit or delete every event and kit item) to `can_edit(module)` —
+  the same gate the private modules use. A non-admin now needs an **edit grant**
+  on `events`/`kit` to change them. `events` joined `GRANTABLE` (label *Calendar*).
+  `incidents` stays authenticated-only.
+- **Privileged ops are SECURITY DEFINER RPCs with an audit trail (the #3 ask).**
+  `admin_set_grant` / `admin_revoke_grant` / `admin_create_invite` each re-check
+  `is_admin()` and write an **`access_audit`** row. The browser no longer writes
+  `access_grants` / `invites` directly — `Sync.setGrant`/`createInvite` go through
+  `rpc()` — so every access change is checked in one place and recorded. Table RLS
+  still refuses a non-admin (defence in depth). `admins` still has **no write
+  policy at all** — an admin can only be seeded by migration/SQL. Invites gained
+  `expires_at` (honoured by `handle_new_user`); tokens are `new_token()` (two
+  UUIDs, no pgcrypto dependency).
+- **Tests.** `verify:api` gained: the audit trail is unreadable by anon, a
+  **granted** editor writes (its account is granted `events` edit inline) and an
+  **ungranted** session's write changes nothing. RPC bodies exercised end-to-end
+  in PGlite (grant/invite/revoke + audit + non-admin blocked). Offline `e2e` (now
+  **71**) gained the curated-link check; the write-tightening only engages online,
+  which the `file://` suite never is. `verify` clean (38 contrast, 30 schema, 10
+  remote, 11 deploy); `shots` clean.
+
+**Live steps the user runs (needs their token; not done here):**
+1. `npm run db:push` (adds `access_audit`, the admin RPCs, `invites.expires_at`,
+   and the tightened per-module write policies).
+2. `npm run verify:api` and `npm run verify:remote` to confirm the live surface.
+
+**Note:** after the push, any invited **non-admin editor must be granted edit**
+on the modules they work in (Calendar/Kit) from Manage access, or their writes
+land nowhere — the admin account is unaffected (`is_admin()` bypasses). The view
+link needs nothing enabled — it is a plain URL. Anonymous sign-ins should stay
+**off**.
+
+### 0.6 Signed-out = calendar only, and private events — APPLIED (2026-08-15)
+
+Two changes on the manager's instruction. Do not revert without asking.
+
+- **A signed-out visitor sees only the Calendar; signing in reveals the rest.**
+  The default for an online, signed-out visitor is now the calendar alone — the
+  rest of the nav (Schedule, Kit, To-do, Crew, Board, Settings) appears after
+  sign-in, the private modules still further gated by a grant. A new
+  `viewVisible(id)` layers it: a curated `?view=` link wins; then **offline/local
+  shows everything** (the field case, and what `e2e` drives); then a signed-out
+  visitor gets `PUBLIC_VIEWS` (= `calendar`); then a signed-in one gets whatever
+  `canView(module)` allows. `renderNav`, `setView`, `applyGates` and the search
+  groups (`MODULE_VIEW`) all route through it, so nothing off the calendar leaks —
+  not even in search — when signed out. This is **nav/presentation** for the
+  public modules (their table reads stay open); the real data boundary is RLS on
+  the private modules and on private events (below). `SHAREABLE_VIEWS` bounds the
+  `?view=` link to public pages, so a tampered `?view=crew` is dropped.
+- **Private events (real RLS, not just hidden).** An event has an `is_private`
+  flag (new `events.is_private` column, default false). The `events` SELECT policy
+  became `using (not is_private or auth.role() = 'authenticated')` — so a private
+  event is **invisible to the anonymous publishable key** the shared link carries,
+  and visible only to a signed-in session. Set it in the event sheet
+  (*Visibility* → public / private, a `data-private` toggle → `mutate`). It syncs
+  on the event row (`is_private` in `eventRow`/`toDocument`, `private` in the
+  document). Marked in words + a shape channel, never colour: a **padlock**
+  (`#i-lock`, `.ev-lock`) on the badge with "· private" in its title, a worded
+  **Private** chip on the schedule card, and a line in the Copy-details brief.
+  Offline/local shows private events (no auth there); against the live DB the anon
+  pull simply never receives them.
+- **Tests.** `verify:sql` (now **31**) checks the events read policy is
+  private-aware and exempts it from the "public tables readable" rule; `verify:api`
+  plants a private event and confirms **anon sees nothing, a session sees it**
+  (removed with the secret key). `e2e` (now **72**) sets an event private and
+  asserts the padlock + worded state on badge and schedule, then reverts.
+  `e2e_sync` now grants its throwaway editor `events` edit (the write-tightening).
+  `verify` clean (38 contrast, 31 schema, 10 remote, 11 deploy, still 7 views);
+  `shots` clean.
+
+**Live steps:** covered by the same `npm run db:push` as §0.5 — the regenerated
+migration now also adds `events.is_private` and the private-aware read policy.
+Then `npm run seed -- --force` is **not** needed for this (the column defaults
+false); an existing event is edited to private in-app.
+
+### 0.7 UX polish pass — APPLIED (2026-08-15)
+
+A production-readiness sweep on the manager's instruction. No schema change, no
+live steps needed. Do not revert without asking.
+
+- **Data persistence: pending edits survive a racing pull.** The real durability
+  fix. `sync.js` replaced its two narrow overlay passes (`reinjectPending` +
+  `reconcilePending` — which only protected deletes and register inserts) with one
+  **`overlayPending(doc)`** that replays *every* pending outbox op — field edits
+  and role/task/note updates included — onto a freshly pulled document. Without
+  it, a pull landing between a local write and its flush (a Realtime echo, the 20s
+  poll, a tab regaining focus) painted the server's older value over the edit: it
+  flashed back and read as "my change didn't save". `scripts/verify_overlay.mjs`
+  loads sync.js in node (browser globals stubbed) and asserts an edited venue,
+  coverage tag, role, task tick, task delete, new event and board-note move all
+  survive a racing pull; wired into `npm run verify` as **verify:overlay** (8
+  checks). *Note: the live schema is current — this was never a migration gap.*
+- **To-do edit + delete.** To-dos were tick-or-delete only. Clicking a card
+  (board) or a row/title (list) now opens an **editor drawer** (reuses the sheet,
+  keyed by `taskSheetId`): title, notes, area, owner, due date, a done toggle and
+  a **Delete to-do** (confirms). Anchored to-dos show their inherited date and
+  detach when a date is pinned. List rows gained a hover-× (dropped on phones,
+  where the drawer's Delete is the touch path).
+- **Board: a link dropped on empty canvas spawns a connected note.**
+  `startConnect` now, on release over empty canvas after an actual drag, creates a
+  note there and links it in one `mutate()` (`addConnectedNode`), then opens it to
+  type — the quick way to branch an idea out.
+- **The green event-title font is gone.** `.ev` default ink moved from `--primary`
+  (green, which read as if it *meant* something) to `--on-surface` neutral. The
+  named coverage tags keep their colours. `contrast.mjs`'s `.ev` pair updated
+  (still 38 pairs).
+- **A hand-added event starts untitled, with a placeholder.** `addEvent` no longer
+  pre-fills the literal words "New event" as content to delete; the title field
+  shows a **placeholder ("Event name")** and, wherever a title is *shown*, an
+  `evTitle()` helper falls back to "Untitled event" (italic on the badge) so it is
+  never blank.
+- **Toasts: a plain notice hides the dead Undo button** and clears sooner (4s vs a
+  change's 7s). Every `toast(text)` with no undo (Signed out, Copied, a failure,
+  read-only) is now a clean notice. The help (`?`) text was corrected — it claimed
+  edits are browser-only, untrue once synced.
+- **Tests.** `e2e` gained the to-do-drawer edit/delete and the board
+  drag-to-empty checks and updated the new-event assertion (empty title +
+  placeholder + "Untitled event") → **74 checks**. `verify` clean (38 contrast,
+  8 overlay, 31 schema, 11 deploy); `shots` clean.
+
+### 0.8 Board reorder + events created on Save — APPLIED (2026-08-15)
+
+Two changes on the manager's instruction; no schema change, no live steps. Do not
+revert without asking. (A third report — "double-click to set an event private" —
+was diagnosed as a **transient**: a local `file://` page that briefly reached
+Supabase went signed-out read-only, so the first click hit the read-only gate; it
+falls back to editable and the next click lands. Not a code fault — offline, a
+single click always works. No change made.)
+
+- **Board tabs reorder by dragging.** The order lives in `DATA.boards` (the array
+  *is* the order), so a drag is a `mutate('Reordered boards')` like a rename — it
+  persists, undoes and syncs. The dragged tab reflows live in the DOM under the
+  finger; the new order is committed once, on release. A tab is still
+  click-to-switch and double-click-to-rename; a press that does not move past a 6px
+  threshold is a tap, not a drop, and the drop's trailing click is swallowed so it
+  does not also switch. Tabs get `cursor: grab` + `touch-action: none` (off in
+  read-only). The `boards` table already had `sort_order`; the **sync diff now
+  writes a board row when its position changed**, not only its name (`posA` map in
+  `sync.js`), so a reordered strip no longer snaps back on the next pull.
+- **A hand-added event is a draft until Save** — the same shape as Add kit (§0.1).
+  "New event" and a day's **+** open the sheet on an in-memory `eventDraft` that is
+  **not in `DATA`** and written nowhere: no row on the calendar, no "Event added"
+  toast, nothing synced, until Save. The draft sheet shows Details + Coverage &
+  visibility with **Save/Cancel** (no Delete); the crew, kit and prep sections are
+  hidden until the event exists to hang them on. Field edits, the coverage picker
+  and the visibility toggle all write to the draft (no `mutate`); the two picker
+  handlers in the delegated click listener are draft-aware. **Save** is the one
+  write — one `mutate`, one row — then the full sheet reopens on the now-real event
+  so its crew can go on. Close or Cancel throws the draft away (`closeSheet` clears
+  `eventDraft`).
+- **Tests.** `e2e` gained a board reorder/switch check and rewrote the new-event
+  check to the draft flow (the **+** creates nothing; Cancel discards; Save writes
+  once; then "Untitled event") → **75 checks**. `verify` clean (38 contrast, 8
+  overlay, 31 schema, 11 deploy); `shots` clean.
+
+### 0.9 The live DB is the source of truth; bulk-bar stranding fixed — APPLIED (2026-08-15)
+
+A pre-push review pass. Do not revert without asking.
+
+- **The live database is authoritative — do not re-seed to "fix" it.** The
+  deployed project (`uciyizhmuiopetrdpovy`) is live, accurate, and the **source
+  of truth** for the year's data: the manager maintains it in-app, and it holds
+  edits that are not in `data/year.json`. `npm run seed` / `seed -- --force`,
+  `clear:placeholders` and `repair:events` were **one-off migration helpers** —
+  they have done their job and are **not part of a routine push**. A push now is
+  code only (`npm run build:prototype` → `vercel deploy --prod`, or the schema via
+  `db:push` when a migration changes). Running `seed --force` against the live DB
+  would **upsert every row back to the file's values and wipe prod-only edits**
+  (coverage tags, added events, crew), so treat it as destructive, not a refresh.
+  The seed still exists for standing up a *fresh* project and for the offline
+  prototype's inlined data — that is its only remaining role. (The earlier
+  "Live steps … `seed -- --force`" notes in §0.1–§0.5 predate this and are
+  superseded here; where they conflict, this section wins.)
+- **The floating bulk bar no longer strands over other pages.** Select mode is a
+  calendar-only concept (its toggle lives in the calendar toolbar; both pick
+  surfaces — the month and the split schedule — are inside `v-calendar`), but
+  `setView()` never cleared `selecting`/`picked` and never re-ran `renderBulkBar`.
+  Because `.bulkbar` is `position: fixed; z-index: 60`, navigating away left it
+  floating over Kit/Crew/Board/Settings/To-do with a **live Delete** that would
+  destroy the still-picked events from a page that has nothing to do with them.
+  `setView` now, on leaving the calendar, drops the selection, clears
+  `body.is-selecting` and removes the bar in one step.
+- **Tests.** `e2e` gained a check that picks an event, navigates to Settings, and
+  asserts the bar and `body.is-selecting` are gone and select mode is off on
+  return → **76 checks**. `verify` clean (38 contrast, 8 overlay, 31 schema, 10
+  remote, 11 deploy, still 7 views); build regenerated (`ctv-os.html`, `dist/`).
+
 ### 1. The Stitch redesign — APPLIED
 
 The user rejected the original visual design ("I don't like the design, use
@@ -252,8 +542,8 @@ Not real. Replace before anything ships.
 npm install
 npm run build:prototype   # template + data -> ctv-os.html
 npm run tasks             # rebuild the to-do list into data/year.json
-npm run verify            # 21 token-drift + 31 contrast + 29 schema + 11 deploy
-npm run e2e               # 41 interaction checks in real Chrome, offline
+npm run verify            # 38 contrast + 8 overlay + 31 schema + 11 deploy
+npm run e2e               # 75 interaction checks in real Chrome, offline
 npm run e2e:sync          # 10 checks: TWO browsers against the live project
 npm run shots             # 9 screenshots + the design-system audit
 npm run db:migration      # regenerate the Supabase migration from schema.sql
@@ -403,12 +693,15 @@ notes, photos) — what is not built is the check-out log against events. The
 file. Export gives back a corrected `year.json`; **Export PDF** gives a
 structured brief.
 
-**The database is live.** Project `uciyizhmuiopetrdpovy` (eu-west-1) has the
-schema pushed and the year seeded: 31 events, 78 roles (44 open), 56 tasks.
-*The board migration (§0.2) is on disk but not yet pushed — run `npm run db:push`
-then `npm run seed -- --force` to add the `boards`/`board_nodes`/`board_edges`
-tables and the seed board.* `npm run verify:api` asserts the deployed API
-enforces the rules, and `npm run e2e:sync` drives two real browsers against it.
+**The database is live and is the source of truth (see §0.9).** Project
+`uciyizhmuiopetrdpovy` (eu-west-1) has the schema pushed, the board migration
+applied, and the real year loaded — including the official Freshers' Week
+programme (102 events) and any coverage tags and edits the manager has made
+in-app. Those live edits are **not** all reflected in `data/year.json`, so **do
+not re-seed to "sync" it** — `seed --force` upserts every row back to the file
+and would wipe prod-only edits (destructive, not a refresh). Seeding is for a
+fresh project only. `npm run verify:api` asserts the deployed API enforces the
+rules, and `npm run e2e:sync` drives two real browsers against it.
 
 **Offline is tested by blocking DNS, not by hoping.** `e2e` and `verify:deploy`
 launch Chrome with `--host-resolver-rules=MAP <db-host> ~NOTFOUND`. Both suites

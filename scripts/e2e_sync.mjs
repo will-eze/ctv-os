@@ -67,6 +67,20 @@ const account = await admin('admin/users', {
   body: JSON.stringify({ email, password, email_confirm: true }),
 }).then((r) => r.json());
 
+// Writing the calendar now needs a per-module edit grant, not merely a session.
+// Grant this throwaway editor the calendar (service key bypasses RLS to plant it;
+// it cascades away with the account), so Alice can actually move an event below.
+if (account?.id) {
+  await fetch(`${URL_}/rest/v1/access_grants?on_conflict=user_id,module`, {
+    method: 'POST',
+    headers: {
+      apikey: SEC, Authorization: `Bearer ${SEC}`, 'Content-Type': 'application/json',
+      Prefer: 'resolution=merge-duplicates',
+    },
+    body: JSON.stringify([{ user_id: account.id, module: 'events', can_view: true, can_edit: true }]),
+  });
+}
+
 const browser = await puppeteer.launch({
   executablePath: '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
   headless: 'new',

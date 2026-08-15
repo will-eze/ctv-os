@@ -147,6 +147,13 @@ const openSheet = async (id) => {
   const [y, m] = ev.date.split('-').map(Number);
   await goto('calendar');
   await gotoMonth(y, m - 1);
+  // A busy freshers day caps at three badges behind a "+N more", so the badge we
+  // want may not be rendered. Tapping the day uncaps that cell — then the badge
+  // is always present to click. (Harmless on a quiet day: it just focuses it.)
+  await page.evaluate((k) => {
+    const day = document.querySelector(`.day[data-day="${k}"]`);
+    if (day && !day.classList.contains('is-selected')) day.click();
+  }, ev.date);
   await page.evaluate((i) => document.querySelector(`.ev[data-ev="${i}"]`)?.click(), id);
   await page.waitForSelector('#sheet.is-open [data-f="date"]', { visible: true });
   await sheetSettled();
@@ -475,8 +482,8 @@ console.log('\n  CREWING\n  ' + '-'.repeat(70));
 await check('the assign list separates free, busy and unqualified', async () => {
   // The product exists to prevent crew gaps, so the control that fills one must
   // not silently create a clash or put somebody on kit they are not signed off
-  // on. Arena Night 1 has a VISION MIX role; only three of seven are trained.
-  await openSheet('arena-1');
+  // on. Summer Ball has a VISION MIX role; only three of seven are trained.
+  await openSheet('summer-ball');
   const groups = await page.$$eval('.bay select', (sels) => {
     const bay = sels.find((s) => /vision/i.test(s.closest('.bay').querySelector('.bay-k').value));
     return [...bay.querySelectorAll('optgroup')].map((g) => ({
@@ -503,7 +510,7 @@ await check('somebody already booked that hour is flagged, not hidden', async ()
     const g = gs.find((x) => /already on something else/i.test(x.label));
     return g ? [...g.querySelectorAll('option')].map((o) => o.textContent.trim()) : null;
   });
-  if (busy && busy.length && !busy.every((n) => n.includes('—'))) {
+  if (busy && busy.length && !busy.every((n) => n.includes(' - '))) {
     throw new Error(`a busy option does not name what they are on: ${busy.join(' | ')}`);
   }
   return busy?.length ? `${busy.length} flagged: ${busy[0]}` : 'nobody double-bookable on this event';
@@ -512,15 +519,15 @@ await check('somebody already booked that hour is flagged, not hidden', async ()
 await check('a role can be added, named and crewed', async () => {
   // Before this existed a hand-made event was a dead end — the sheet told you
   // its roles had to be named and gave you no way to name them.
-  const before = (await eventById('arena-1')).roles.length;
+  const before = (await eventById('summer-ball')).roles.length;
   await page.click('#role-add');
   await sheetSettled();
-  eq((await eventById('arena-1')).roles.length, before + 1, 'roles after add');
+  eq((await eventById('summer-ball')).roles.length, before + 1, 'roles after add');
 
   await page.$eval(`[data-role-label="${before}"]`, (el) => {
     el.value = 'back cam'; el.dispatchEvent(new Event('change', { bubbles: true }));
   });
-  const added = (await eventById('arena-1')).roles[before];
+  const added = (await eventById('summer-ball')).roles[before];
   eq(added.label, 'BACK CAM', 'label, upper-cased');
   // The skill the label implies is inferred, so the new role filters crew too.
   eq(added.role, 'camera', 'inferred skill');
@@ -528,29 +535,29 @@ await check('a role can be added, named and crewed', async () => {
   await page.$eval(`[data-role="${before}"]`, (el) => {
     el.value = 'nina'; el.dispatchEvent(new Event('change', { bubbles: true }));
   });
-  eq((await eventById('arena-1')).roles[before].member, 'nina', 'assigned');
+  eq((await eventById('summer-ball')).roles[before].member, 'nina', 'assigned');
   return 'added → named BACK CAM → inferred camera → crewed';
 });
 
 await check('role times and on-site are editable and drive clashes', async () => {
-  const i = (await eventById('arena-1')).roles.length - 1;
+  const i = (await eventById('summer-ball')).roles.length - 1;
   await page.click(`[data-role-edit="${i}"]`);
   await sheetSettled();
   await page.$eval(`[data-role-time="${i}:from"]`, (el) => {
     el.value = '20:00'; el.dispatchEvent(new Event('change', { bubbles: true }));
   });
-  eq((await eventById('arena-1')).roles[i].from, '20:00', 'from');
+  eq((await eventById('summer-ball')).roles[i].from, '20:00', 'from');
   // The disclosure survives the re-render an edit triggers, so the bay is still
   // open here — clicking the toggle again would close it.
   await page.$eval(`[data-role-onsite="${i}"]`, (el) => {
     el.checked = false; el.dispatchEvent(new Event('change', { bubbles: true }));
   });
-  eq((await eventById('arena-1')).roles[i].on_site, false, 'on_site');
+  eq((await eventById('summer-ball')).roles[i].on_site, false, 'on_site');
   return 'times set, then moved off site';
 });
 
 await check('a role can be removed again', async () => {
-  const roles = (await eventById('arena-1')).roles;
+  const roles = (await eventById('summer-ball')).roles;
   const i = roles.length - 1;
 
   // Remove is deliberately quiet: it appears when the bay it belongs to is
@@ -576,9 +583,9 @@ await check('a role can be removed again', async () => {
 
   await clickAt(`[data-role-del="${i}"]`);
   await sheetSettled();
-  eq((await eventById('arena-1')).roles.length, roles.length - 1, 'roles after remove');
+  eq((await eventById('summer-ball')).roles.length, roles.length - 1, 'roles after remove');
   await page.click('#toast-undo');
-  eq((await eventById('arena-1')).roles.length, roles.length, 'roles after undo');
+  eq((await eventById('summer-ball')).roles.length, roles.length, 'roles after undo');
   await page.hover(`[data-role-del="${i}"]`);
   await clickAt(`[data-role-del="${i}"]`);             // leave the seed as we found it
   await page.evaluate(() => document.getElementById('sheet-x').click());
@@ -589,44 +596,285 @@ await check('undo refreshes the sheet that is still open', async () => {
   // Undo lives on the toast, outside the sheet. Before the sheet became part of
   // render(), pressing it restored the data and left the sheet showing the
   // state you had just undone.
-  await openSheet('arena-1');
+  await openSheet('summer-ball');
   const original = await page.$eval('[data-f="title"]', (el) => el.value);
   await page.$eval('[data-f="title"]', (el) => {
-    el.value = 'Arena Night 1 — renamed'; el.dispatchEvent(new Event('change', { bubbles: true }));
+    el.value = 'Summer Ball — renamed'; el.dispatchEvent(new Event('change', { bubbles: true }));
   });
-  eq(await page.$eval('[data-f="title"]', (el) => el.value), 'Arena Night 1 — renamed', 'field after edit');
+  eq(await page.$eval('[data-f="title"]', (el) => el.value), 'Summer Ball — renamed', 'field after edit');
   await page.click('#toast-undo');
   eq(await page.$eval('[data-f="title"]', (el) => el.value), original, 'field after undo');
-  eq((await eventById('arena-1')).title, original, 'stored title after undo');
+  eq((await eventById('summer-ball')).title, original, 'stored title after undo');
   await page.evaluate(() => document.getElementById('sheet-x').click());
   return 'the field on screen follows the store, not the other way round';
 });
 
 await check('deleting the event the sheet is showing closes it', async () => {
-  await openSheet('arena-4');
+  await openSheet('bbc-trip');
   await confirmDelete();
   await sheetGone();
   eq(await page.$eval('#sheet', (el) => el.classList.contains('is-open')), false, 'sheet open');
   await page.click('#toast-undo');
   // Undo brings the event back but must not re-open a sheet you already left.
   eq(await page.$eval('#sheet', (el) => el.classList.contains('is-open')), false, 'sheet re-opened');
-  eq(!!(await eventById('arena-4')), true, 'event restored');
+  eq(!!(await eventById('bbc-trip')), true, 'event restored');
   return 'closed on delete, stayed closed on undo';
+});
+
+console.log('\n  COVERAGE TAGS + BULK\n  ' + '-'.repeat(70));
+
+await check('a coverage tag can be set from the sheet and shows on the badge', async () => {
+  // Green / yellow / blue are arbitrary tags CTV puts on an event to say what it
+  // is covering. The colour is never the only channel: the badge names its tag.
+  await openSheet('rugby-rec');
+  await page.click('[data-cover-set="green"]');
+  await sheetSettled();
+  eq((await eventById('rugby-rec')).cover, 'green', 'cover stored on the event');
+  const badge = await page.$eval('.ev[data-ev="rugby-rec"]', (el) => ({ cls: el.className, title: el.title }));
+  if (!/cov-green/.test(badge.cls)) throw new Error(`badge missing cov-green: ${badge.cls}`);
+  if (!/tagged Green/i.test(badge.title)) throw new Error(`badge title omits the tag word: ${badge.title}`);
+  // Clearing removes the field entirely rather than storing an empty string.
+  await page.click('[data-cover-set=""]');
+  await sheetSettled();
+  if ((await eventById('rugby-rec')).cover) throw new Error('cover not cleared');
+  await page.evaluate(() => document.getElementById('sheet-x').click());
+  return 'green set → badge tinted and named in words → cleared';
+});
+
+await check('select mode tags several events at once, undoably', async () => {
+  await goto('calendar');
+  await sheetGone();
+  await gotoMonth(2026, 9);                       // October — rugby-rec + su-takeover
+  await page.click('#select-toggle');
+  await page.evaluate(() => document.querySelector('.ev[data-ev="rugby-rec"]').click());
+  await page.evaluate(() => document.querySelector('.ev[data-ev="su-takeover"]').click());
+  eq(await page.$eval('#bulkbar .bulkbar-n', (el) => el.textContent), '2 selected', 'bulk bar count');
+  await page.click('[data-bulk-cover="blue"]');
+  eq((await eventById('rugby-rec')).cover, 'blue', 'first event tagged');
+  eq((await eventById('su-takeover')).cover, 'blue', 'second event tagged');
+  await page.click('#toast-undo');
+  if ((await eventById('rugby-rec')).cover) throw new Error('bulk tag was not undone');
+  await page.click('#select-toggle');            // leave select mode
+  eq(await page.$('#bulkbar'), null, 'bulk bar gone after leaving select mode');
+  return 'picked 2 → tagged blue together → undone → mode left cleanly';
+});
+
+await check('navigating off the calendar drops select mode and the floating bar', async () => {
+  await goto('calendar');
+  await sheetGone();
+  await gotoMonth(2026, 9);                       // October — has event badges
+  await page.click('#select-toggle');
+  await page.evaluate(() => document.querySelector('.ev[data-ev="rugby-rec"]').click());
+  if (!(await page.$('#bulkbar'))) throw new Error('bulk bar did not appear on the calendar');
+  // The bar is position:fixed and z-index 60 — if a nav leaves it behind, its
+  // live Delete floats over a page that has nothing to do with events.
+  await goto('settings');
+  eq(await page.$('#bulkbar'), null, 'bulk bar gone after navigating to Settings');
+  eq(await page.evaluate(() => document.body.classList.contains('is-selecting')), false,
+    'body.is-selecting cleared after leaving the calendar');
+  // And select mode is genuinely off when you return — not silently still armed.
+  await goto('calendar');
+  await gotoMonth(2026, 9);
+  eq(await page.$eval('#select-toggle', (el) => el.getAttribute('aria-pressed')), 'false',
+    'select mode is off on returning to the calendar');
+  return 'picked an event → bar showed → nav dropped selection, bar and mode';
+});
+
+await check('the coverage legend names its colours and filters the month', async () => {
+  await goto('calendar');
+  await sheetGone();
+  await openSheet('rugby-rec');
+  await page.click('[data-cover-set="yellow"]');
+  await sheetSettled();
+  await page.evaluate(() => document.getElementById('sheet-x').click());
+  await gotoMonth(2026, 9);
+  // The legend states each colour in words — the "no state by hue alone" rule.
+  const legend = await page.$eval('.legend', (el) => el.textContent);
+  if (!/Yellow/i.test(legend)) throw new Error(`legend does not name yellow: ${legend}`);
+  // Filtering to yellow keeps the tagged event and drops an untagged one.
+  await page.click('[data-cov-filter="yellow"]');
+  const shown = await page.$$eval('.ev[data-ev]', (els) => els.map((e) => e.dataset.ev));
+  if (!shown.includes('rugby-rec')) throw new Error('yellow filter hid the tagged event');
+  if (shown.includes('su-takeover')) throw new Error('yellow filter kept an untagged event');
+  await page.click('[data-cov-filter="yellow"]');           // clear the filter
+  await openSheet('rugby-rec');
+  await page.click('[data-cover-set=""]');                  // and the tag
+  await sheetSettled();
+  await page.evaluate(() => document.getElementById('sheet-x').click());
+  return 'legend names the colour, filter narrows to it, then cleaned up';
+});
+
+await check('the split view puts the schedule beside the month', async () => {
+  await goto('calendar');
+  await sheetGone();
+  await page.click('#split-toggle');
+  eq(await page.$eval('body', (b) => b.classList.contains('is-split')), true, 'is-split on');
+  if (!(await page.$('.split-pane .timeline'))) throw new Error('no schedule pane rendered in split');
+  await page.click('#split-toggle');
+  eq(await page.$eval('body', (b) => b.classList.contains('is-split')), false, 'is-split off');
+  return 'schedule pane shown beside the month, then hidden';
+});
+
+await check('selecting an event in the split pane keeps its scroll position', async () => {
+  await goto('calendar');
+  await sheetGone();
+  await page.click('#split-toggle');
+  // Scroll the pane's own scroller down, then open a card from it. Opening a
+  // sheet rebuilds the calendar, which used to snap the pane back to the top.
+  await page.evaluate(() => { document.querySelector('.split-pane .timeline').scrollTop = 300; });
+  const id = await page.$eval('.split-pane .tl-card[data-ev]', (el) => el.dataset.ev);
+  // Dispatch the click in-page (page.click would scroll the element into view and
+  // move the scroller itself, which is the very thing under test).
+  await page.evaluate((i) => document.querySelector(`.split-pane [data-ev="${i}"]`).click(), id);
+  await page.waitForSelector('#sheet.is-open', { visible: true });
+  await sheetSettled();
+  const top = await page.$eval('.split-pane .timeline', (el) => el.scrollTop);
+  eq(top, 300, 'pane scroll preserved after opening a card');
+  await page.evaluate(() => document.getElementById('sheet-x').click());
+  await sheetGone();
+  await page.click('#split-toggle');
+  return 'scroll held at 300 through the sheet opening';
+});
+
+await check('a busy day expands to all its events, several open at once', async () => {
+  await goto('calendar');
+  await sheetGone();
+  await gotoMonth(2026, 8);                         // September 2026 — freshers week
+  const s23 = '.day[data-day="2026-09-23"]';        // 12 events
+  const s21 = '.day[data-day="2026-09-21"]';        // 11 events
+  eq(await page.$$eval(`${s23} .ev[data-ev]`, (e) => e.length), 3, 'capped at three badges');
+  if (!(await page.$(`${s23} [data-expand="2026-09-23"]`))) throw new Error('no "+N more" control');
+  await page.evaluate(() => document.querySelector('.day[data-day="2026-09-23"] [data-expand]').click());
+  eq(await page.$$eval(`${s23} .ev[data-ev]`, (e) => e.length), 12, 'all events shown once expanded');
+  if (!(await page.$(`${s23} [data-collapse="2026-09-23"]`))) throw new Error('no "Show less" control');
+  // A second busy day expands independently — tapping it does not collapse the first.
+  await page.evaluate(() => document.querySelector('.day[data-day="2026-09-21"] .day-head').click());
+  eq(await page.$$eval(`${s23} .ev[data-ev]`, (e) => e.length), 12, 'first day stays open');
+  eq(await page.$$eval(`${s21} .ev[data-ev]`, (e) => e.length), 11, 'second day open too');
+  // Collapse each on its own.
+  await page.evaluate(() => document.querySelector('.day[data-day="2026-09-23"] [data-collapse]').click());
+  eq(await page.$$eval(`${s23} .ev[data-ev]`, (e) => e.length), 3, 'first collapses to the cap');
+  eq(await page.$$eval(`${s21} .ev[data-ev]`, (e) => e.length), 11, 'second stays open');
+  await page.evaluate(() => document.querySelector('.day[data-day="2026-09-21"] .day-head').click());
+  return 'capped, expanded to all, several open at once, each collapsed on its own';
+});
+
+await check('Cmd/Ctrl+Z undoes the last change', async () => {
+  await goto('calendar');
+  await sheetGone();
+  await openSheet('rugby-rec');
+  await page.click('[data-cover-set="green"]');
+  await sheetSettled();
+  await page.evaluate(() => document.getElementById('sheet-x').click());
+  await sheetGone();
+  eq((await eventById('rugby-rec')).cover, 'green', 'tag applied');
+  // Focus is on the page, not a text field, so the shortcut reaches the document.
+  await page.evaluate(() => document.body.focus());
+  await page.keyboard.down('Meta');
+  await page.keyboard.press('KeyZ');
+  await page.keyboard.up('Meta');
+  await page.waitForFunction(() =>
+    !JSON.parse(localStorage.getItem('ctvos.year.v2')).events.find((e) => e.id === 'rugby-rec').cover);
+  return 'keyboard undo reverted the coverage tag';
+});
+
+await check('a ?view= link curates the nav to the public pages', async () => {
+  await goto('settings');
+  // Only Calendar is ticked by default; build the share-view link.
+  await page.evaluate(() => document.querySelector('[data-action="vshare"]').click());
+  const link = await page.$eval('#vshare-out .invite-link', (el) => el.textContent);
+  if (!/\?view=calendar$/.test(link)) throw new Error(`link was "${link}"`);
+  // Apply that scope and confirm the nav narrows to Calendar alone — the private
+  // pages were never offered, and the other public pages drop out too.
+  const navIds = await page.evaluate(() => {
+    viewScope = new Set(['calendar']);
+    renderNav();
+    return [...document.querySelectorAll('#nav [data-view]')].map((b) => b.dataset.view);
+  });
+  eq(navIds, ['calendar'], 'nav shows only the curated page');
+  // Restore the full app for the tests that follow.
+  await page.evaluate(() => { viewScope = null; renderNav(); });
+  await goto('calendar');
+  return 'link built (?view=calendar), nav narrowed to it, then restored';
+});
+
+await check('an event can be made private, and it is marked in words', async () => {
+  await goto('calendar');
+  await sheetGone();
+  await openSheet('rugby-rec');
+  // Scroll the drawer down, then toggle via a dispatched click (page.click would
+  // scroll the button into view and move the very scroll we are testing).
+  await page.evaluate(() => { document.getElementById('sheet').scrollTop = 200; });
+  const beforeTop = await page.$eval('#sheet', (el) => el.scrollTop);
+  await page.evaluate(() => document.querySelector('[data-private="1"]').click());
+  await page.waitForFunction(() => document.querySelector('[data-private="1"]')?.classList.contains('is-on'));
+  // The highlight moved to Private, and the scroll held (did not snap to the top).
+  const afterTop = await page.$eval('#sheet', (el) => el.scrollTop);
+  if (afterTop < beforeTop - 20) throw new Error(`sheet scroll jumped ${beforeTop} -> ${afterTop}`);
+  eq((await eventById('rugby-rec')).private, true, 'private flag stored');
+  await page.evaluate(() => document.getElementById('sheet-x').click());
+  await sheetGone();
+  // The badge carries a padlock (a shape channel) and names the state in its title.
+  const badge = await page.$eval('.ev[data-ev="rugby-rec"]', (el) => ({
+    lock: Boolean(el.querySelector('.ev-lock')), title: el.title,
+  }));
+  eq(badge.lock, true, 'padlock on the badge');
+  if (!/private/i.test(badge.title)) throw new Error(`title was "${badge.title}"`);
+  // The schedule states it in words too.
+  await goto('schedule');
+  const said = await page.$$eval('.tl-card', (els) => els.some((e) => /Private/.test(e.textContent)));
+  eq(said, true, 'schedule names it Private');
+  // Put it back public and confirm the mark clears. Toggle via a dispatched
+  // click (as the private step above does): the button sits low in a long drawer
+  // over a sticky footer, so a coordinate click is hit-testing the footer, not
+  // the behaviour under test.
+  await goto('calendar');
+  await openSheet('rugby-rec');
+  await page.evaluate(() => document.querySelector('[data-private="0"]').click());
+  await sheetSettled();
+  eq(Boolean((await eventById('rugby-rec')).private), false, 'back on the public calendar');
+  await page.evaluate(() => document.getElementById('sheet-x').click());
+  return 'private set → padlock + worded on badge and schedule, then reverted';
 });
 
 console.log('\n  ADDING AND DELETING\n  ' + '-'.repeat(70));
 
-await check('a day can take a new event', async () => {
+await check('a new event is a draft until Save - the + does not create it', async () => {
   await goto('calendar');
   await sheetGone();
   await gotoMonth(2026, 9);                      // October
+  const before = (await stored()).events.filter((e) => e.date === '2026-10-15').length;
+  // The day's + opens a DRAFT: the sheet is up, but nothing is written yet - no
+  // row on the calendar, and the footer offers Save/Cancel, not Delete. The crew,
+  // kit and prep sections are hidden until the event exists to hang them on.
   await page.evaluate(() => document.querySelector('.day[data-day="2026-10-15"] .day-add').click());
-  await page.waitForSelector('#sheet.is-open [data-f="title"]');
+  await page.waitForSelector('#sheet.is-open #event-save');
   await sheetSettled();
+  eq((await stored()).events.filter((e) => e.date === '2026-10-15').length, before, 'nothing created on +');
+  eq(await page.$('#sheet-del'), null, 'a draft has no Delete');
+  eq(await page.$('#role-add'), null, 'a draft hides the crew section');
+  // The title field is empty with a placeholder, not pre-filled with words to delete.
+  const ph = await page.$eval('#sheet-in [data-f="title"]', (el) => ({ value: el.value, placeholder: el.placeholder }));
+  eq(ph.value, '', 'the input is empty, not pre-filled');
+  eq(ph.placeholder, 'Event name', 'the input shows a placeholder');
+  // Cancel throws the draft away - still nothing written.
+  await page.evaluate(() => document.getElementById('event-cancel').click());
+  await sheetGone();
+  eq((await stored()).events.filter((e) => e.date === '2026-10-15').length, before, 'Cancel discards the draft');
+  // Add again and Save: now, and only now, the event is written - once - and the
+  // full sheet reopens on it so its crew can go on.
+  await page.evaluate(() => document.querySelector('.day[data-day="2026-10-15"] .day-add').click());
+  await page.waitForSelector('#event-save');
+  await sheetSettled();
+  await page.evaluate(() => document.getElementById('event-save').click());
+  await page.waitForSelector('#sheet.is-open #sheet-del');   // the saved event's full sheet
   const evs = (await stored()).events.filter((e) => e.date === '2026-10-15');
-  eq(evs.length, 1, 'events on 15 Oct');
-  eq(evs[0].title, 'New event', 'title');
-  return 'created and its sheet opened';
+  eq(evs.length, before + 1, 'saved: one event on 15 Oct');
+  eq(evs[0].title, '', 'title starts empty');
+  // Where the title is shown (badge, heading) it reads "Untitled event", never blank.
+  const badgeText = await page.$eval(`.ev[data-ev="${evs[0].id}"]`, (el) => el.textContent.trim());
+  if (!/Untitled event/.test(badgeText)) throw new Error(`badge was "${badgeText}"`);
+  return 'draft on +, written only on Save, shown as "Untitled event"';
 });
 
 await check('a new event starts with no crew, not with no gap', async () => {
@@ -711,7 +959,7 @@ await check('reset restores the seed year', async () => {
   const ev = await eventById('ntd');
   eq(ev.venue, undefined, 'venue');
   const n = (await stored()).events.length;
-  eq(n, 31, 'event count');
+  eq(n, 102, 'event count');
   return `${n} events back`;
 });
 
@@ -735,7 +983,7 @@ await check('export produces the corrected year', async () => {
     return captured.text();
   });
   const parsed = JSON.parse(json);
-  eq(parsed.events.length, 31, 'events');
+  eq(parsed.events.length, 102, 'events');
   eq(parsed.events.find((e) => e.id === 'ntd').venue, 'Studio', 'edited venue');
   if (!parsed.societies || !parsed.prep_templates) throw new Error('lost the reference data');
   return 'valid year.json with the edits in it';
@@ -1050,25 +1298,26 @@ await check('the list view shows the same tasks as the board', async () => {
 });
 
 await check('an anchored task moves when its event moves', async () => {
-  // "Order merch" is T−28 from Welcome Weekend night 1 (18 Sep) = 21 Aug.
+  // "Order merch" is T−28 from the freshers kickoff — the Arrivals Party, 19 Sep
+  // (the official successor to the old Welcome Weekend placeholder) = 22 Aug.
   const dueOf = (id) => page.evaluate((i) => {
     const box = document.querySelector(`[data-task="${i}"]`);
-    // "21 AUG · in 14d" — the date half is what the lead-time engine decides.
+    // "22 AUG · in 14d" — the date half is what the lead-time engine decides.
     return box.closest('.tcard').querySelector('.tcard-due')
       .textContent.split('·')[0].trim();
   }, id);
-  eq(await dueOf('merch'), '21 AUG', 'merch due before the move');
+  eq(await dueOf('merch'), '22 AUG', 'merch due before the move');
 
-  await openSheet('ww-fri');
+  await openSheet('fw26-arrivals-party-0919');
   await page.$eval('[data-f="date"]', (el) => {
-    el.value = '2026-09-25'; el.dispatchEvent(new Event('change', { bubbles: true }));
+    el.value = '2026-09-26'; el.dispatchEvent(new Event('change', { bubbles: true }));
   });
   await closeAndTodo();
-  eq(await dueOf('merch'), '28 AUG', 'merch due after the move');
+  eq(await dueOf('merch'), '29 AUG', 'merch due after the move');
   await page.click('#toast-undo');
   await gotoTodo();
-  eq(await dueOf('merch'), '21 AUG', 'merch due after undo');
-  return 'welcome weekend +7d → merch deadline +7d, and back';
+  eq(await dueOf('merch'), '22 AUG', 'merch due after undo');
+  return 'arrivals party +7d → merch deadline +7d, and back';
 });
 
 await check('ticking a task persists and is undoable', async () => {
@@ -1172,6 +1421,48 @@ await check('a to-do can be deleted, and that is undoable', async () => {
   return 'deleted, then undone';
 });
 
+await check('a to-do can be edited in its drawer, and deleted from there', async () => {
+  // The list was tick-or-delete only: no way to fix a typo, change the area, or
+  // move a date once a to-do existed. Clicking one now opens an editor drawer.
+  await gotoTodo();
+  await page.click('[data-status="upcoming"]');
+  await page.click('[data-task-mode="list"]');
+  // Pick whatever the list is actually showing at the top, so the row is on
+  // screen and clickable regardless of what earlier tests left selected.
+  const id = await page.$eval('#v-tasks .tlink[data-task-open]', (el) => el.dataset.taskOpen);
+  await page.evaluate((i) => document.querySelector(`.tlink[data-task-open="${i}"]`).click(), id);
+  await page.waitForSelector('#sheet.is-open [data-tf="title"]');
+  await page.$eval('[data-tf="title"]', (el) => {
+    el.value = 'Edited via the to-do drawer';
+    el.dispatchEvent(new Event('change', { bubbles: true }));
+  });
+  eq((await stored()).tasks.find((t) => t.id === id).title, 'Edited via the to-do drawer', 'title after edit');
+  await page.click('#toast-undo');
+  eq((await stored()).tasks.find((t) => t.id === id).title !== 'Edited via the to-do drawer', true, 'title reverted');
+  // Delete from the drawer confirms first (the deliberate path), then applies.
+  // The drawer is still open on this to-do, so the delete button is right there;
+  // evaluate-click it so a background re-render can't leave a stale node.
+  await page.waitForSelector('#task-sheet-del');
+  const n = (await stored()).tasks.length;
+  await page.evaluate(() => document.getElementById('task-sheet-del').click());
+  await page.waitForFunction(() => {
+    const b = document.getElementById('toast-undo');
+    return !document.getElementById('toast').hidden && b.textContent.trim() === 'Delete';
+  });
+  await page.evaluate(() => document.getElementById('toast-undo').click());   // confirm the delete
+  await page.waitForFunction((was) => {
+    const b = document.getElementById('toast-undo');
+    return !document.getElementById('toast').hidden && b.textContent.trim() === 'Undo'
+      && JSON.parse(localStorage.getItem('ctvos.year.v2')).tasks.length === was - 1;
+  }, {}, n);
+  eq((await stored()).tasks.length, n - 1, 'tasks after drawer delete');
+  await page.evaluate(() => document.getElementById('toast-undo').click());   // undo restores it
+  await page.waitForFunction((was) =>
+    JSON.parse(localStorage.getItem('ctvos.year.v2')).tasks.length === was, {}, n);
+  eq((await stored()).tasks.length, n, 'tasks after undo');
+  return 'edited, then deleted from the drawer and restored';
+});
+
 console.log('\n  BOARD\n  ' + '-'.repeat(70));
 
 // The board is now part of the document: notes and links live in DATA.boards and
@@ -1222,6 +1513,54 @@ await check('a note is undoable, like every other edit', async () => {
   return 'added a note, undo removed it';
 });
 
+await check('dragging a link onto empty canvas creates a connected note', async () => {
+  // Releasing the connector on empty space used to do nothing; now it spawns a
+  // fresh note there, already linked - the quick way to branch an idea outward.
+  await goto('board');
+  const before = (await stored()).boards[0];
+  const nBefore = before.nodes.length, eBefore = before.edges.length;
+  const outcome = await page.evaluate(() => {
+    const handle = document.querySelector('.board-node [data-handle]');
+    const node = handle.closest('.board-node');
+    const fromId = node.dataset.id;
+    const hr = handle.getBoundingClientRect();
+    const sx = hr.x + hr.width / 2, sy = hr.y + hr.height / 2;
+    // Find a client point on the canvas that is not over any note or the toolbar.
+    const canvas = document.querySelector('.board-canvas');
+    const r = canvas.getBoundingClientRect();
+    let pt = null;
+    for (let fx = 0.55; fx < 0.95 && !pt; fx += 0.08)
+      for (let fy = 0.12; fy < 0.9 && !pt; fy += 0.08) {
+        const x = r.x + r.width * fx, y = r.y + r.height * fy;
+        const el = document.elementFromPoint(x, y);
+        if (el && el.closest('.board-canvas') && !el.closest('.board-node') && !el.closest('.board-tools')) pt = { x, y };
+      }
+    if (!pt) return { ok: false, why: 'no empty spot found' };
+    const opts = (x, y) => ({ bubbles: true, clientX: x, clientY: y, button: 0, pointerId: 1, pointerType: 'mouse' });
+    handle.dispatchEvent(new PointerEvent('pointerdown', opts(sx, sy)));
+    window.dispatchEvent(new PointerEvent('pointermove', opts(sx + 30, sy + 12)));
+    window.dispatchEvent(new PointerEvent('pointermove', opts(pt.x, pt.y)));
+    window.dispatchEvent(new PointerEvent('pointerup', opts(pt.x, pt.y)));
+    return { ok: true, fromId };
+  });
+  if (!outcome.ok) throw new Error(outcome.why);
+  await page.waitForFunction((n) =>
+    JSON.parse(localStorage.getItem('ctvos.year.v2')).boards[0].nodes.length === n + 1, {}, nBefore);
+  const after = (await stored()).boards[0];
+  eq(after.nodes.length, nBefore + 1, 'a note was created');
+  eq(after.edges.length, eBefore + 1, 'and a link with it');
+  const newNode = after.nodes[after.nodes.length - 1];
+  const linked = after.edges.some((e) =>
+    (e.from === outcome.fromId && e.to === newNode.id) || (e.to === outcome.fromId && e.from === newNode.id));
+  eq(linked, true, 'the new note is linked to the source');
+  // One undo removes both the note and its link.
+  await page.evaluate(() => document.activeElement.blur());
+  await page.click('#toast-undo');
+  await page.waitForFunction((n) =>
+    JSON.parse(localStorage.getItem('ctvos.year.v2')).boards[0].nodes.length === n, {}, nBefore);
+  return 'released on empty canvas → linked note, undo clears both';
+});
+
 await check('the board viewport is a per-client preference, not shared data', async () => {
   await goto('board');
   const doc = (await stored()).boards[0];
@@ -1230,6 +1569,48 @@ await check('the board viewport is a per-client preference, not shared data', as
   const ui = JSON.parse(await page.evaluate(() => localStorage.getItem('ctvos.board.ui.v1')) || 'null');
   if (!ui || !ui.activeId) throw new Error('the per-client board UI store is missing or empty');
   return 'boards/notes in the document; camera + active board in ctvos.board.ui.v1';
+});
+
+await check('boards can be added, dragged to reorder, and a tap still switches', async () => {
+  // Order is content: DATA.boards is the tab order, so a drag is a mutate like a
+  // rename and persists. A plain tap on a tab still switches to it (the drop's
+  // click is swallowed, but a no-move press is not a drop).
+  await goto('board');
+  // Grow to three boards so a reorder is unambiguous.
+  await page.evaluate(() => document.querySelector('[data-newboard]').click());
+  await page.evaluate(() => document.querySelector('[data-newboard]').click());
+  await page.waitForFunction(() => document.querySelectorAll('.board-tab').length >= 3);
+  const before = await page.$$eval('.board-tab', (els) => els.map((t) => t.dataset.board));
+  // Drag the first tab past the last with real pointer events.
+  await page.evaluate((firstId) => {
+    const strip = document.querySelector('.board-tabs');
+    const tab = strip.querySelector(`.board-tab[data-board="${firstId}"]`);
+    const last = [...strip.querySelectorAll('.board-tab')].pop();
+    const r = tab.getBoundingClientRect(), lr = last.getBoundingClientRect();
+    const o = (x, y) => ({ bubbles: true, clientX: x, clientY: y, button: 0, pointerId: 1, pointerType: 'mouse' });
+    tab.dispatchEvent(new PointerEvent('pointerdown', o(r.x + r.width / 2, r.y + r.height / 2)));
+    window.dispatchEvent(new PointerEvent('pointermove', o(r.x + r.width / 2 + 20, r.y + r.height / 2)));
+    window.dispatchEvent(new PointerEvent('pointermove', o(lr.right + 30, lr.y + lr.height / 2)));
+    window.dispatchEvent(new PointerEvent('pointerup', o(lr.right + 30, lr.y + lr.height / 2)));
+  }, before[0]);
+  await page.waitForFunction((id) =>
+    JSON.parse(localStorage.getItem('ctvos.year.v2')).boards.at(-1).id === id, {}, before[0]);
+  const stored2 = (await stored()).boards.map((b) => b.id);
+  if (stored2[stored2.length - 1] !== before[0]) throw new Error('the dragged board did not move to the end');
+  if (stored2[0] === before[0]) throw new Error('order unchanged');
+  // A plain click on a different tab still switches to it (not swallowed).
+  const target = before[1];
+  await page.evaluate((id) => {
+    const t = document.querySelector(`.board-tab[data-board="${id}"]`);
+    const r = t.getBoundingClientRect();
+    const o = (x, y) => ({ bubbles: true, clientX: x, clientY: y, button: 0, pointerId: 2, pointerType: 'mouse' });
+    t.dispatchEvent(new PointerEvent('pointerdown', o(r.x + r.width / 2, r.y + r.height / 2)));
+    window.dispatchEvent(new PointerEvent('pointerup', o(r.x + r.width / 2, r.y + r.height / 2)));
+    t.click();
+  }, target);
+  await page.waitForFunction((id) =>
+    document.querySelector('.board-tab[aria-current="true"]')?.dataset.board === id, {}, target);
+  return 'reorder persists to DATA.boards; a no-move tap still switches';
 });
 
 console.log('\n  ACCOUNTS\n  ' + '-'.repeat(70));

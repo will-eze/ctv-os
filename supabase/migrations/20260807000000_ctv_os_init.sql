@@ -1,6 +1,6 @@
 -- GENERATED FILE — do not edit.
 --
--- Source: supabase/schema.sql   (sha256 473043a15c5ca5bd)
+-- Source: supabase/schema.sql   (sha256 182fef5a5bababcf)
 -- Regenerate: npm run db:migration
 --
 -- schema.sql is what `npm run verify:sql` executes against real Postgres. This
@@ -541,6 +541,24 @@ alter table events add column if not exists kit_needed jsonb not null default '[
 -- event. Small and event-scoped, so it rides on the event row like kit_needed.
 alter table events add column if not exists prep_skip jsonb not null default '[]'::jsonb;
 
+-- A colour tag CTV applies to an event to coordinate coverage — one of
+-- 'green' / 'yellow' / 'blue', or NULL for untagged. The colours carry no fixed
+-- meaning in the schema on purpose: the station manager assigns their own (e.g.
+-- green = we're filming it) and shares the public calendar with the SU so they
+-- can see what CTV is covering at a glance. Text, not an enum, so a fourth tag
+-- never needs a migration; the interface only ever writes the three it offers.
+-- Public-readable like the rest of an event (the shared calendar link needs no
+-- account); only a signed-in session can set it, through the events RLS.
+alter table events add column if not exists cover text;
+
+-- A private event is off the public calendar: it is only visible to a signed-in
+-- session, never to the anonymous publishable key. The station manager can plan a
+-- shoot without it showing on the link they share with the SU. Enforced by the
+-- events read policy below (not just hidden in the interface); default false, so
+-- every existing event stays public. Roles/prep hang off the event and become
+-- unreachable in the interface once the event row is hidden.
+alter table events add column if not exists is_private boolean not null default false;
+
 -- A prep step can instead be a link to another event on the calendar — a shoot
 -- whose date is the prep deadline (camera training before the match). It then
 -- takes its date from that event rather than a lead time, and moves when the
@@ -838,7 +856,21 @@ create table if not exists invites (
   grants     jsonb not null default '[]'::jsonb,   -- [{module,can_view,can_edit}]
   created_by uuid references auth.users(id) on delete set null,
   used_at    timestamptz,
+  expires_at timestamptz,                            -- null = never expires
   created_at timestamptz not null default now()
+);
+
+-- Every change to who-can-see-what, recorded. The privileged operations run as
+-- SECURITY DEFINER functions that write a row here, so there is a forensic trail
+-- of grants and invites independent of the frontend that triggered them.
+-- Admin-readable; never written directly by a client, only by the RPCs.
+create table if not exists access_audit (
+  id          bigint generated always as identity primary key,
+  actor       uuid references auth.users(id) on delete set null,
+  action      text not null,                         -- grant.set, grant.revoke, invite.create
+  target_user uuid,
+  detail      jsonb not null default '{}'::jsonb,
+  at          timestamptz not null default now()
 );
 
 -- On sign-up: create the profile, promote to admin if the email is on the
@@ -853,7 +885,8 @@ declare
   adm boolean := exists (select 1 from admins a where a.email = new.email);
   g   jsonb;
 begin
-  select * into inv from invites where token = tok and used_at is null;
+  select * into inv from invites
+    where token = tok and used_at is null and (expires_at is null or expires_at > now());
   insert into profiles (user_id, email, is_admin)
   values (new.id, new.email, adm or coalesce(inv.is_admin, false))
   on conflict (user_id) do update set email = excluded.email;
@@ -897,6 +930,70 @@ language sql stable security definer set search_path = public as $$
     where g.user_id = auth.uid() and g.module = mod and g.can_edit);
 $$;
 
+-- The modules a grant may name. Kept in one place so the RPCs,
+-- the app and any future module agree on the vocabulary.
+create or replace function is_grantable_module(mod text) returns boolean
+language sql immutable as $$
+  select mod in ('events', 'crew', 'tasks', 'board', 'kit', 'money');
+$$;
+
+-- A token, without pgcrypto (which bare Postgres under verify:sql lacks). Two
+-- v4 UUIDs, dashes stripped: 244 bits of randomness, ample for a capability URL.
+create or replace function new_token() returns text
+language sql volatile as $$
+  select replace(gen_random_uuid()::text, '-', '') || replace(gen_random_uuid()::text, '-', '');
+$$;
+
+-- ---------------------------------------------------------------------------
+-- Privileged operations as functions, not table writes
+-- ---------------------------------------------------------------------------
+-- Granting access and issuing an invite are the operations an attacker would
+-- target, so they run here — SECURITY DEFINER, each guarded by is_admin(), each
+-- writing an audit row — rather than as direct table writes from the browser.
+-- The table RLS still refuses a non-admin (defence in depth), but the app's only
+-- path in is through these, so every privileged change is checked in one place
+-- and recorded.
+
+create or replace function admin_set_grant(p_user uuid, p_module text, p_view boolean, p_edit boolean)
+returns void
+language plpgsql security definer set search_path = public as $$
+begin
+  if not is_admin() then raise exception 'admin only'; end if;
+  if not is_grantable_module(p_module) then raise exception 'unknown module %', p_module; end if;
+  insert into access_grants (user_id, module, can_view, can_edit)
+  values (p_user, p_module, coalesce(p_view, false), coalesce(p_edit, false))
+  on conflict (user_id, module) do update
+    set can_view = excluded.can_view, can_edit = excluded.can_edit;
+  insert into access_audit (actor, action, target_user, detail)
+  values (auth.uid(), 'grant.set', p_user,
+          jsonb_build_object('module', p_module, 'view', p_view, 'edit', p_edit));
+end $$;
+
+create or replace function admin_revoke_grant(p_user uuid, p_module text)
+returns void
+language plpgsql security definer set search_path = public as $$
+begin
+  if not is_admin() then raise exception 'admin only'; end if;
+  delete from access_grants where user_id = p_user and module = p_module;
+  insert into access_audit (actor, action, target_user, detail)
+  values (auth.uid(), 'grant.revoke', p_user, jsonb_build_object('module', p_module));
+end $$;
+
+create or replace function admin_create_invite(p_email text, p_is_admin boolean, p_grants jsonb, p_expires timestamptz)
+returns text
+language plpgsql security definer set search_path = public as $$
+declare tok text := new_token();
+begin
+  if not is_admin() then raise exception 'admin only'; end if;
+  insert into invites (token, email, is_admin, grants, created_by, expires_at)
+  values (tok, nullif(p_email, ''), coalesce(p_is_admin, false),
+          coalesce(p_grants, '[]'::jsonb), auth.uid(), p_expires);
+  insert into access_audit (actor, action, detail)
+  values (auth.uid(), 'invite.create',
+          jsonb_build_object('email', p_email, 'is_admin', p_is_admin, 'grants', p_grants));
+  return tok;
+end $$;
+
 -- ---------------------------------------------------------------------------
 -- Row level security
 -- ---------------------------------------------------------------------------
@@ -932,26 +1029,54 @@ alter table ledger          enable row level security;
 alter table funding_windows enable row level security;
 alter table incidents       enable row level security;
 
+-- Reads stay open on the public tables (the Calendar URL is public). Writes used
+-- to need only *an* account — any authenticated user could edit or delete every
+-- event and every kit item, grant or no grant. That is too coarse: an invited
+-- viewer, or an anonymous share-link guest (which is also the `authenticated`
+-- role), could change data they were only meant to see. So each public table now
+-- maps to a module and its writes go through can_edit(module) — the same gate the
+-- private modules already use. An anonymous guest has no edit grant, so can_edit
+-- returns false and the read-only share link really is read-only.
+--
+-- members and tasks are the private modules; they get grant-gated policies below
+-- and so are left out of this loop.
 do $$
-declare t text;
+declare rec record;
 begin
-  -- members and tasks are the private modules; they get grant-gated policies
-  -- below and so are left out of this open-read loop.
-  foreach t in array array[
-    'societies','events','event_roles','prep_items','prep_templates',
-    'kit','kit_bookings','deliverables','playbook','contacts','ledger',
-    'funding_windows'
-  ] loop
-    execute format('drop policy if exists %I on %I', t || '_read',  t);
-    execute format('drop policy if exists %I on %I', t || '_write', t);
-    execute format('drop policy if exists %I on %I', t || '_update', t);
-    execute format('create policy %I on %I for select using (true)', t || '_read', t);
-    execute format('create policy %I on %I for insert with check (auth.role() = ''authenticated'')',
-                   t || '_write', t);
-    execute format('create policy %I on %I for update using (auth.role() = ''authenticated'') '
-                   'with check (auth.role() = ''authenticated'')', t || '_update', t);
+  for rec in select * from (values
+      ('societies','events'), ('events','events'), ('event_roles','events'),
+      ('prep_items','events'), ('prep_templates','events'),
+      ('kit','kit'), ('kit_bookings','kit'),
+      ('ledger','money'), ('funding_windows','money'),
+      ('deliverables',null), ('playbook',null), ('contacts',null)
+    ) as v(tbl, module)
+  loop
+    execute format('drop policy if exists %I on %I', rec.tbl || '_read',  rec.tbl);
+    execute format('drop policy if exists %I on %I', rec.tbl || '_write', rec.tbl);
+    execute format('drop policy if exists %I on %I', rec.tbl || '_update', rec.tbl);
+    execute format('create policy %I on %I for select using (true)', rec.tbl || '_read', rec.tbl);
+    if rec.module is null then
+      -- Reference tables with no interface of their own: an admin writes them.
+      execute format('create policy %I on %I for insert with check (is_admin())', rec.tbl || '_write', rec.tbl);
+      execute format('create policy %I on %I for update using (is_admin()) with check (is_admin())',
+                     rec.tbl || '_update', rec.tbl);
+    else
+      execute format('create policy %I on %I for insert with check (can_edit(%L))',
+                     rec.tbl || '_write', rec.tbl, rec.module);
+      execute format('create policy %I on %I for update using (can_edit(%L)) with check (can_edit(%L))',
+                     rec.tbl || '_update', rec.tbl, rec.module, rec.module);
+    end if;
   end loop;
 end $$;
+
+-- events overrides the generic open read above: a private event is visible only
+-- to a signed-in session, never to the anonymous publishable key the shared
+-- calendar link carries. Public events stay public. This is real enforcement at
+-- the row, not just a hidden nav item, so a private shoot never leaks through the
+-- API to someone holding the link.
+drop policy if exists events_read on events;
+create policy events_read on events for select
+  using (not is_private or auth.role() = 'authenticated');
 
 -- Deletion is allowed on exactly two tables, and refused everywhere else.
 --
@@ -979,8 +1104,8 @@ declare t text;
 begin
   foreach t in array array['events', 'kit'] loop
     execute format('drop policy if exists %I on %I', t || '_delete', t);
-    execute format('create policy %I on %I for delete using (auth.role() = ''authenticated'')',
-                   t || '_delete', t);
+    execute format('create policy %I on %I for delete using (can_edit(%L))',
+                   t || '_delete', t, case t when 'events' then 'events' else 'kit' end);
   end loop;
 end $$;
 
@@ -992,7 +1117,7 @@ end $$;
 -- and the event survives.
 drop policy if exists event_roles_delete on event_roles;
 create policy event_roles_delete on event_roles for delete
-  using (auth.role() = 'authenticated');
+  using (can_edit('events'));
 
 -- prep_items is deletable for the same reason event_roles is. A per-event prep
 -- step is a plan, editable on the event, and the sheet has always been able to
@@ -1002,7 +1127,7 @@ create policy event_roles_delete on event_roles for delete
 -- which is not deletable this way.)
 drop policy if exists prep_items_delete on prep_items;
 create policy prep_items_delete on prep_items for delete
-  using (auth.role() = 'authenticated');
+  using (can_edit('events'));
 
 -- members (crew) and tasks are the private modules: read and write are gated by
 -- a grant (or admin), not merely by having an account. This is what lets the
@@ -1058,6 +1183,7 @@ alter table admins        enable row level security;
 alter table profiles      enable row level security;
 alter table access_grants enable row level security;
 alter table invites       enable row level security;
+alter table access_audit  enable row level security;
 
 drop policy if exists admins_read on admins;
 create policy admins_read on admins for select using (is_admin());
@@ -1078,6 +1204,22 @@ create policy access_admin_del on access_grants for delete using (is_admin());
 
 drop policy if exists invites_admin_all on invites;
 create policy invites_admin_all on invites for all using (is_admin()) with check (is_admin());
+
+-- The audit trail is admin-readable and never written through the API: only the
+-- SECURITY DEFINER functions above append to it, so there is no insert policy.
+drop policy if exists audit_admin_read on access_audit;
+create policy audit_admin_read on access_audit for select using (is_admin());
+
+-- Expose the admin RPCs to signed-in accounts; each refuses a non-admin inside
+-- the function. Guarded on role existence so bare Postgres (verify:sql, which has
+-- no anon/authenticated roles) still runs the file.
+do $$ begin
+  if exists (select 1 from pg_roles where rolname = 'authenticated') then
+    grant execute on function admin_set_grant(uuid, text, boolean, boolean) to authenticated;
+    grant execute on function admin_revoke_grant(uuid, text) to authenticated;
+    grant execute on function admin_create_invite(text, boolean, jsonb, timestamptz) to authenticated;
+  end if;
+end $$;
 
 -- incidents: authenticated only, both directions.
 drop policy if exists incidents_read on incidents;

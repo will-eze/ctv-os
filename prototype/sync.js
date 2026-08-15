@@ -1,4 +1,4 @@
-// CTV OS — multi-client sync.
+// CTV OS - multi-client sync.
 //
 // Inlined into the page by scripts/build_prototype.py. Not loaded over the
 // network: the CSP forbids external scripts, and a station manager on a phone
@@ -12,9 +12,9 @@
 // exactly wrong for several: two people editing different events would clobber
 // each other, because the unit of writing was the entire year.
 //
-// So the document stays — every render path, coverage(), findClashes(), the
+// So the document stays - every render path, coverage(), findClashes(), the
 // month grid and all 39 e2e checks read `DATA` and know nothing about any of
-// this — and the unit of *writing* becomes the row.
+// this - and the unit of *writing* becomes the row.
 //
 // mutate() already cloned the document before every change so that undo could
 // restore it. That clone is the other half of a diff. Comparing before against
@@ -37,7 +37,7 @@
 // database mints the uuid; the slug is the unique key the client writes against.
 //
 // Roles are addressed by uuid, generated on the client at the moment the role
-// is added. They have no natural name — the interface has always addressed them
+// is added. They have no natural name - the interface has always addressed them
 // by array position, and a position is not an identity when someone else can
 // insert one. This is the one place the document gained a field.
 
@@ -61,8 +61,8 @@ const Sync = (() => {
 
   // The board is a later addition, so a live project that has not had the new
   // migration pushed yet does not have these three tables. Their absence must
-  // not take the whole app offline — the calendar is public and has to keep
-  // working — so a pull tolerates them 404ing and treats the canvas as empty
+  // not take the whole app offline - the calendar is public and has to keep
+  // working - so a pull tolerates them 404ing and treats the canvas as empty
   // until the migration lands. Every other table is load-bearing and still throws.
   const OPTIONAL_TABLES = new Set(['boards', 'board_nodes', 'board_edges']);
 
@@ -79,7 +79,7 @@ const Sync = (() => {
   const enabled = () => Boolean(CFG && CFG.url && CFG.key);
 
   // --- Status ---------------------------------------------------------------
-  // Every state this reports is rendered as words, never as a colour alone —
+  // Every state this reports is rendered as words, never as a colour alone -
   // the one rule that outlived the redesign. See renderSyncStatus in the
   // template and the four assertions in scripts/shots.mjs.
   function setStatus(patch) {
@@ -111,7 +111,7 @@ const Sync = (() => {
     }
     // Parse by what is actually there, not by status code. A PostgREST write with
     // Prefer: return=minimal answers 201 (insert) or 200 (upsert) with an EMPTY
-    // body — not 204 — so the old `status === 204 ? null : res.json()` called
+    // body - not 204 - so the old `status === 204 ? null : res.json()` called
     // res.json() on nothing and threw "Unexpected end of JSON input". That throw
     // is not a 4xx, so drainOutbox treated it as the network dropping and stalled
     // the whole queue behind it: every add (event, task, kit, crew, board note)
@@ -119,6 +119,14 @@ const Sync = (() => {
     // parsing when there is one makes an empty success an empty success.
     const text = await res.text();
     return text ? JSON.parse(text) : null;
+  }
+
+  // A stored-procedure call. PostgREST exposes the SECURITY DEFINER functions at
+  // /rpc/<name>. The privileged operations (grant, invite, share) go through
+  // these, so the admin check and the audit row live on the server, not in this
+  // page - the frontend only asks; the database decides and records.
+  async function rpc(fn, args = {}) {
+    return rest(`rpc/${fn}`, { method: 'POST', body: JSON.stringify(args) });
   }
 
   // --- Auth (GoTrue) --------------------------------------------------------
@@ -172,7 +180,7 @@ const Sync = (() => {
 
   // Sign up against an invite. The token rides in the sign-up metadata; a
   // trigger on the database redeems it and applies the admin's grants. No secret
-  // key touches the page — the token is the capability.
+  // key touches the page - the token is the capability.
   async function signUp(email, password, inviteToken) {
     const res = await fetch(`${CFG.url}/auth/v1/signup`, {
       method: 'POST',
@@ -193,7 +201,7 @@ const Sync = (() => {
 
   // --- Password recovery ----------------------------------------------------
   // Ask GoTrue to email a reset link. redirect_to is *this page* so the link
-  // lands back in the app instead of Supabase's default Site URL — which is
+  // lands back in the app instead of Supabase's default Site URL - which is
   // http://localhost:3000 out of the box and is why a fresh project's reset
   // emails 'refuse to connect'. The URL still has to be on the project's
   // Auth → Redirect URLs allow-list, or GoTrue falls back to the Site URL.
@@ -253,7 +261,7 @@ const Sync = (() => {
     return true;
   }
 
-  // What the signed-in account is allowed to see and change — the admin flag and
+  // What the signed-in account is allowed to see and change - the admin flag and
   // the per-module grants. Read straight after a pull and folded into the status
   // the interface renders its gates from.
   async function loadAccess() {
@@ -284,27 +292,23 @@ const Sync = (() => {
     return { profiles, grants };
   }
 
-  async function createInvite({ email = null, is_admin = false, grants = [] }) {
-    const token = (crypto.randomUUID?.() ?? `${Date.now()}${Math.random()}`).replace(/[^a-z0-9]/gi, '');
-    const rows = await rest('invites', {
-      method: 'POST',
-      headers: { Prefer: 'return=representation' },
-      body: JSON.stringify([{ token, email, is_admin, grants, created_by: session?.user?.id ?? null }]),
+  // Issuing an invite, changing a grant and minting/revoking a share link all go
+  // through the SECURITY DEFINER RPCs: the server re-checks is_admin() and writes
+  // an audit row, so the browser never carries the capability to grant access -
+  // it only asks. The table RLS still refuses a non-admin (defence in depth).
+  async function createInvite({ email = null, is_admin = false, grants = [], expires_at = null }) {
+    const token = await rpc('admin_create_invite', {
+      p_email: email, p_is_admin: is_admin, p_grants: grants, p_expires: expires_at,
     });
-    return rows[0];
+    return { token };
   }
 
   async function setGrant(userId, module, can_view, can_edit) {
     if (!can_view && !can_edit) {
-      await rest(`access_grants?user_id=eq.${userId}&module=eq.${encodeURIComponent(module)}`,
-        { method: 'DELETE' });
+      await rpc('admin_revoke_grant', { p_user: userId, p_module: module });
       return;
     }
-    await rest('access_grants?on_conflict=user_id,module', {
-      method: 'POST',
-      headers: { Prefer: 'resolution=merge-duplicates,return=minimal' },
-      body: JSON.stringify([{ user_id: userId, module, can_view, can_edit }]),
-    });
+    await rpc('admin_set_grant', { p_user: userId, p_module: module, p_view: can_view, p_edit: can_edit });
   }
 
   async function signOut() {
@@ -329,7 +333,7 @@ const Sync = (() => {
       // A refresh token that no longer works means the session is over. Say so
       // rather than leaving the page looking editable when it is not.
       saveSession(null);
-      setStatus({ error: 'Session expired — sign in again' });
+      setStatus({ error: 'Session expired - sign in again' });
       return false;
     }
   }
@@ -423,6 +427,8 @@ const Sync = (() => {
           start_time: hhmm(e.start_time),
           end_time: hhmm(e.end_time),
           brief: e.brief,
+          cover: e.cover ?? null,
+          private: e.is_private ?? false,
           society: e.society_id ? (socById.get(e.society_id)?.slug ?? null) : undefined,
           kit_needed: e.kit_needed ?? [],
           prep_skip: e.prep_skip ?? [],
@@ -442,7 +448,7 @@ const Sync = (() => {
           done: t.done_on !== null,
         })),
       // Kit is a deletable register now, so an empty table is an empty locker,
-      // not "not seeded yet" — it is mapped verbatim like members, blanks and
+      // not "not seeded yet" - it is mapped verbatim like members, blanks and
       // all. (The genuinely-unseeded project is caught upstream by pull()'s
       // events-length guard, which bails before ever reaching here.) Identity is
       // the slug, mirroring events and members.
@@ -485,13 +491,20 @@ const Sync = (() => {
     start_time: nz(e.start_time),
     end_time: nz(e.end_time),
     brief: nz(e.brief),
-    // The kit an event needs rides on the event row as jsonb — a short list of
+    // The kit an event needs rides on the event row as jsonb - a short list of
     // {id, qty} against kit slugs. Small, event-scoped, and it travels with the
     // same events upsert/update the rest of the sheet already writes.
     kit_needed: e.kit_needed ?? [],
     // Template steps this event has opted out of, by label. Rides on the event
     // row like kit_needed.
     prep_skip: e.prep_skip ?? [],
+    // The coverage colour tag ('green'/'yellow'/'blue' or null). A scalar on the
+    // event, so setting it - one event or fifty in a bulk action - diffs and
+    // syncs through the same events update the rest of the sheet already writes.
+    cover: e.cover ?? null,
+    // Whether the event is off the public calendar (visible only to a session).
+    // Enforced by RLS; carried here so the flag round-trips like any other field.
+    is_private: e.private ?? false,
   });
 
   const taskRow = (t) => ({
@@ -504,7 +517,7 @@ const Sync = (() => {
     due_on: nz(t.due),
     lead_days: t.anchor ? t.lead_days : null,
     // The document says done/not-done; the table records when. There is no
-    // honest date to invent for a box someone ticked, so it is today — which is
+    // honest date to invent for a box someone ticked, so it is today - which is
     // also what makes `overdue` in the task_due view mean anything.
     done_on: t.done ? new Date().toISOString().slice(0, 10) : null,
   });
@@ -576,64 +589,124 @@ const Sync = (() => {
   // to find the deletions costs a query of the same size as just fetching
   // everything, because an academic year is ~31 events and ~56 tasks. It is
   // about 60 KB. When that stops being true, this is the function to revisit.
-  // A pull is the database's whole truth — but the outbox holds writes this
-  // client has made and not yet flushed. Without this, a pull that lands between
-  // a local delete and its DELETE reaching Postgres would put the deleted row
-  // straight back on screen (and it would sit there until the delete's own
-  // Realtime echo triggered another pull). So the still-pending deletes are
-  // subtracted from the incoming document before it is shown: what you removed
-  // stays removed until the server has actually caught up.
-  // The mirror of the delete case: a register item this client just *added*
-  // (kit or crew) lives in the outbox until its insert reaches Postgres. A pull
-  // that lands in that window — a realtime reconnect, a poll — carries the
-  // database's truth, which does not yet include the new row, so applyRemote
-  // would drop it and the open sheet would slam shut a second after you clicked
-  // Add. Re-inject any still-pending insert the incoming document is missing, so
-  // what you added stays until the server has actually caught up.
-  function reinjectPending(doc) {
-    for (const op of readOutbox()) {
-      if (op.op !== 'upsert') continue;
-      const r = op.row;
-      if (op.table === 'kit') {
-        doc.kit ??= [];
-        if (!doc.kit.some((k) => k.id === r.slug)) {
-          doc.kit.push({
-            id: r.slug, name: r.name, category: r.category, asset_tag: r.asset_tag,
-            owner: r.owner, state: r.state, home: r.home, notes: r.notes,
-            usage: r.usage, tips: r.tips, photo_url: r.photo_url,
-          });
-        }
-      } else if (op.table === 'members') {
-        doc.members ??= [];
-        if (!doc.members.some((m) => m.id === r.slug)) {
-          doc.members.push({
-            id: r.slug, known_as: r.known_as, full_name: r.full_name,
-            committee_role: r.committee_role, trained: r.trained ?? [], active: r.active !== false,
-          });
-        }
+  // A pull is the database's whole truth - but the outbox holds writes this
+  // client has made and not yet flushed. Overlaying those pending ops back onto
+  // the freshly pulled document is what keeps an optimistic edit on screen until
+  // the server has actually caught up. Without it, a pull that lands in the gap
+  // between a local change and its write reaching Postgres - a Realtime echo of
+  // someone else's edit, the 20s poll, a tab regaining focus - carries the
+  // server's OLDER value and applyRemote paints it over your change: it flashes
+  // back, reads as "my edit didn't save", and only returns once the outbox drains
+  // and the next pull arrives. That momentary revert is the single most common
+  // "changes don't persist" symptom.
+  //
+  // Every pending op is replayed in the order it was made: a delete removes its
+  // row; an insert or field edit creates or merges its row. This generalises the
+  // two narrower passes that came before, which only protected deletes and
+  // register (kit/crew) inserts and left ordinary edits - an event moved, a role
+  // assigned, a task ticked, a note dragged - exposed to exactly this revert.
+  const putById = (list, obj) => {
+    const i = list.findIndex((x) => x.id === obj.id);
+    if (i >= 0) Object.assign(list[i], obj); else list.push(obj);
+  };
+  const eventFields = (row) => ({
+    title: row.title, date: row.date, strand: row.strand, status: row.status,
+    confidence: row.date_confidence, venue: row.venue,
+    call_time: hhmm(row.call_time), doors_time: hhmm(row.doors_time),
+    start_time: hhmm(row.start_time), end_time: hhmm(row.end_time),
+    brief: row.brief, kit_needed: row.kit_needed ?? [], prep_skip: row.prep_skip ?? [],
+    cover: row.cover ?? null, private: row.is_private ?? false,
+  });
+  const taskFields = (row) => {
+    const anchor = row._anchor_slug ?? null;
+    return {
+      id: row.slug, title: row.title, detail: row.detail, area: row.area,
+      source: row.source, owner_role: row.owner_role,
+      anchor, due: anchor ? null : (row.due_on ?? null),
+      lead_days: anchor ? row.lead_days : null, done: row.done_on != null,
+    };
+  };
+  const memberFields = (row) => ({
+    id: row.slug, known_as: row.known_as, full_name: row.full_name,
+    committee_role: row.committee_role, trained: row.trained ?? [], active: row.active !== false,
+  });
+  const kitFields = (row) => ({
+    id: row.slug, name: row.name, category: row.category, asset_tag: row.asset_tag,
+    owner: row.owner, state: row.state, home: row.home, notes: row.notes,
+    usage: row.usage, tips: row.tips, photo_url: row.photo_url,
+  });
+  const roleFields = (row) => ({
+    id: row.id, label: row.label, role: row.role, member: row._member_slug ?? null,
+    from: hhmm(row.from_time), to: hhmm(row.to_time), on_site: row.on_site,
+  });
+  const prepFields = (row) => ({
+    id: row.id, label: row.label, lead_days: row.lead_days,
+    owner_role: row.owner_role, detail: row.detail, event_ref: row._ref_slug ?? undefined,
+  });
+
+  function overlayUpsert(doc, op) {
+    const row = op.row;
+    switch (op.table) {
+      case 'members': putById(doc.members ??= [], memberFields(row)); break;
+      case 'kit': putById(doc.kit ??= [], kitFields(row)); break;
+      case 'tasks': putById(doc.tasks ??= [], taskFields(row)); break;
+      case 'events': {
+        const ev = (doc.events ??= []).find((e) => e.id === row.slug);
+        if (ev) Object.assign(ev, eventFields(row));
+        else doc.events.push({ id: row.slug, roles: [], ...eventFields(row) });
+        break;
+      }
+      case 'event_roles': {
+        const ev = (doc.events ?? []).find((e) => e.id === row._event_slug);
+        if (ev) putById(ev.roles ??= [], roleFields(row));
+        break;
+      }
+      case 'prep_items': {
+        const ev = (doc.events ?? []).find((e) => e.id === row._event_slug);
+        if (ev) putById(ev.prep ??= [], prepFields(row));
+        break;
+      }
+      case 'boards': {
+        const b = (doc.boards ??= []).find((x) => x.id === row.slug);
+        if (b) b.name = row.name;
+        else doc.boards.push({ id: row.slug, name: row.name, nodes: [], edges: [] });
+        break;
+      }
+      case 'board_nodes': {
+        const b = (doc.boards ?? []).find((x) => x.id === row._board_slug);
+        if (b) putById(b.nodes ??= [], { id: row.slug, x: row.x, y: row.y, body: row.body, color: row.color });
+        break;
+      }
+      case 'board_edges': {
+        const b = (doc.boards ?? []).find((x) => x.id === row._board_slug);
+        if (b) putById(b.edges ??= [], { id: row.slug, from: row.from_node, to: row.to_node });
+        break;
       }
     }
-    return doc;
   }
 
-  function reconcilePending(doc) {
+  function overlayDelete(doc, op) {
+    const key = op.by.match(/=eq\.(.+)$/)?.[1];
+    if (!key) return;
+    if (op.table === 'events') doc.events = (doc.events ?? []).filter((e) => e.id !== key);
+    else if (op.table === 'tasks') doc.tasks = (doc.tasks ?? []).filter((t) => t.id !== key);
+    else if (op.table === 'members') doc.members = (doc.members ?? []).filter((m) => m.id !== key);
+    else if (op.table === 'kit') doc.kit = (doc.kit ?? []).filter((k) => k.id !== key);
+    else if (op.table === 'event_roles')
+      for (const e of doc.events ?? []) e.roles = (e.roles ?? []).filter((r) => r.id !== key);
+    else if (op.table === 'prep_items')
+      for (const e of doc.events ?? []) if (e.prep) e.prep = e.prep.filter((p) => p.id !== key);
+    else if (op.table === 'boards') doc.boards = (doc.boards ?? []).filter((b) => b.id !== key);
+    else if (op.table === 'board_nodes')
+      for (const b of doc.boards ?? []) b.nodes = (b.nodes ?? []).filter((n) => n.id !== key);
+    else if (op.table === 'board_edges')
+      for (const b of doc.boards ?? []) b.edges = (b.edges ?? []).filter((e) => e.id !== key);
+  }
+
+  function overlayPending(doc) {
     for (const op of readOutbox()) {
-      if (op.op !== 'delete') continue;
-      const key = op.by.match(/=eq\.(.+)$/)?.[1];
-      if (!key) continue;
-      if (op.table === 'events') doc.events = (doc.events ?? []).filter((e) => e.id !== key);
-      else if (op.table === 'tasks') doc.tasks = (doc.tasks ?? []).filter((t) => t.id !== key);
-      else if (op.table === 'members') doc.members = (doc.members ?? []).filter((m) => m.id !== key);
-      else if (op.table === 'kit') doc.kit = (doc.kit ?? []).filter((k) => k.id !== key);
-      else if (op.table === 'event_roles')
-        for (const e of doc.events ?? []) e.roles = (e.roles ?? []).filter((r) => r.id !== key);
-      else if (op.table === 'prep_items')
-        for (const e of doc.events ?? []) if (e.prep) e.prep = e.prep.filter((p) => p.id !== key);
-      else if (op.table === 'boards') doc.boards = (doc.boards ?? []).filter((b) => b.id !== key);
-      else if (op.table === 'board_nodes')
-        for (const b of doc.boards ?? []) b.nodes = (b.nodes ?? []).filter((n) => n.id !== key);
-      else if (op.table === 'board_edges')
-        for (const b of doc.boards ?? []) b.edges = (b.edges ?? []).filter((e) => e.id !== key);
+      if (op.op === 'delete') overlayDelete(doc, op);
+      else overlayUpsert(doc, op);
     }
     return doc;
   }
@@ -652,10 +725,10 @@ const Sync = (() => {
         // An empty database is not an empty year. Refusing to overwrite the
         // seed here is what makes it safe to point the page at a project
         // before anyone has run the seed script.
-        setStatus({ mode: 'empty', error: 'Database is reachable but empty — run npm run seed' });
+        setStatus({ mode: 'empty', error: 'Database is reachable but empty - run npm run seed' });
         return null;
       }
-      const doc = reinjectPending(reconcilePending(toDocument(rows)));
+      const doc = overlayPending(toDocument(rows));
       hooks.setDoc?.(doc);
       setStatus({ mode: 'synced', error: null, at: Date.now() });
       return doc;
@@ -676,8 +749,8 @@ const Sync = (() => {
     const ops = [];
     const index = (list) => new Map((list ?? []).map((x) => [x.id, x]));
 
-    // Members. The crew directory is editable — names, committee roles and what
-    // someone is trained on — and now deletable: a new committee clears the
+    // Members. The crew directory is editable - names, committee roles and what
+    // someone is trained on - and now deletable: a new committee clears the
     // previous year's roster and starts clean. So members diff like events and
     // tasks, deletion included. Removing a person nulls the roles they held
     // (member_id is ON DELETE SET NULL), which is exactly an unassigned slot.
@@ -693,7 +766,7 @@ const Sync = (() => {
       if (!mB.has(id)) ops.push({ table: 'members', op: 'delete', by: `slug=eq.${id}` });
     }
 
-    // Kit. Editable — details, usage notes, tips, photo — and deletable, for the
+    // Kit. Editable - details, usage notes, tips, photo - and deletable, for the
     // same reason as crew: the locker is a register a committee resets. Deleting a
     // piece cascades its bookings in the schema; here it is just gone from the list.
     const kA = index(before.kit), kB = index(after.kit);
@@ -746,7 +819,7 @@ const Sync = (() => {
     }
 
     // Prep items. Same shape as roles: keyed by uuid, resolved to their event
-    // through a slug lookup at flush time, and deletable — a prep step removed
+    // through a slug lookup at flush time, and deletable - a prep step removed
     // in the sheet has to be a real DELETE or it returns on the next pull.
     const prepOf = (doc) => {
       const m = new Map();
@@ -788,16 +861,20 @@ const Sync = (() => {
       if (!tB.has(id)) ops.push({ table: 'tasks', op: 'delete', by: `slug=eq.${id}` });
     }
 
-    // Board. Boards diff by slug like events; a rename is the only field-change
-    // worth a write, so the change test compares the name and lets sort_order
-    // ride along in the payload. Notes and links are keyed by their own slug and
-    // carry the owning board's slug, resolved to a uuid at flush. All deletable.
+    // Board. Boards diff by slug like events. Two things change a board's row: a
+    // rename, and a move (the tabs reorder by dragging). sort_order is the array
+    // index, so a change of position is worth a write just like a change of name -
+    // otherwise a reordered tab strip would snap back on the next pull. Notes and
+    // links are keyed by their own slug and carry the owning board's slug, resolved
+    // to a uuid at flush. All deletable.
     const boardsA = index(before.boards), boardsB = index(after.boards);
+    const posA = new Map((before.boards ?? []).map((b, i) => [b.id, i]));
     let bi = 0;
     for (const [id, b] of boardsB) {
       const was = boardsA.get(id);
       if (!was) ops.push({ table: 'boards', op: 'upsert', on: 'slug', row: boardRow(b, bi) });
-      else if (was.name !== b.name) ops.push({ table: 'boards', op: 'update', by: `slug=eq.${id}`, row: boardRow(b, bi) });
+      else if (was.name !== b.name || posA.get(id) !== bi)
+        ops.push({ table: 'boards', op: 'update', by: `slug=eq.${id}`, row: boardRow(b, bi) });
       bi++;
     }
     for (const id of boardsA.keys()) {
@@ -851,7 +928,7 @@ const Sync = (() => {
   async function resolve(kind, slug) {
     if (slug == null) return null;
     // A missing bucket must never throw here: a TypeError is not a 4xx, so it is
-    // treated as "the network" and wedges the whole outbox behind it forever —
+    // treated as "the network" and wedges the whole outbox behind it forever -
     // which is exactly how one queued board edit silently stopped every other
     // change from persisting. Materialise the bucket instead of trusting init().
     if (!idmap[kind]) idmap[kind] = new Map();
@@ -875,7 +952,7 @@ const Sync = (() => {
     }
     if (row._ref_slug !== undefined) {
       // A linked event that this client cannot resolve (deleted, or never seen)
-      // lands as null — the same state the on-delete-set-null FK would produce.
+      // lands as null - the same state the on-delete-set-null FK would produce.
       row.event_ref = await resolve('events', row._ref_slug);
       delete row._ref_slug;
     }
@@ -932,7 +1009,7 @@ const Sync = (() => {
   // One drain at a time, and re-read the queue around every await. Two problems
   // this closes, both silent edit-loss under rapid use:
   //   - Reentrancy: mutate() fires push()→drainOutbox() without awaiting, so two
-  //     quick edits used to run two drains at once — double-applying an op and
+  //     quick edits used to run two drains at once - double-applying an op and
   //     racing each other's writeOutbox(). A guard serialises them; a push that
   //     lands mid-drain re-runs the drain once at the end.
   //   - Stale write-back: the old loop held the queue in a local `ops` and wrote
@@ -951,16 +1028,16 @@ const Sync = (() => {
         try {
           await apply(ops[0]);
         } catch (err) {
-          // A write that will never succeed — a deleted parent, a rejected
-          // enum — must not wedge the queue behind it forever. Postgres says
+          // A write that will never succeed - a deleted parent, a rejected
+          // enum - must not wedge the queue behind it forever. Postgres says
           // which by returning 4xx; anything else is treated as the network.
           const fatal = /^4\d\d /.test(String(err.message));
           if (!fatal) { setStatus({ mode: 'offline', error: String(err.message) }); return; }
           // Dropping it silently is how a delete looks like it "did not persist":
           // gone locally, still in the database, back on the next pull. Say so.
-          setStatus({ error: `A change was rejected by the database (${ops[0].table} ${ops[0].op}) — reload to see the current state.` });
+          setStatus({ error: `A change was rejected by the database (${ops[0].table} ${ops[0].op}) - reload to see the current state.` });
         }
-        // Re-read before removing the head — a push may have appended while we
+        // Re-read before removing the head - a push may have appended while we
         // awaited apply(), and writing back a stale slice would drop it. Pushes
         // only ever append, so ops[0] is still the row we just handled.
         const cur = readOutbox();
@@ -1037,7 +1114,7 @@ const Sync = (() => {
             // pull itself reads everything, so this list only has to name the
             // tables edited collaboratively, not every table. kit and the board
             // were missing, so a piece of kit or a note added by someone else sat
-            // unseen until the 20s poll — on a shoot day that is too slow. The
+            // unseen until the 20s poll - on a shoot day that is too slow. The
             // board tables fire only once they are in the supabase_realtime
             // publication (schema.sql adds them; needs a db:push); subscribing
             // before that is accepted and simply silent, so this is safe to ship.
@@ -1135,7 +1212,8 @@ const Sync = (() => {
     init, push, pull, signIn, signUp, signOut, recover, updatePassword, drainOutbox, uploadKitPhoto,
     loadAccess, listAccounts, createInvite, setGrant,
     enabled, status: () => status, session: () => session,
-    // Exposed for scripts/e2e-sync.mjs, which drives the real database.
-    _diff: diff, _toDocument: toDocument,
+    // Exposed for scripts/e2e-sync.mjs, which drives the real database, and for
+    // scripts/verify_overlay.mjs, which unit-tests the pending-overlay in node.
+    _diff: diff, _toDocument: toDocument, _overlayPending: overlayPending,
   };
 })();

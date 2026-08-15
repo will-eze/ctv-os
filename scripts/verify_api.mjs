@@ -159,10 +159,18 @@ await check('the board is not readable without a grant', async () => {
   return 'boards hidden from anon and ungranted accounts';
 });
 
+await check('the access audit trail is private', async () => {
+  // The audit trail is admin-only, like the account tables — a stranger with the
+  // publishable key sees nothing.
+  const audit = await api('access_audit?select=id');
+  eq(Array.isArray(audit.json) ? audit.json.length : -1, 0, 'access_audit visible to anon');
+  return 'access_audit hidden from the publishable key';
+});
+
 // --- Writing ----------------------------------------------------------------
 console.log('\n  BUT NOT WRITE\n  ' + '-'.repeat(70));
 
-const target = 'ww-fri';
+const target = 'rugby-rec';
 const before = (await api(`events?slug=eq.${target}&select=title,venue`)).json[0];
 
 await check('an anonymous UPDATE changes nothing', async () => {
@@ -198,8 +206,31 @@ await check('an anonymous INSERT is refused outright', async () => {
   return `${r.status}, ${(r.json?.message ?? '').slice(0, 44)}`;
 });
 
+await check('a session without an edit grant still cannot write', async () => {
+  // The tightening: an account that is merely signed in — no edit grant on the
+  // calendar — changes nothing. This is the hole (any login could edit anything)
+  // now closed. The test account has no grant yet; it is given one just below.
+  const r = await api(`events?slug=eq.${target}`, {
+    token: TOKEN, method: 'PATCH', body: { title: 'UNGRANTED' }, prefer: 'return=representation',
+  });
+  eq(touched(r), 0, 'rows updated by an ungranted session');
+  const after = (await api(`events?slug=eq.${target}&select=title`)).json[0];
+  eq(after.title, before.title, 'title after an ungranted write');
+  return 'a login alone is not enough — an edit grant is required';
+});
+
+// Grant the throwaway account edit on the calendar, so the write tests below
+// exercise a real editor. The service key bypasses RLS to plant the grant; it is
+// removed with the account (access_grants cascades on user delete).
+if (made?.id) {
+  await api('access_grants?on_conflict=user_id,module', {
+    key: SEC, method: 'POST', prefer: 'resolution=merge-duplicates',
+    body: [{ user_id: made.id, module: 'events', can_view: true, can_edit: true }],
+  });
+}
+
 // --- With a session ---------------------------------------------------------
-console.log('\n  A SIGNED-IN EDITOR CAN\n  ' + '-'.repeat(70));
+console.log('\n  A GRANTED EDITOR CAN\n  ' + '-'.repeat(70));
 
 await check('signing in with the publishable key works', async () => {
   if (!TOKEN) throw new Error(`no access token: ${JSON.stringify(signIn).slice(0, 120)}`);
@@ -262,6 +293,25 @@ await check('an event can be created and deleted again', async () => {
   });
   eq(touched(gone), 1, 'rows deleted');
   return 'created, then deleted — the two tables that allow it';
+});
+
+await check('a private event is hidden from the publishable key, shown to a session', async () => {
+  // is_private keeps an event off the public calendar: the anon key cannot see
+  // it, a signed-in session can. Planted and removed with the secret key.
+  const slug = `verify-priv-${Date.now().toString(36)}`;
+  await api('events', {
+    key: SEC, method: 'POST',
+    body: { slug, title: 'Private verification event', date: '2027-06-02', strand: 'admin', is_private: true },
+  });
+  try {
+    const anon = await api(`events?slug=eq.${slug}&select=slug`);
+    eq(touched(anon), 0, 'private event visible to anon');
+    const authed = await api(`events?slug=eq.${slug}&select=slug`, { token: TOKEN });
+    eq(touched(authed), 1, 'private event visible to a session');
+    return 'anon sees nothing; a signed-in session sees it';
+  } finally {
+    await api(`events?slug=eq.${slug}`, { key: SEC, method: 'DELETE' });
+  }
 });
 
 await check('a kit booking cannot be deleted, even with a session', async () => {

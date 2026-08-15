@@ -434,17 +434,33 @@ await check('the public calendar stays readable without a session', async () => 
   // Shutting anon out of writes must not shut the station out of looking at the
   // year. The public tables — events and everything the calendar hangs off —
   // read with the publishable key. The private modules (crew, tasks, board), the
-  // account tables and incidents are the deliberate exceptions.
+  // account tables, the audit trail and incidents are the deliberate exceptions.
   const gated = new Set(['incidents', 'members', 'tasks',
     'boards', 'board_nodes', 'board_edges',
-    'profiles', 'access_grants', 'invites', 'admins']);
+    'profiles', 'access_grants', 'invites', 'admins', 'access_audit']);
   const { rows } = await db.query(
     `select tablename, qual from pg_policies
       where schemaname = 'public' and cmd = 'SELECT'`
   );
-  const shut = rows.filter((r) => !gated.has(r.tablename) && r.qual !== 'true');
+  // events is conditionally public: every row bar the private ones (see the
+  // private-event check below), so its qual is not the bare 'true' but is still
+  // open to anon for public events. Exempt exactly that shape.
+  const shut = rows.filter((r) => !gated.has(r.tablename) && r.qual !== 'true'
+    && !(r.tablename === 'events' && /is_private/.test(r.qual)));
   eq(shut.map((r) => r.tablename), [], 'public tables anon cannot read');
   return `${rows.filter((r) => !gated.has(r.tablename)).length} public tables readable with the key`;
+});
+
+await check('a private event is hidden from the anonymous key', async () => {
+  // is_private events read only with a session; public events read for anyone.
+  const { rows } = await db.query(
+    `select qual from pg_policies where tablename = 'events' and cmd = 'SELECT'`
+  );
+  if (!rows.length) throw new Error('no SELECT policy on events');
+  if (!/is_private/.test(rows[0].qual) || !/authenticated/.test(rows[0].qual)) {
+    throw new Error(`events read policy is not private-aware: ${rows[0].qual}`);
+  }
+  return 'private events need a session; public events stay open';
 });
 
 await check('crew, the to-do list and the board are private, gated by a grant', async () => {
