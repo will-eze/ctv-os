@@ -641,6 +641,32 @@ await check('a coverage tag can be set from the sheet and shows on the badge', a
   return 'green set → badge tinted and named in words → cleared';
 });
 
+await check('a day cell lists its events in chronological order', async () => {
+  // The month grid used to render a day in DATA.events array order, so an edit
+  // (tagging an event) that rewrote the row - and moved it in the array on the
+  // way back - silently reshuffled the day out of time order. The cell now sorts
+  // by time, matching the schedule. Expand the busiest day and read the times.
+  await goto('calendar');
+  await sheetGone();
+  await gotoMonth(2026, 8);                         // September — the freshers pile-up
+  // Expand the day with the most badges so every event is shown, not just three.
+  const key = await page.evaluate(() => {
+    const cells = [...document.querySelectorAll('.day[data-day]:not(.is-outside)')];
+    let best = null, n = -1;
+    for (const c of cells) {
+      const evs = c.querySelectorAll('.ev').length + (c.querySelector('.ev-more') ? 99 : 0);
+      if (evs > n) { n = evs; best = c.dataset.day; }
+    }
+    document.querySelector(`.day[data-day="${best}"] .ev-more`)?.click();
+    return best;
+  });
+  const times = await page.$$eval(`.day[data-day="${key}"] .ev-time`, (els) => els.map((e) => e.textContent.trim()));
+  if (times.length < 2) throw new Error(`expected a busy day, got ${times.length} timed events`);
+  const sorted = [...times].sort((a, b) => a.localeCompare(b));
+  if (times.join(',') !== sorted.join(',')) throw new Error(`day ${key} out of order: ${times.join(' ')}`);
+  return `day ${key}: ${times.length} events in time order`;
+});
+
 await check('select mode tags several events at once, undoably', async () => {
   await goto('calendar');
   await sheetGone();
@@ -1611,6 +1637,41 @@ await check('boards can be added, dragged to reorder, and a tap still switches',
   await page.waitForFunction((id) =>
     document.querySelector('.board-tab[aria-current="true"]')?.dataset.board === id, {}, target);
   return 'reorder persists to DATA.boards; a no-move tap still switches';
+});
+
+await check('a board tab renames by double-click, even when it is not active', async () => {
+  // Switching a board used to renderShell() (root.innerHTML = ...), which
+  // destroyed the tab span the clicks landed on; the trailing dblclick then hit
+  // a detached node and rename silently did nothing. Rename the SECOND tab (not
+  // the active one) so the click-switch path is exercised, then commit on blur.
+  await goto('board');
+  const ids = await page.$$eval('.board-tab', (els) => els.map((t) => t.dataset.board));
+  const tid = ids[1];
+  await page.evaluate((id) => {
+    const nm = document.querySelector(`.board-tab[data-board="${id}"] .board-tab-name`);
+    const r = nm.getBoundingClientRect();
+    const o = () => ({ bubbles: true, clientX: r.x + 4, clientY: r.y + 4, button: 0, pointerId: 3, pointerType: 'mouse' });
+    // Two full click cycles, then the dblclick that opens the editor.
+    for (let i = 0; i < 2; i++) {
+      nm.dispatchEvent(new PointerEvent('pointerdown', o()));
+      window.dispatchEvent(new PointerEvent('pointerup', o()));
+      nm.dispatchEvent(new MouseEvent('click', o()));
+    }
+    nm.dispatchEvent(new MouseEvent('dblclick', o()));
+  }, tid);
+  // The span the pointer hit is now editable and in the document.
+  await page.waitForFunction((id) => {
+    const nm = document.querySelector(`.board-tab[data-board="${id}"] .board-tab-name`);
+    return nm && nm.isContentEditable && document.activeElement === nm;
+  }, {}, tid);
+  await page.evaluate((id) => {
+    const nm = document.querySelector(`.board-tab[data-board="${id}"] .board-tab-name`);
+    nm.textContent = 'Season Two';
+    nm.blur();                                       // commits on focusout
+  }, tid);
+  await page.waitForFunction((id) =>
+    (JSON.parse(localStorage.getItem('ctvos.year.v2')).boards.find((b) => b.id === id) || {}).name === 'Season Two', {}, tid);
+  return 'double-click opens the editor on a live node; blur commits the new name';
 });
 
 console.log('\n  ACCOUNTS\n  ' + '-'.repeat(70));

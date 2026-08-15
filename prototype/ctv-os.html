@@ -4203,7 +4203,13 @@ function renderCalendar() {
     for (const day of week) {
     const key = iso(day);
     const outside = day.getMonth() !== cur.m;
-    const evs = DATA.events.filter((e) => e.date === key && pass(e));
+    // Sorted by time, not left in DATA.events array order: an edit (tagging an
+    // event, say) rewrites its row and the pull can bring it back in a different
+    // array position, which would silently reshuffle the day. Time order is the
+    // running order the schedule shows, so the two surfaces agree.
+    const evs = DATA.events
+      .filter((e) => e.date === key && pass(e))
+      .sort((a, b) => (a.start_time || a.call_time || '').localeCompare(b.start_time || b.call_time || ''));
     // A cell shows at most three badges; an expanded day shows them all. A real
     // freshers week piles events onto one date, and without the cap they overflow
     // the cell silently. Several days can be expanded at once (expandedDays is a
@@ -7278,7 +7284,19 @@ const Board = (() => {
   }
 
   // --- Boards (switch is viewport; add/remove/rename/reorder are content) ----
-  function switchBoard(id) { ui.activeId = id; saveUI(); sel = null; renderShell(); }
+  function switchBoard(id) {
+    if (id === ui.activeId) return;
+    ui.activeId = id; saveUI(); sel = null;
+    // Update the active tab in place rather than rebuilding the strip. A full
+    // renderShell() replaces root.innerHTML, which destroys the tab-name span
+    // the clicks landed on - and since a switch fires on the first click of a
+    // double-click, the following dblclick would then hit a detached node and
+    // rename would silently do nothing. Only the graph and the highlight change.
+    root.querySelectorAll('.board-tab').forEach((t) =>
+      t.setAttribute('aria-current', String(t.dataset.board === id)));
+    applyCam();
+    paintGraph();
+  }
   // Dragging a tab reorders the strip. tabDrag holds the gesture; tabDragged
   // survives one tick so the click that a release also fires does not switch to
   // the tab that was just dropped. Order is content (DATA.boards is the order),
