@@ -143,16 +143,57 @@ check('the CSP names the database the page was built for',
 check('Inter actually rendered', await page.evaluate(() => document.fonts.check('700 32px Inter')),
   await page.evaluate(() => getComputedStyle(document.body).fontFamily.split(',')[0]));
 
-const shell = await page.evaluate(() => ({
+// Signed out, offline, on the DEPLOYED build: the access model still applies.
+// This is the security boundary. A visitor with no signal (or one who blocks the
+// host to try to get past the gate) must NOT fall through to the whole app the
+// way "offline = show everything" used to let them. They get the public calendar
+// and nothing else, read-only, and the private modules never even appear in the
+// nav. The .view SECTIONS all exist in the DOM either way — they are hidden; it
+// is the .nav-item list the gate controls, so that is what is asserted.
+const out = await page.evaluate(() => ({
   views: document.querySelectorAll('.view').length,
-  nav: document.querySelectorAll('.nav-item').length,
+  nav: [...document.querySelectorAll('.nav-item')].map((b) => b.dataset.view),
   days: document.querySelectorAll('.day[data-day]').length,
+  readonly: document.body.classList.contains('is-readonly'),
 }));
-check('the app rendered', shell.views === 7 && shell.nav === 7,
-  `${shell.views} views, ${shell.nav} nav items`);
+check('the public page rendered offline', out.views === 7 && out.days > 0,
+  `${out.views} view sections, ${out.days} days`);
+check('signed out + offline is calendar-only', out.nav.length === 1 && out.nav[0] === 'calendar',
+  `nav: ${out.nav.join(', ') || 'none'}`);
+check('no private module in the nav signed out',
+  !out.nav.some((v) => ['crew', 'tasks', 'board'].includes(v)),
+  'crew / to-do / board absent');
+check('signed out is read-only', out.readonly, out.readonly ? 'body.is-readonly set' : 'NOT read-only');
+
+// The field case the offline tolerance exists FOR: a crew member who signed in
+// earlier and then lost signal. A stored session plus the per-user access cache
+// — exactly what the app writes to localStorage after a successful sign-in —
+// must restore their modules and keep the page fully editable offline, without
+// the database, which stays blocked at DNS for this whole run. isAdmin in the
+// cache stands in for a fully-granted account (the admin sees every module).
+const UID = 'field-crew-test-uid';
+await page.evaluate((uid) => {
+  localStorage.setItem('ctvos.session.v1', JSON.stringify({
+    access_token: 'offline.test.token', refresh_token: 'offline.test.refresh',
+    expires_at: Date.now() + 3600 * 1000, user: { id: uid, email: 'crew@test' },
+  }));
+  localStorage.setItem('ctvos.access.v1', JSON.stringify({ uid, isAdmin: true, grants: {} }));
+}, UID);
+await page.reload({ waitUntil: 'networkidle0' });
+await new Promise((r) => setTimeout(r, 400));
+
+const signedIn = await page.evaluate(() => ({
+  nav: document.querySelectorAll('.nav-item').length,
+  readonly: document.body.classList.contains('is-readonly'),
+}));
+check('a signed-in crew member sees the whole app offline', signedIn.nav === 7,
+  `${signedIn.nav} nav items from the cached grants`);
+check('the field case stays editable offline', !signedIn.readonly,
+  signedIn.readonly ? 'unexpectedly read-only' : 'editable');
 
 // Inline handlers are the other common CSP casualty: the page looks perfect and
-// nothing responds. Drive a real mutation through to localStorage.
+// nothing responds. Drive a real mutation through to localStorage — offline and
+// signed in, the field crew's normal working state.
 const mutated = await page.evaluate(() => {
   document.querySelector('[data-view="tasks"]').click();
   const box = document.querySelector('[data-task]');

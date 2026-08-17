@@ -67,6 +67,27 @@ page.on('console', (m) => {
 
 await page.goto(url, { waitUntil: 'networkidle0' });
 
+// The field case this suite exercises is a crew member who signed in and then
+// lost signal — NOT an anonymous visitor. On a build that carries the Supabase
+// config (this machine has .env.local, so build:prototype inlines it), the
+// access model applies even offline: signed out is calendar-only and read-only,
+// and the private modules drop out of the nav. So seed the session and the
+// per-user access cache the app itself writes on sign-in — an admin, so every
+// module is visible — and reload so boot restores them. On a no-config build (a
+// fresh clone) Sync is disabled and this is inert; everything shows regardless.
+const SEED_UID = 'e2e-admin-uid';
+const seedSignedIn = async () => {
+  await page.evaluate((uid) => {
+    localStorage.setItem('ctvos.session.v1', JSON.stringify({
+      access_token: 'e2e.token', refresh_token: 'e2e.refresh',
+      expires_at: Date.now() + 3600e3, user: { id: uid, email: 'admin@e2e' },
+    }));
+    localStorage.setItem('ctvos.access.v1', JSON.stringify({ uid, isAdmin: true, grants: {} }));
+  }, SEED_UID);
+  await page.reload({ waitUntil: 'networkidle0' });
+};
+await seedSignedIn();
+
 // Nobody is assigned to events by default now, and the crew-gap signal — the
 // open-role counts on the nav, the red badges, the Missing Requirements panels —
 // is off by default, behind a setting. This suite is largely about that signal,
@@ -1676,31 +1697,54 @@ await check('a board tab renames by double-click, even when it is not active', a
 
 console.log('\n  ACCOUNTS\n  ' + '-'.repeat(70));
 
-await check('the account control opens a menu and the sign-in dialog', async () => {
-  // Offline (this suite's world) the app stays fully usable and the account
-  // button offers sign-in. The read-only gate and private-module hiding only
-  // engage against the live database, which npm run e2e:sync exercises.
+await check('signed out on a configured build is calendar-only and read-only', async () => {
+  // The security boundary this change adds. On a build that carries the Supabase
+  // config, an anonymous client — online OR offline — gets the public calendar
+  // and nothing else, read-only, with the private modules absent from the nav.
+  // "Offline = show everything" used to let a signed-out visitor drop their
+  // network and see the whole app; it no longer does. (On a no-config build Sync
+  // is disabled and everything shows; there is no dbHost to block, so the
+  // calendar-only assertion is scoped to the configured case.) The account
+  // button still offers sign-in and the dialog opens.
   await goto('calendar');
   await sheetGone();
+  await page.evaluate(() => {
+    localStorage.removeItem('ctvos.session.v1');
+    localStorage.removeItem('ctvos.access.v1');
+  });
+  await page.reload({ waitUntil: 'networkidle0' });
+  const state = await page.evaluate(() => ({
+    enabled: typeof Sync !== 'undefined' && Sync.enabled(),
+    nav: [...document.querySelectorAll('.nav-item')].map((b) => b.dataset.view),
+    readonly: document.body.classList.contains('is-readonly'),
+  }));
+  if (state.enabled) {
+    eq(state.nav, ['calendar'], 'nav is calendar-only signed out');
+    eq(state.readonly, true, 'read-only signed out');
+  }
   if (await page.$eval('#account', (el) => el.hidden)) throw new Error('account button hidden');
   await page.click('#account');
   const menu = await page.$eval('#acct-menu', (el) => (el.hidden ? '' : el.textContent));
   if (!/sign in/i.test(menu)) throw new Error('menu did not offer sign in');
   await page.click('#acct-signin');
   await page.waitForSelector('#auth:not([hidden])');
-  const title = await page.$eval('#auth-h', (el) => el.textContent.trim());
   await page.evaluate(() => document.getElementById('auth-x').click());
-  return `account menu → "${title}"`;
+  await seedSignedIn();   // restore the field crew's session for the rest of the suite
+  return state.enabled ? `signed out → nav: ${state.nav.join(', ')}, read-only` : 'no-config build: gate inert';
 });
 
-await check('offline stays editable — the field case, not read-only', async () => {
-  // The read-only gate is for an anonymous visitor on the live site, never for a
-  // phone with no signal: those edits queue. Prove editing still works here.
+await check('a signed-in crew member stays editable offline — the field case', async () => {
+  // The field case the offline tolerance exists FOR: signed in earlier, now no
+  // signal at the venue. The stored session and cached grants keep the whole app
+  // visible and editable — edits queue in the outbox and send on the next write.
   await goto('calendar');
   await sheetGone();
-  const readonly = await page.evaluate(() => document.body.classList.contains('is-readonly'));
-  eq(readonly, false, 'not read-only while offline');
-  return 'offline is a working state, not a locked one';
+  const state = await page.evaluate(() => ({
+    readonly: document.body.classList.contains('is-readonly'),
+    nav: document.querySelectorAll('.nav-item').length,
+  }));
+  eq(state.readonly, false, 'not read-only while signed in offline');
+  return `${state.nav} nav items, editable — offline is a working state, not a locked one`;
 });
 
 console.log('\n  PHONE\n  ' + '-'.repeat(70));

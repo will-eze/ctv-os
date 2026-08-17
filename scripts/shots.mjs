@@ -78,8 +78,27 @@ const foreign = (u) =>
   !u.startsWith('file:') && !u.startsWith('data:')
   && !(allowedOrigin && new URL(u).host === allowedOrigin);
 
+// On a build that carries the Supabase config (this machine has .env.local, so
+// build:prototype inlines it), the access model applies even offline: a signed-
+// out client is calendar-only, so the crew / kit / board screens would photograph
+// as an empty redirect. These shots are of the app a signed-in crew member sees,
+// so every page is seeded — before its own scripts run — with the session and
+// per-user access cache the app writes on sign-in (an admin, so every module is
+// visible). On a no-config build there is no gate and this is simply inert.
+async function seedSession(page) {
+  await page.evaluateOnNewDocument(() => {
+    const uid = 'shots-admin-uid';
+    localStorage.setItem('ctvos.session.v1', JSON.stringify({
+      access_token: 'shots.token', refresh_token: 'shots.refresh',
+      expires_at: Date.now() + 3600e3, user: { id: uid, email: 'admin@shots' },
+    }));
+    localStorage.setItem('ctvos.access.v1', JSON.stringify({ uid, isAdmin: true, grants: {} }));
+  });
+}
+
 async function shot(name, { width, height, prep }) {
   const page = await browser.newPage();
+  await seedSession(page);
   await page.setViewport({ width, height, deviceScaleFactor: 2 });
   const external = [];
   page.on('request', (r) => { if (foreign(r.url())) external.push(r.url()); });
@@ -134,6 +153,7 @@ await (await shot('10-phone-schedule', {
 
 // --- Audit ----------------------------------------------------------------
 const page = await browser.newPage();
+await seedSession(page);
 await page.setViewport({ width: 1440, height: 1000 });
 await page.goto(url, { waitUntil: 'networkidle0' });
 

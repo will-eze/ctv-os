@@ -1945,6 +1945,14 @@ const Sync = (() => {
 
   const SESSION_KEY = 'ctvos.session.v1';
   const OUTBOX_KEY = 'ctvos.outbox.v1';
+  // The last access decision the server gave THIS user - the admin flag and the
+  // per-module grants - kept so a cold boot with no signal can still show a
+  // signed-in crew member exactly the modules they were granted, rather than
+  // hiding everything until the network resolves. Keyed by user id and only
+  // ever restored when the stored session's id matches, so it can never hand
+  // one account another's grants. It stores grant BOOLEANS, not data; the real
+  // boundary is RLS on the server, which this never relaxes.
+  const ACCESS_KEY = 'ctvos.access.v1';
   const POLL_MS = 20000;
 
   // Tables pulled to build the document. Order matters: societies and members
@@ -2042,7 +2050,7 @@ const Sync = (() => {
       else localStorage.removeItem(SESSION_KEY);
     } catch { /* private mode: the session lasts as long as the tab */ }
     setStatus({ signedIn: Boolean(s), user: s?.user?.email ?? null });
-    if (!s) setStatus({ isAdmin: false, grants: {}, account: null });
+    if (!s) { setStatus({ isAdmin: false, grants: {}, account: null }); clearAccessCache(); }
     scheduleRefresh();
     // The socket carries the token for RLS, so a sign-in or sign-out has to
     // re-handshake rather than keep talking with the old identity.
@@ -2160,6 +2168,27 @@ const Sync = (() => {
   // What the signed-in account is allowed to see and change - the admin flag and
   // the per-module grants. Read straight after a pull and folded into the status
   // the interface renders its gates from.
+  function saveAccessCache(uid, isAdmin, grants) {
+    try { localStorage.setItem(ACCESS_KEY, JSON.stringify({ uid, isAdmin, grants })); }
+    catch { /* private mode: no cache, offline cold boot falls back to public */ }
+  }
+  function clearAccessCache() {
+    try { localStorage.removeItem(ACCESS_KEY); } catch { /* nothing to clear */ }
+  }
+  // Restore the cached decision only for the account that is actually signed in.
+  // Returns true if it seeded the status, so a cold offline boot shows the right
+  // modules before (or without) the network resolving.
+  function restoreAccessCache() {
+    const uid = session?.user?.id;
+    if (!uid) return false;
+    try {
+      const c = JSON.parse(localStorage.getItem(ACCESS_KEY) || 'null');
+      if (!c || c.uid !== uid) return false;
+      setStatus({ isAdmin: Boolean(c.isAdmin), grants: c.grants || {} });
+      return true;
+    } catch { return false; }
+  }
+
   async function loadAccess() {
     if (!session) { setStatus({ isAdmin: false, grants: {}, account: null }); return; }
     const uid = session.user?.id;
@@ -2170,12 +2199,18 @@ const Sync = (() => {
       ]);
       const gmap = {};
       for (const g of grants) gmap[g.module] = { view: g.can_view, edit: g.can_edit };
+      const isAdmin = Boolean(prof[0]?.is_admin);
       setStatus({
-        isAdmin: Boolean(prof[0]?.is_admin), grants: gmap,
+        isAdmin, grants: gmap,
         account: prof[0]?.email ?? session.user?.email ?? null,
       });
+      saveAccessCache(uid, isAdmin, gmap);   // so an offline cold boot can restore it
     } catch {
-      setStatus({ isAdmin: false, grants: {}, account: session.user?.email ?? null });
+      // Network resolve failed (offline). Keep whatever the cache already
+      // restored rather than blanking a signed-in user's grants to nothing.
+      if (!restoreAccessCache()) {
+        setStatus({ isAdmin: false, grants: {}, account: session.user?.email ?? null });
+      }
     }
   }
 
@@ -3082,6 +3117,10 @@ const Sync = (() => {
     const recovery = adoptUrlSession();   // a reset link overrides any saved session
     setStatus({ signedIn: Boolean(session), user: session?.user?.email ?? null,
       pending: readOutbox().length, recovery });
+    // Seed grants from the per-user cache immediately, so a cold boot with no
+    // signal shows a signed-in crew member their granted modules from the first
+    // paint instead of hiding them until loadAccess() can reach the network.
+    if (session) restoreAccessCache();
     scheduleRefresh();
     if (session && session.expires_at < Date.now()) await refresh();
     await pull();
@@ -3209,7 +3248,17 @@ const VIEW_MODULE = {
   calendar: 'events', schedule: 'events', tasks: 'tasks',
   crew: 'crew', kit: 'kit', board: 'board', settings: 'settings',
 };
-const connectedOnline = () => Sync.enabled() && SYNC.mode === 'synced';
+// Whether this is a build that talks to the live database at all - i.e. it
+// carries the Supabase config, as the deployed app does. A no-config build (a
+// fresh clone with no .env.local) is the local-only prototype and is exempt.
+// This, NOT the live socket state, is what gates access:
+// a deployed client is bound by the access model whether or not the socket is
+// up this instant. Reading "socket down" as "offline field case, show
+// everything" was the bug - it let a signed-out visitor drop their network and
+// see the private modules, and it flashed the whole nav on every cold load
+// before the first pull landed. `SYNC.mode === 'synced'` is still used directly
+// where "are we live right now" genuinely matters (the sync status pill).
+const deployedBuild = () => Sync.enabled();
 
 // A curated view link - ?view=calendar,kit - narrows the nav to the named pages,
 // for sharing e.g. just the calendar with the SU manager. It is presentation
@@ -3224,7 +3273,7 @@ let viewScope = null;
 const PUBLIC_VIEWS = new Set(['calendar']);
 
 function canView(mod) {
-  if (!connectedOnline()) return true;
+  if (!deployedBuild()) return true;   // local file:// prototype: the whole app
   if (!PRIVATE_MODULES.has(mod)) return true;
   if (!SYNC.signedIn) return false;
   return Boolean(SYNC.isAdmin) || Boolean(SYNC.grants?.[mod]?.view);
@@ -3235,9 +3284,12 @@ function canView(mod) {
 // visitor gets only the public views; a signed-in one gets whatever their module
 // grants allow. Reads of the calendar's data stay public - this gates the nav.
 function viewVisible(id) {
-  if (viewScope) return viewScope.has(id);
-  if (!connectedOnline()) return true;
-  if (!SYNC.signedIn) return PUBLIC_VIEWS.has(id);
+  // A curated ?view= link narrows the nav, but never past the access model: a
+  // private module still has to clear canView(), so no share link (even a
+  // tampered one, or a future addition to SHAREABLE_VIEWS) can surface one.
+  if (viewScope) return viewScope.has(id) && canView(VIEW_MODULE[id]);
+  if (!deployedBuild()) return true;     // local build shows everything (e2e)
+  if (!SYNC.signedIn) return PUBLIC_VIEWS.has(id);  // signed out, deployed: calendar only
   return canView(VIEW_MODULE[id]);
 }
 
@@ -3245,8 +3297,8 @@ function viewVisible(id) {
 // enforced by RLS and by hiding modules a user cannot see, so the interface
 // gate is the coarse one: offline is editable (queued), online needs a session.
 function canEdit() {
-  if (!connectedOnline()) return true;
-  return Boolean(SYNC.signedIn);
+  if (!deployedBuild()) return true;   // local build: editable, queued (the field case + e2e)
+  return Boolean(SYNC.signedIn);       // deployed: needs a session, connected or not
 }
 // The first view this client can open - home normally, but the one curated/public
 // page for a signed-out or ?view= visitor who cannot open the calendar.
@@ -6593,7 +6645,7 @@ function renderSync(s) {
 // nav (private modules drop out), and a redirect home if the current screen is
 // no longer allowed.
 function applyGates() {
-  document.body.classList.toggle('is-readonly', connectedOnline() && !SYNC.signedIn);
+  document.body.classList.toggle('is-readonly', deployedBuild() && !SYNC.signedIn);
   renderAccount();
   renderNav();
   if (!viewVisible(view)) setView(firstAllowedView());

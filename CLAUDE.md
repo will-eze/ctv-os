@@ -441,6 +441,63 @@ A pre-push review pass. Do not revert without asking.
   return → **76 checks**. `verify` clean (38 contrast, 8 overlay, 31 schema, 10
   remote, 11 deploy, still 7 views); build regenerated (`ctv-os.html`, `dist/`).
 
+### 0.10 Access is tied to identity, not to connection — APPLIED (2026-08-17)
+
+On the manager's report of two things: a `?view=crew` link "granting access",
+and the whole nav flashing on every load before it settles — which reveals the
+private pages and reads as insecure. The real fix is one principle: **access is
+gated by a signed-in identity, never by whether the socket happens to be up.**
+This **reverses the "offline shows everything / the field case is not read-only"
+rule of §0.1 and §0.6** — do not reinstate it without asking. The manager chose
+this trade directly (the field crew sign in; a signed-out client is calendar-only
+even offline).
+
+- **The `?view=crew` report was already safe, and is now safe twice over.** The
+  curated-link parser only ever admitted the *public* pages (`SHAREABLE_VIEWS` =
+  calendar/schedule/kit), so a tampered `?view=crew` was already dropped; and the
+  private modules resolve through `can_view()` grants + server RLS regardless.
+  `viewVisible` now also passes any `viewScope` entry through `canView()`, so no
+  share link can surface a private module even if `SHAREABLE_VIEWS` ever grows.
+- **The nav no longer flashes, and "offline" is no longer a bypass.** The gate
+  keyed on `connectedOnline()` (`SYNC.mode === 'synced'`), so from first paint
+  until the first pull landed — and *permanently* for anyone who simply dropped
+  their network — the app read "socket down → offline field case → show
+  everything", flashing all seven items and letting a signed-out visitor see the
+  private-module shells (inlined **seed** data; live private data is never inlined
+  and stays behind RLS). The discriminator is now **`deployedBuild()` =
+  `Sync.enabled()`** — *does this build carry the Supabase config* — not the live
+  socket state. On a configured build a **signed-out client is Calendar-only and
+  read-only, connected or not**, from the first paint (no flash). A **no-config
+  build** (fresh clone, no `.env.local`) is the local prototype and still shows
+  the whole app. `canView`, `viewVisible`, `canEdit` and `body.is-readonly` all
+  moved to this basis.
+- **The offline field case is preserved for *authenticated* crew, via a per-user
+  grant cache.** `sync.js` writes the resolved `{isAdmin, grants}` to
+  `localStorage` (`ctvos.access.v1`), **keyed by user id and only ever restored
+  when the stored session's id matches** — so a cold boot with no signal shows a
+  signed-in crew member exactly the modules they were granted (never
+  "everything"), and one account can never inherit another's grants. Cleared on
+  sign-out. It stores grant booleans, not data; **RLS on the server is still the
+  real boundary**, which this never relaxes.
+- **Tests.** The suites had encoded the old model (they ran *signed out* against a
+  configured build and asserted the whole app was visible and editable offline),
+  so they were updated to the field case they actually represent — a crew member
+  who signed in, then lost signal. `e2e` and `shots` seed the session + access
+  cache the app itself writes on sign-in (an admin, so every module shows) before
+  boot; on a no-config build the seed is inert. `e2e`'s two chrome checks were
+  rewritten: one now asserts **signed-out + offline is Calendar-only and
+  read-only** with the private modules absent (the new boundary), the other that a
+  **signed-in** crew member stays editable offline (→ **78 checks**).
+  `verify:deploy` now proves both halves directly — signed-out offline is
+  calendar-only/read-only/no private nav, and a seeded signed-in session restores
+  the full app and a persisted edit offline (→ **16 deploy checks**). `verify`
+  clean (38 contrast, 8 overlay, 31 schema, 16 deploy); `shots` audit clean.
+
+**Live steps: none.** This is frontend gating + a client-side cache; no schema
+change, nothing to push. The server-side RLS that is the real enforcement was
+already in place (§0.5/§0.6). Deploy is code-only: `npm run build:prototype` →
+`vercel deploy --prod` (per §0.9).
+
 ### 1. The Stitch redesign — APPLIED
 
 The user rejected the original visual design ("I don't like the design, use

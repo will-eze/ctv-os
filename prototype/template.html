@@ -1990,7 +1990,17 @@ const VIEW_MODULE = {
   calendar: 'events', schedule: 'events', tasks: 'tasks',
   crew: 'crew', kit: 'kit', board: 'board', settings: 'settings',
 };
-const connectedOnline = () => Sync.enabled() && SYNC.mode === 'synced';
+// Whether this is a build that talks to the live database at all - i.e. it
+// carries the Supabase config, as the deployed app does. A no-config build (a
+// fresh clone with no .env.local) is the local-only prototype and is exempt.
+// This, NOT the live socket state, is what gates access:
+// a deployed client is bound by the access model whether or not the socket is
+// up this instant. Reading "socket down" as "offline field case, show
+// everything" was the bug - it let a signed-out visitor drop their network and
+// see the private modules, and it flashed the whole nav on every cold load
+// before the first pull landed. `SYNC.mode === 'synced'` is still used directly
+// where "are we live right now" genuinely matters (the sync status pill).
+const deployedBuild = () => Sync.enabled();
 
 // A curated view link - ?view=calendar,kit - narrows the nav to the named pages,
 // for sharing e.g. just the calendar with the SU manager. It is presentation
@@ -2005,7 +2015,7 @@ let viewScope = null;
 const PUBLIC_VIEWS = new Set(['calendar']);
 
 function canView(mod) {
-  if (!connectedOnline()) return true;
+  if (!deployedBuild()) return true;   // local file:// prototype: the whole app
   if (!PRIVATE_MODULES.has(mod)) return true;
   if (!SYNC.signedIn) return false;
   return Boolean(SYNC.isAdmin) || Boolean(SYNC.grants?.[mod]?.view);
@@ -2016,9 +2026,12 @@ function canView(mod) {
 // visitor gets only the public views; a signed-in one gets whatever their module
 // grants allow. Reads of the calendar's data stay public - this gates the nav.
 function viewVisible(id) {
-  if (viewScope) return viewScope.has(id);
-  if (!connectedOnline()) return true;
-  if (!SYNC.signedIn) return PUBLIC_VIEWS.has(id);
+  // A curated ?view= link narrows the nav, but never past the access model: a
+  // private module still has to clear canView(), so no share link (even a
+  // tampered one, or a future addition to SHAREABLE_VIEWS) can surface one.
+  if (viewScope) return viewScope.has(id) && canView(VIEW_MODULE[id]);
+  if (!deployedBuild()) return true;     // local build shows everything (e2e)
+  if (!SYNC.signedIn) return PUBLIC_VIEWS.has(id);  // signed out, deployed: calendar only
   return canView(VIEW_MODULE[id]);
 }
 
@@ -2026,8 +2039,8 @@ function viewVisible(id) {
 // enforced by RLS and by hiding modules a user cannot see, so the interface
 // gate is the coarse one: offline is editable (queued), online needs a session.
 function canEdit() {
-  if (!connectedOnline()) return true;
-  return Boolean(SYNC.signedIn);
+  if (!deployedBuild()) return true;   // local build: editable, queued (the field case + e2e)
+  return Boolean(SYNC.signedIn);       // deployed: needs a session, connected or not
 }
 // The first view this client can open - home normally, but the one curated/public
 // page for a signed-out or ?view= visitor who cannot open the calendar.
@@ -5374,7 +5387,7 @@ function renderSync(s) {
 // nav (private modules drop out), and a redirect home if the current screen is
 // no longer allowed.
 function applyGates() {
-  document.body.classList.toggle('is-readonly', connectedOnline() && !SYNC.signedIn);
+  document.body.classList.toggle('is-readonly', deployedBuild() && !SYNC.signedIn);
   renderAccount();
   renderNav();
   if (!viewVisible(view)) setView(firstAllowedView());

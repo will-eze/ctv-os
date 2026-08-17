@@ -49,6 +49,14 @@ const Sync = (() => {
 
   const SESSION_KEY = 'ctvos.session.v1';
   const OUTBOX_KEY = 'ctvos.outbox.v1';
+  // The last access decision the server gave THIS user - the admin flag and the
+  // per-module grants - kept so a cold boot with no signal can still show a
+  // signed-in crew member exactly the modules they were granted, rather than
+  // hiding everything until the network resolves. Keyed by user id and only
+  // ever restored when the stored session's id matches, so it can never hand
+  // one account another's grants. It stores grant BOOLEANS, not data; the real
+  // boundary is RLS on the server, which this never relaxes.
+  const ACCESS_KEY = 'ctvos.access.v1';
   const POLL_MS = 20000;
 
   // Tables pulled to build the document. Order matters: societies and members
@@ -146,7 +154,7 @@ const Sync = (() => {
       else localStorage.removeItem(SESSION_KEY);
     } catch { /* private mode: the session lasts as long as the tab */ }
     setStatus({ signedIn: Boolean(s), user: s?.user?.email ?? null });
-    if (!s) setStatus({ isAdmin: false, grants: {}, account: null });
+    if (!s) { setStatus({ isAdmin: false, grants: {}, account: null }); clearAccessCache(); }
     scheduleRefresh();
     // The socket carries the token for RLS, so a sign-in or sign-out has to
     // re-handshake rather than keep talking with the old identity.
@@ -264,6 +272,27 @@ const Sync = (() => {
   // What the signed-in account is allowed to see and change - the admin flag and
   // the per-module grants. Read straight after a pull and folded into the status
   // the interface renders its gates from.
+  function saveAccessCache(uid, isAdmin, grants) {
+    try { localStorage.setItem(ACCESS_KEY, JSON.stringify({ uid, isAdmin, grants })); }
+    catch { /* private mode: no cache, offline cold boot falls back to public */ }
+  }
+  function clearAccessCache() {
+    try { localStorage.removeItem(ACCESS_KEY); } catch { /* nothing to clear */ }
+  }
+  // Restore the cached decision only for the account that is actually signed in.
+  // Returns true if it seeded the status, so a cold offline boot shows the right
+  // modules before (or without) the network resolving.
+  function restoreAccessCache() {
+    const uid = session?.user?.id;
+    if (!uid) return false;
+    try {
+      const c = JSON.parse(localStorage.getItem(ACCESS_KEY) || 'null');
+      if (!c || c.uid !== uid) return false;
+      setStatus({ isAdmin: Boolean(c.isAdmin), grants: c.grants || {} });
+      return true;
+    } catch { return false; }
+  }
+
   async function loadAccess() {
     if (!session) { setStatus({ isAdmin: false, grants: {}, account: null }); return; }
     const uid = session.user?.id;
@@ -274,12 +303,18 @@ const Sync = (() => {
       ]);
       const gmap = {};
       for (const g of grants) gmap[g.module] = { view: g.can_view, edit: g.can_edit };
+      const isAdmin = Boolean(prof[0]?.is_admin);
       setStatus({
-        isAdmin: Boolean(prof[0]?.is_admin), grants: gmap,
+        isAdmin, grants: gmap,
         account: prof[0]?.email ?? session.user?.email ?? null,
       });
+      saveAccessCache(uid, isAdmin, gmap);   // so an offline cold boot can restore it
     } catch {
-      setStatus({ isAdmin: false, grants: {}, account: session.user?.email ?? null });
+      // Network resolve failed (offline). Keep whatever the cache already
+      // restored rather than blanking a signed-in user's grants to nothing.
+      if (!restoreAccessCache()) {
+        setStatus({ isAdmin: false, grants: {}, account: session.user?.email ?? null });
+      }
     }
   }
 
@@ -1186,6 +1221,10 @@ const Sync = (() => {
     const recovery = adoptUrlSession();   // a reset link overrides any saved session
     setStatus({ signedIn: Boolean(session), user: session?.user?.email ?? null,
       pending: readOutbox().length, recovery });
+    // Seed grants from the per-user cache immediately, so a cold boot with no
+    // signal shows a signed-in crew member their granted modules from the first
+    // paint instead of hiding them until loadAccess() can reach the network.
+    if (session) restoreAccessCache();
     scheduleRefresh();
     if (session && session.expires_at < Date.now()) await refresh();
     await pull();
